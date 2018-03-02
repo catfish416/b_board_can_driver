@@ -1,0 +1,831 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="39,1" id="srcline1">  1</a></span><span class="line">function [Lane_NumInfoOut,Info_Me,TargetPosition,InLaneLCFlg,ObjTrigOut,LCTrigSuccessOut,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,2" id="srcline2">  2</a></span><span class="line">          Info_Lo,Info_Fd,Info_Fo,Info_Ld,ObjSelectRes,Time2LeaveEgoPath,Time2Collision,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,3" id="srcline3">  3</a></span><span class="line">          DbgInfo] = ObjSelectDebugVersion(Line_ShapeInfo,Lane_NumInfo,Veh_State,FusData,ObjNum,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,4" id="srcline4">  4</a></span><span class="line">                                           DisTrig,SpaceTol,VelLoTrig,UseFakeCIPVEn,EgoL,EgoW,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,5" id="srcline5">  5</a></span><span class="line">                                           CIPVFilterEn,CIPVFilterLatTol,CIPVFilterLongTol,CIPVFilterTimeTol,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,6" id="srcline6">  6</a></span><span class="line">                                           Chg2NextLane,V_tar,LateralSafetyTol,InLaneLCTol,TrigStart,LCEnbSts,...</span></span>
+<span class="srcline"><span class="lineno"><a href="39,7" id="srcline7">  7</a></span><span class="line">                                           RightEnRelse,CurOpRsEdg,DbgNum,PPEn,CurOp,LatSpdTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,8" id="srcline8">  8</a></span><span class="line">    <span class="comment">%First Consider 2 lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,9" id="srcline9">  9</a></span><span class="line">    <span class="comment">%inter off lane 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,10" id="srcline10"> 10</a></span><span class="line">    <span class="comment">%inter lane 1 </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,11" id="srcline11"> 11</a></span><span class="line">    <span class="comment">%outer lane 2</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,12" id="srcline12"> 12</a></span><span class="line">    <span class="comment">%outer off lane 3</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,13" id="srcline13"> 13</a></span><span class="line">    <span class="comment">%1st 2nd    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,14" id="srcline14"> 14</a></span><span class="line">    <span class="comment">%Fd Fo Ld Lo</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,15" id="srcline15"> 15</a></span><span class="line">    persistent DebounceCnt </span></span>
+<span class="srcline"><span class="lineno"><a href="39,16" id="srcline16"> 16</a></span><span class="line">    if isempty(DebounceCnt)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,17" id="srcline17"> 17</a></span><span class="line">        DebounceCnt = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,18" id="srcline18"> 18</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,19" id="srcline19"> 19</a></span><span class="line">    InLaneLCFlg = 0;LCTrigSuccessOut = 0;DbgInfo = zeros(10,1);FobDir = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,20" id="srcline20"> 20</a></span><span class="line">    Info_Me = [Veh_State(1),Veh_State(2),Veh_State(8),EgoL,EgoW,Veh_State(3),Veh_State(4)];Lane_NumInfoOut = Lane_NumInfo;TargetPosition = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,21" id="srcline21"> 21</a></span><span class="line">    EgoLane_IndexIn = Lane_NumInfo(2);    ObjSelectRes = 0;Time2LeaveEgoPath = 0; Time2Collision = 255;ObjTrig = 0;ObjTrigOut = ObjTrig;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,22" id="srcline22"> 22</a></span><span class="line">    while (Veh_State(3) &lt; 0) ||(Veh_State(3)&gt;2*pi)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,23" id="srcline23"> 23</a></span><span class="line">        if Veh_State(3) &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,24" id="srcline24"> 24</a></span><span class="line">            Veh_State(3) = Veh_State(3) + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,25" id="srcline25"> 25</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,26" id="srcline26"> 26</a></span><span class="line">        if Veh_State(3) &gt; 2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="39,27" id="srcline27"> 27</a></span><span class="line">            Veh_State(3) = Veh_State(3) - 2*pi;    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,28" id="srcline28"> 28</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,29" id="srcline29"> 29</a></span><span class="line">    end  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,30" id="srcline30"> 30</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,31" id="srcline31"> 31</a></span><span class="line">    if Lane_NumInfoOut(3) &lt; 0.5        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,32" id="srcline32"> 32</a></span><span class="line">        if (EgoLane_IndexIn == 2)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,33" id="srcline33"> 33</a></span><span class="line">            TargetIndex = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,34" id="srcline34"> 34</a></span><span class="line">        elseif (EgoLane_IndexIn == 1)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,35" id="srcline35"> 35</a></span><span class="line">            TargetIndex = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,36" id="srcline36"> 36</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,37" id="srcline37"> 37</a></span><span class="line">            TargetIndex = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,38" id="srcline38"> 38</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,39" id="srcline39"> 39</a></span><span class="line">        Lane_NumInfoOut(3) = TargetIndex;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,40" id="srcline40"> 40</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,41" id="srcline41"> 41</a></span><span class="line">        TargetIndex = Lane_NumInfoOut(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,42" id="srcline42"> 42</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,43" id="srcline43"> 43</a></span><span class="line">    if EgoLane_IndexIn &gt; Lane_NumInfoOut(1) || EgoLane_IndexIn &lt; 1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,44" id="srcline44"> 44</a></span><span class="line">        Info_Lo = [65535,65535,65535,1.5,2.5,Veh_State(3)]; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,45" id="srcline45"> 45</a></span><span class="line">        Info_Fo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,46" id="srcline46"> 46</a></span><span class="line">        Info_Fd = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,47" id="srcline47"> 47</a></span><span class="line">        Info_Ld = [65535,65535,65535,1.5,2.5,Veh_State(3)]; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,48" id="srcline48"> 48</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,49" id="srcline49"> 49</a></span><span class="line"> </span></span>
+<span class="srcline"><span class="lineno"><a href="39,50" id="srcline50"> 50</a></span><span class="line">        Info_Lo = [65535,0,65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,51" id="srcline51"> 51</a></span><span class="line">        Info_Fo = [-65535,0,-65535,1.5,2.5,Veh_State(3)]; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,52" id="srcline52"> 52</a></span><span class="line">        Info_Fd = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,53" id="srcline53"> 53</a></span><span class="line">        Info_Ld = [65535,65535,65535,1.5,2.5,Veh_State(3)]; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,54" id="srcline54"> 54</a></span><span class="line">        LCTrigSuccess = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,55" id="srcline55"> 55</a></span><span class="line">        if EgoLane_IndexIn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,56" id="srcline56"> 56</a></span><span class="line">            LineAng = -atan(Line_ShapeInfo(EgoLane_IndexIn,2));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,57" id="srcline57"> 57</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,58" id="srcline58"> 58</a></span><span class="line">            LineAng = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,59" id="srcline59"> 59</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,60" id="srcline60"> 60</a></span><span class="line">        <span class="comment">%Filter a Lo that in ego way</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,61" id="srcline61"> 61</a></span><span class="line">        [ObjIndexLo,Info_Lo,FobDir] = FusIndSeletLo(Info_Me,FusData,LineAng,ObjNum,Veh_State,UseFakeCIPVEn,CIPVFilterLongTol,CIPVFilterLatTol,CIPVFilterTimeTol,CIPVFilterEn,LatSpdTol);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,62" id="srcline62"> 62</a></span><span class="line">        if ObjIndexLo &gt; 127</span></span>
+<span class="srcline"><span class="lineno"><a href="39,63" id="srcline63"> 63</a></span><span class="line">            ObjSelectRes = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,64" id="srcline64"> 64</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,65" id="srcline65"> 65</a></span><span class="line">        <span class="comment">% Fo</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,66" id="srcline66"> 66</a></span><span class="line">        Info_Fo = [-65535,0,-65535,1.5,2.5,Veh_State(3)];     </span></span>
+<span class="srcline"><span class="lineno"><a href="39,67" id="srcline67"> 67</a></span><span class="line">        DisToEgoLane = LaneFuncCal(Line_ShapeInfo,EgoLane_IndexIn,Info_Lo(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,68" id="srcline68"> 68</a></span><span class="line">        <span class="comment">% Force to Lane Change</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,69" id="srcline69"> 69</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,70" id="srcline70"> 70</a></span><span class="line">        if (abs(TargetIndex-EgoLane_IndexIn)&gt;0.5)                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,71" id="srcline71"> 71</a></span><span class="line">            <span class="comment">% Left in Lane 1 Left cross Lane 2 Right in lane 3 Right cross Lane 4</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,72" id="srcline72"> 72</a></span><span class="line">            if TargetIndex &lt; EgoLane_IndexIn</span></span>
+<span class="srcline"><span class="lineno"><a href="39,73" id="srcline73"> 73</a></span><span class="line">                Direction = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,74" id="srcline74"> 74</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,75" id="srcline75"> 75</a></span><span class="line">                Direction = 4;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,76" id="srcline76"> 76</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,77" id="srcline77"> 77</a></span><span class="line">            LCTrigSuccess = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,78" id="srcline78"> 78</a></span><span class="line">            [TargetPosition,LCSpaceEnough,InLaneLCFlg] = LCLateralSpaceCheck(Direction,Line_ShapeInfo,Lane_NumInfo,Info_Lo,Info_Me,LateralSafetyTol,Chg2NextLane,RightEnRelse,InLaneLCTol,1,FobDir);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,79" id="srcline79"> 79</a></span><span class="line">            if LCSpaceEnough &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,80" id="srcline80"> 80</a></span><span class="line">                <span class="comment">% Fd Ld is checked</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,81" id="srcline81"> 81</a></span><span class="line">                [Info_Ld,Info_Fd,ObjTrig,InbetweenFlg] = LdFdObjSearch(Direction,TargetPosition,Info_Me,LateralSafetyTol,SpaceTol,FusData,ObjNum,Veh_State,Info_Lo,Line_ShapeInfo,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,82" id="srcline82"> 82</a></span><span class="line">                InbetweenFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,83" id="srcline83"> 83</a></span><span class="line">                if (ObjTrig &gt; 1 &amp;&amp; InbetweenFlg &lt; 0.5 )|| UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,84" id="srcline84"> 84</a></span><span class="line">                    <span class="comment">% LC Triggered Success</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,85" id="srcline85"> 85</a></span><span class="line">                    LCTrigSuccess = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,86" id="srcline86"> 86</a></span><span class="line">                    [TargetIndex,~] = UpdateTargetIndex(Direction,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,87" id="srcline87"> 87</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,88" id="srcline88"> 88</a></span><span class="line">                    <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,89" id="srcline89"> 89</a></span><span class="line">                    ObjTrig;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,90" id="srcline90"> 90</a></span><span class="line">                end                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,91" id="srcline91"> 91</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,92" id="srcline92"> 92</a></span><span class="line">                <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,93" id="srcline93"> 93</a></span><span class="line">            end                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,94" id="srcline94"> 94</a></span><span class="line">        elseif (Info_Lo(1)&lt;DisTrig)&amp;&amp;(Info_Lo(3)&lt;(V_tar - VelLoTrig))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,95" id="srcline95"> 95</a></span><span class="line">        <span class="comment">% Info_Lo trigger to Lane Change</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,96" id="srcline96"> 96</a></span><span class="line">            DirectionPrioTbl = [1,3,2,4];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,97" id="srcline97"> 97</a></span><span class="line">            LCTrigSuccess = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,98" id="srcline98"> 98</a></span><span class="line">            for i = 1:4</span></span>
+<span class="srcline"><span class="lineno"><a href="39,99" id="srcline99"> 99</a></span><span class="line">                Direction = DirectionPrioTbl(i);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,100" id="srcline100">100</a></span><span class="line">                [TargetPosition,LCSpaceEnough,InLaneLCFlg] = LCLateralSpaceCheck(Direction,Line_ShapeInfo,Lane_NumInfo,Info_Lo,Info_Me,LateralSafetyTol,Chg2NextLane,RightEnRelse,InLaneLCTol,2,FobDir);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,101" id="srcline101">101</a></span><span class="line">                if abs(Direction - DbgNum)&lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,102" id="srcline102">102</a></span><span class="line">                    DbgInfo(1) = TargetPosition;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,103" id="srcline103">103</a></span><span class="line">                    DbgInfo(2) = LCSpaceEnough;                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,104" id="srcline104">104</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,105" id="srcline105">105</a></span><span class="line">                if LCSpaceEnough &gt; 0.5 </span></span>
+<span class="srcline"><span class="lineno"><a href="39,106" id="srcline106">106</a></span><span class="line">                    <span class="comment">% Fd Ld is checked</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,107" id="srcline107">107</a></span><span class="line">                    [Info_Ld,Info_Fd,ObjTrig,InbetweenFlg] = LdFdObjSearch(Direction,TargetPosition,Info_Me,LateralSafetyTol,SpaceTol,FusData,ObjNum,Veh_State,Info_Lo,Line_ShapeInfo,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,108" id="srcline108">108</a></span><span class="line"><span class="comment">%                         InbetweenFlg = InbetweenLaneObjCheck(Direction,Info_Ld,Info_Fd,Info_Me,LateralSafetyTol,TargetPosition);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,109" id="srcline109">109</a></span><span class="line">                    if abs(Direction - DbgNum)&lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,110" id="srcline110">110</a></span><span class="line">                        DbgInfo(3) = ObjTrig;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,111" id="srcline111">111</a></span><span class="line">                        DbgInfo(4) = InbetweenFlg;                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,112" id="srcline112">112</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,113" id="srcline113">113</a></span><span class="line">                    InbetweenFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,114" id="srcline114">114</a></span><span class="line">                    if (ObjTrig &gt; 1.5 &amp;&amp; InbetweenFlg &lt; 0.5) || UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,115" id="srcline115">115</a></span><span class="line">                        <span class="comment">% LC Triggered Success</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,116" id="srcline116">116</a></span><span class="line">                        LCTrigSuccess = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,117" id="srcline117">117</a></span><span class="line">                        [TargetIndex,~]  = UpdateTargetIndex(Direction,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,118" id="srcline118">118</a></span><span class="line">                        break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,119" id="srcline119">119</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,120" id="srcline120">120</a></span><span class="line">                        <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,121" id="srcline121">121</a></span><span class="line">                        ObjTrig;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,122" id="srcline122">122</a></span><span class="line">                    end                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,123" id="srcline123">123</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,124" id="srcline124">124</a></span><span class="line">                    <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,125" id="srcline125">125</a></span><span class="line">                end       </span></span>
+<span class="srcline"><span class="lineno"><a href="39,126" id="srcline126">126</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,127" id="srcline127">127</a></span><span class="line">        elseif abs(DisToEgoLane) &gt; 1 &amp;&amp; PPEn &gt; 0.5 &amp;&amp; CurOp &lt; 0.5          </span></span>
+<span class="srcline"><span class="lineno"><a href="39,128" id="srcline128">128</a></span><span class="line">        <span class="comment">% Position trigger to Lane Change to ego center</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,129" id="srcline129">129</a></span><span class="line">        <span class="comment">% LC in lane at least 1m, if smaller than 1m  </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,130" id="srcline130">130</a></span><span class="line">            if DisToEgoLane &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,131" id="srcline131">131</a></span><span class="line">                Direction = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,132" id="srcline132">132</a></span><span class="line">                LCTrigSuccess = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,133" id="srcline133">133</a></span><span class="line">                [TargetPosition,LCSpaceEnough,InLaneLCFlg] = LCLateralSpaceCheck(Direction,Line_ShapeInfo,Lane_NumInfo,Info_Lo,Info_Me,LateralSafetyTol,Chg2NextLane,RightEnRelse,InLaneLCTol,3,FobDir);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,134" id="srcline134">134</a></span><span class="line">                if LCSpaceEnough &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,135" id="srcline135">135</a></span><span class="line">                    <span class="comment">% Fd Ld is checked                    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,136" id="srcline136">136</a></span><span class="line">                    [Info_Ld,Info_Fd,ObjTrig,InbetweenFlg] = LdFdObjSearch(Direction,TargetPosition,Info_Me,LateralSafetyTol,SpaceTol,FusData,ObjNum,Veh_State,Info_Lo,Line_ShapeInfo,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,137" id="srcline137">137</a></span><span class="line">                    InbetweenFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,138" id="srcline138">138</a></span><span class="line">                    if (ObjTrig &gt; 1.5 &amp;&amp; InbetweenFlg &lt; 0.5)|| UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,139" id="srcline139">139</a></span><span class="line">                        <span class="comment">% LC Triggered Success</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,140" id="srcline140">140</a></span><span class="line">                        LCTrigSuccess = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,141" id="srcline141">141</a></span><span class="line">                        [TargetIndex,~]  = UpdateTargetIndex(Direction,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,142" id="srcline142">142</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,143" id="srcline143">143</a></span><span class="line">                        <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,144" id="srcline144">144</a></span><span class="line">                    end                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,145" id="srcline145">145</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,146" id="srcline146">146</a></span><span class="line">                    <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,147" id="srcline147">147</a></span><span class="line">                end                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,148" id="srcline148">148</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,149" id="srcline149">149</a></span><span class="line">                Direction = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,150" id="srcline150">150</a></span><span class="line">                LCTrigSuccess = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,151" id="srcline151">151</a></span><span class="line">                [TargetPosition,LCSpaceEnough,InLaneLCFlg] = LCLateralSpaceCheck(Direction,Line_ShapeInfo,Lane_NumInfo,Info_Lo,Info_Me,LateralSafetyTol,Chg2NextLane,RightEnRelse,InLaneLCTol,3,FobDir);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,152" id="srcline152">152</a></span><span class="line">                if LCSpaceEnough &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,153" id="srcline153">153</a></span><span class="line">                    <span class="comment">% Fd Ld is checked</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,154" id="srcline154">154</a></span><span class="line">                    [Info_Ld,Info_Fd,ObjTrig,InbetweenFlg] = LdFdObjSearch(Direction,TargetPosition,Info_Me,LateralSafetyTol,SpaceTol,FusData,ObjNum,Veh_State,Info_Lo,Line_ShapeInfo,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,155" id="srcline155">155</a></span><span class="line">                    InbetweenFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,156" id="srcline156">156</a></span><span class="line">                    if (ObjTrig &gt; 1.5 &amp;&amp; InbetweenFlg &lt; 0.5)|| UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,157" id="srcline157">157</a></span><span class="line">                        <span class="comment">% LC Triggered Success</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,158" id="srcline158">158</a></span><span class="line">                        LCTrigSuccess = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,159" id="srcline159">159</a></span><span class="line">                        [TargetIndex,~]  = UpdateTargetIndex(Direction,EgoLane_IndexIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,160" id="srcline160">160</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,161" id="srcline161">161</a></span><span class="line">                        <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,162" id="srcline162">162</a></span><span class="line">                    end                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,163" id="srcline163">163</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,164" id="srcline164">164</a></span><span class="line">                    <span class="comment">% LC Triggered failed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,165" id="srcline165">165</a></span><span class="line">                end                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,166" id="srcline166">166</a></span><span class="line">            end  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,167" id="srcline167">167</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,168" id="srcline168">168</a></span><span class="line">        <span class="comment">% No Lane Change</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,169" id="srcline169">169</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,170" id="srcline170">170</a></span><span class="line">        <span class="comment">% Work Debounce Counter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,171" id="srcline171">171</a></span><span class="line">        if TrigStart &gt; 0.5 &amp;&amp; LCEnbSts &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,172" id="srcline172">172</a></span><span class="line">            Lane_NumInfoOut(3) = TargetIndex;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,173" id="srcline173">173</a></span><span class="line">            if LCTrigSuccess &lt; 0.5 || CurOpRsEdg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,174" id="srcline174">174</a></span><span class="line">                DebounceCnt = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,175" id="srcline175">175</a></span><span class="line">                ObjTrigOut = ObjTrig;  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,176" id="srcline176">176</a></span><span class="line">                LCTrigSuccessOut = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,177" id="srcline177">177</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,178" id="srcline178">178</a></span><span class="line">                if DebounceCnt &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,179" id="srcline179">179</a></span><span class="line">                    DebounceCnt = DebounceCnt - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,180" id="srcline180">180</a></span><span class="line">                    ObjTrigOut = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,181" id="srcline181">181</a></span><span class="line">                    LCTrigSuccessOut = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,182" id="srcline182">182</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,183" id="srcline183">183</a></span><span class="line">                    ObjTrigOut = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,184" id="srcline184">184</a></span><span class="line">                    LCTrigSuccessOut = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,185" id="srcline185">185</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,186" id="srcline186">186</a></span><span class="line">            end     </span></span>
+<span class="srcline"><span class="lineno"><a href="39,187" id="srcline187">187</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,188" id="srcline188">188</a></span><span class="line">            DebounceCnt = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,189" id="srcline189">189</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,190" id="srcline190">190</a></span><span class="line">        if UseFakeCIPVEn &lt; 0.5 || LCTrigSuccess &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,191" id="srcline191">191</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,192" id="srcline192">192</a></span><span class="line">            Info_Lo = [65535,0,65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,193" id="srcline193">193</a></span><span class="line">            Info_Fo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,194" id="srcline194">194</a></span><span class="line">            Info_Ld = [65535,TargetPosition,65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,195" id="srcline195">195</a></span><span class="line">            Info_Fd = [-65535,TargetPosition,-65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,196" id="srcline196">196</a></span><span class="line">        end  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,197" id="srcline197">197</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,198" id="srcline198">198</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,199" id="srcline199">199</a></span><span class="line">function ObjInfo = ObjInfoMaker(ObjIndex,Object_Info,ObjNum,Veh_State,Type)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,200" id="srcline200">200</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,201" id="srcline201">201</a></span><span class="line">    ObjInfo = zeros(1,6);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,202" id="srcline202">202</a></span><span class="line"><span class="comment">%     ObjIndex = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,203" id="srcline203">203</a></span><span class="line"><span class="comment">%     if (Sur_ObjId &gt; 0)&amp;&amp;(Sur_ObjId &lt; 127)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,204" id="srcline204">204</a></span><span class="line"><span class="comment">%         for i = 1:ObjNum</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,205" id="srcline205">205</a></span><span class="line"><span class="comment">%             if abs(Object_Info(i,1) - Sur_ObjId)&lt;1e-1</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,206" id="srcline206">206</a></span><span class="line"><span class="comment">%                 ObjIndex = i;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,207" id="srcline207">207</a></span><span class="line"><span class="comment">%                 break;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,208" id="srcline208">208</a></span><span class="line"><span class="comment">%             end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,209" id="srcline209">209</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,210" id="srcline210">210</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,211" id="srcline211">211</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,212" id="srcline212">212</a></span><span class="line">    if (ObjIndex &gt; 0)&amp;&amp;(ObjIndex &lt; ObjNum)&amp;&amp;(Object_Info(ObjIndex,1)&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,213" id="srcline213">213</a></span><span class="line">        <span class="comment">% Real angle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,214" id="srcline214">214</a></span><span class="line">        [ObjVel,ObjHeading] = AngleDisCalin2Pi(Object_Info(ObjIndex,3),Object_Info(ObjIndex,5),Veh_State(8));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,215" id="srcline215">215</a></span><span class="line">        ObjInfo = [Object_Info(ObjIndex,2),Object_Info(ObjIndex,4),ObjVel,2.5,Object_Info(ObjIndex,7),ObjHeading];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,216" id="srcline216">216</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,217" id="srcline217">217</a></span><span class="line">        switch Type</span></span>
+<span class="srcline"><span class="lineno"><a href="39,218" id="srcline218">218</a></span><span class="line"><span class="comment">%         Info_Lo = [65535,65535,65535,1.5,2.5,Veh_State(3)]; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,219" id="srcline219">219</a></span><span class="line"><span class="comment">%         Info_Fo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,220" id="srcline220">220</a></span><span class="line"><span class="comment">%         Info_Fd = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,221" id="srcline221">221</a></span><span class="line"><span class="comment">%         Info_Ld = [65535,65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,222" id="srcline222">222</a></span><span class="line">            case 1,                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,223" id="srcline223">223</a></span><span class="line">                ObjInfo = [65535,65535,65535,1.5,2.5,Veh_State(3)];  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,224" id="srcline224">224</a></span><span class="line">            case 2,</span></span>
+<span class="srcline"><span class="lineno"><a href="39,225" id="srcline225">225</a></span><span class="line">                ObjInfo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,226" id="srcline226">226</a></span><span class="line">            case 3,</span></span>
+<span class="srcline"><span class="lineno"><a href="39,227" id="srcline227">227</a></span><span class="line">                ObjInfo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,228" id="srcline228">228</a></span><span class="line">            case 4,</span></span>
+<span class="srcline"><span class="lineno"><a href="39,229" id="srcline229">229</a></span><span class="line">                ObjInfo = [65535,65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,230" id="srcline230">230</a></span><span class="line">            otherwise,</span></span>
+<span class="srcline"><span class="lineno"><a href="39,231" id="srcline231">231</a></span><span class="line">                ObjInfo = [65535,65535,65535,1.5,2.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,232" id="srcline232">232</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,233" id="srcline233">233</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,234" id="srcline234">234</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,235" id="srcline235">235</a></span><span class="line">function [Distance,theta] = AngleDisCalin2Pi(Xdis,Ydis,EgoSpd)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,236" id="srcline236">236</a></span><span class="line">    theta = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,237" id="srcline237">237</a></span><span class="line">    Xdis = Xdis + EgoSpd;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,238" id="srcline238">238</a></span><span class="line">    Distance = sqrt((Xdis)^2 + Ydis^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,239" id="srcline239">239</a></span><span class="line">    if abs(Xdis) &lt; 1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,240" id="srcline240">240</a></span><span class="line">        if Ydis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,241" id="srcline241">241</a></span><span class="line">            theta = 3*pi/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,242" id="srcline242">242</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,243" id="srcline243">243</a></span><span class="line">            theta = pi/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,244" id="srcline244">244</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,245" id="srcline245">245</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,246" id="srcline246">246</a></span><span class="line">        theta = atan(Ydis/Xdis);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,247" id="srcline247">247</a></span><span class="line">        if abs(theta)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,248" id="srcline248">248</a></span><span class="line">            if Xdis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,249" id="srcline249">249</a></span><span class="line">                theta = pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,250" id="srcline250">250</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,251" id="srcline251">251</a></span><span class="line">                theta = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,252" id="srcline252">252</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,253" id="srcline253">253</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,254" id="srcline254">254</a></span><span class="line">            if Xdis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,255" id="srcline255">255</a></span><span class="line">                theta = theta + pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,256" id="srcline256">256</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,257" id="srcline257">257</a></span><span class="line">                if theta &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,258" id="srcline258">258</a></span><span class="line">                    theta = theta + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,259" id="srcline259">259</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,260" id="srcline260">260</a></span><span class="line">            end                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,261" id="srcline261">261</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,262" id="srcline262">262</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,263" id="srcline263">263</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,264" id="srcline264">264</a></span><span class="line">    if Xdis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,265" id="srcline265">265</a></span><span class="line">        Distance = Distance * -1;              </span></span>
+<span class="srcline"><span class="lineno"><a href="39,266" id="srcline266">266</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,267" id="srcline267">267</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,268" id="srcline268">268</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,269" id="srcline269">269</a></span><span class="line"><span class="comment">% Obj select function</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,270" id="srcline270">270</a></span><span class="line">function [Info_Ld,Info_Fd,ObjTrig,InbetweenFlg] = LdFdObjSearch(Direction,TargetPosition,Info_Me,LateralSafetyTol,SpaceTol,FusData,ObjNum,Veh_State,Info_Lo,Line_ShapeInfo,EgoLane_IndexIn)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,271" id="srcline271">271</a></span><span class="line">    <span class="comment">%Find a Ld that in target lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,272" id="srcline272">272</a></span><span class="line">    k = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,273" id="srcline273">273</a></span><span class="line">    if Direction &lt; 2.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,274" id="srcline274">274</a></span><span class="line">        ToLeft = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,275" id="srcline275">275</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,276" id="srcline276">276</a></span><span class="line">        ToLeft = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,277" id="srcline277">277</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,278" id="srcline278">278</a></span><span class="line">    if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,279" id="srcline279">279</a></span><span class="line">        Info_Ld = [65535,abs(TargetPosition),65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,280" id="srcline280">280</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,281" id="srcline281">281</a></span><span class="line">        Info_Ld = [65535,-abs(TargetPosition),65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,282" id="srcline282">282</a></span><span class="line">    end     </span></span>
+<span class="srcline"><span class="lineno"><a href="39,283" id="srcline283">283</a></span><span class="line">    if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,284" id="srcline284">284</a></span><span class="line">        Info_Fd = [-65535,abs(TargetPosition),-65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,285" id="srcline285">285</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,286" id="srcline286">286</a></span><span class="line">        Info_Fd = [-65535,-abs(TargetPosition),-65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,287" id="srcline287">287</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,288" id="srcline288">288</a></span><span class="line">    if Info_Lo(1) &gt; min([Line_ShapeInfo(EgoLane_IndexIn,5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="39,289" id="srcline289">289</a></span><span class="line">        CalDis = min([Line_ShapeInfo(EgoLane_IndexIn,5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,290" id="srcline290">290</a></span><span class="line">    elseif Info_Lo(1) &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,291" id="srcline291">291</a></span><span class="line">        CalDis = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,292" id="srcline292">292</a></span><span class="line">    else </span></span>
+<span class="srcline"><span class="lineno"><a href="39,293" id="srcline293">293</a></span><span class="line">        CalDis = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,294" id="srcline294">294</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,295" id="srcline295">295</a></span><span class="line">    LineAng = -atan(Line_ShapeInfo(EgoLane_IndexIn,2));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,296" id="srcline296">296</a></span><span class="line">    ObjIndex = FusIndSeletFdLd(ToLeft,TargetPosition,Info_Me,Info_Lo,LateralSafetyTol,FusData,LineAng,CalDis,ObjNum,4,Veh_State);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,297" id="srcline297">297</a></span><span class="line">    if ObjIndex &gt; 127</span></span>
+<span class="srcline"><span class="lineno"><a href="39,298" id="srcline298">298</a></span><span class="line">        if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,299" id="srcline299">299</a></span><span class="line">            Info_Ld = [65535,abs(TargetPosition),65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,300" id="srcline300">300</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,301" id="srcline301">301</a></span><span class="line">            Info_Ld = [65535,-abs(TargetPosition),65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,302" id="srcline302">302</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,303" id="srcline303">303</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,304" id="srcline304">304</a></span><span class="line">        Info_Ld = ObjInfoMaker(ObjIndex,FusData,ObjNum,Veh_State,4);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,305" id="srcline305">305</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,306" id="srcline306">306</a></span><span class="line">    <span class="comment">% Fd</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,307" id="srcline307">307</a></span><span class="line">    <span class="comment">%Find a Fd that in target lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,308" id="srcline308">308</a></span><span class="line">    ObjIndex = FusIndSeletFdLd(ToLeft,TargetPosition,Info_Me,Info_Lo,LateralSafetyTol,FusData,LineAng,CalDis,ObjNum,3,Veh_State);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,309" id="srcline309">309</a></span><span class="line">    if ObjIndex &gt; 127</span></span>
+<span class="srcline"><span class="lineno"><a href="39,310" id="srcline310">310</a></span><span class="line">        if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,311" id="srcline311">311</a></span><span class="line">            Info_Fd = [-65535,abs(TargetPosition),-65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,312" id="srcline312">312</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,313" id="srcline313">313</a></span><span class="line">            Info_Fd = [-65535,-abs(TargetPosition),-65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,314" id="srcline314">314</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,315" id="srcline315">315</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,316" id="srcline316">316</a></span><span class="line">        Info_Fd = ObjInfoMaker(ObjIndex,FusData,ObjNum,Veh_State,3);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,317" id="srcline317">317</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,318" id="srcline318">318</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,319" id="srcline319">319</a></span><span class="line">    ObjTrig = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,320" id="srcline320">320</a></span><span class="line">    if (Info_Fd(3) &lt;= Info_Me(3)||(Info_Fd(1) &lt;= -(Info_Fd(3) - Info_Me(3))*10))&amp;&amp;((Info_Ld(1) - Info_Fd(1)) &gt;= SpaceTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,321" id="srcline321">321</a></span><span class="line">        if(Info_Ld(3) &gt;= Info_Me(3))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,322" id="srcline322">322</a></span><span class="line">            <span class="comment">% LC reason is condition met, and target lane faster</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,323" id="srcline323">323</a></span><span class="line">            ObjTrig = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,324" id="srcline324">324</a></span><span class="line">            <span class="comment">% Info_Ld(3) &lt; Info_Me(3)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,325" id="srcline325">325</a></span><span class="line">            <span class="comment">% But aim to change to next lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,326" id="srcline326">326</a></span><span class="line">        elseif abs(Info_Lo(3))&lt;100 &amp;&amp; Info_Ld(3) &gt;= (Info_Lo(3)+2) &amp;&amp; (Info_Ld(1) &gt; Info_Lo(1))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,327" id="srcline327">327</a></span><span class="line">            <span class="comment">% LC reason is Info_Lo slower</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,328" id="srcline328">328</a></span><span class="line">                ObjTrig = 2;  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,329" id="srcline329">329</a></span><span class="line"><span class="comment">%         elseif (TargetIndex ~= EgoLane_IndexIn)&amp;&amp;(Info_Ld(1) &gt; 10)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,330" id="srcline330">330</a></span><span class="line"><span class="comment">%             % LC reason is no in target lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,331" id="srcline331">331</a></span><span class="line"><span class="comment">%                 ObjTrig = 2;          </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,332" id="srcline332">332</a></span><span class="line"><span class="comment">%         else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,333" id="srcline333">333</a></span><span class="line">        elseif Info_Ld(1) &gt; max([10*(Info_Me(3)-Info_Ld(3))+25,25])           </span></span>
+<span class="srcline"><span class="lineno"><a href="39,334" id="srcline334">334</a></span><span class="line">            ObjTrig = 2; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,335" id="srcline335">335</a></span><span class="line">        elseif Info_Ld(1) &gt; max([5*(Info_Me(3)-Info_Ld(3))+15,15])</span></span>
+<span class="srcline"><span class="lineno"><a href="39,336" id="srcline336">336</a></span><span class="line">            <span class="comment">%Not recommended, but can LC if insist</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,337" id="srcline337">337</a></span><span class="line">            ObjTrig = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,338" id="srcline338">338</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,339" id="srcline339">339</a></span><span class="line">            ObjTrig = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,340" id="srcline340">340</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,341" id="srcline341">341</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,342" id="srcline342">342</a></span><span class="line">    <span class="comment">% Find obj that exist inbetween Target Position and Ego Position</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,343" id="srcline343">343</a></span><span class="line">    InbetweenFlg = FusInBetFlgJudg(ToLeft,TargetPosition,Info_Me,Info_Lo,FusData,LineAng,CalDis,ObjNum,4,Veh_State);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,344" id="srcline344">344</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,345" id="srcline345">345</a></span><span class="line">function Ind = FusIndSeletFdLd(ToLeft,TargetPosition,Info_Me,Info_Lo,LateralSafetyTol,FusData,LineAng,CalDis,ObjNum,Type,Veh_State)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,346" id="srcline346">346</a></span><span class="line"><span class="comment">%     ToLeft</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,347" id="srcline347">347</a></span><span class="line"><span class="comment">%     1    Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,348" id="srcline348">348</a></span><span class="line"><span class="comment">%     0    Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,349" id="srcline349">349</a></span><span class="line"><span class="comment">%     Type   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,350" id="srcline350">350</a></span><span class="line"><span class="comment">%     1    Info_Lo = [65535,65535,65535,1.5,2.5,Veh_State(3)]; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,351" id="srcline351">351</a></span><span class="line"><span class="comment">%     2    Info_Fo = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,352" id="srcline352">352</a></span><span class="line"><span class="comment">%     3    Info_Fd = [-65535,-65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,353" id="srcline353">353</a></span><span class="line"><span class="comment">%     4    Info_Ld = [65535,65535,65535,1.5,2.5,Veh_State(3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,354" id="srcline354">354</a></span><span class="line">    IndTemp = 128;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,355" id="srcline355">355</a></span><span class="line">    AbsDis = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,356" id="srcline356">356</a></span><span class="line">    <span class="comment">% Search for ld and fd</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,357" id="srcline357">357</a></span><span class="line">    k = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,358" id="srcline358">358</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,359" id="srcline359">359</a></span><span class="line">        if (k &gt; 127) || (FusData(k,1)&lt; 0.5)                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,360" id="srcline360">360</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,361" id="srcline361">361</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,362" id="srcline362">362</a></span><span class="line">        ObjIndex = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,363" id="srcline363">363</a></span><span class="line">        Info_Temp = ObjInfoMaker(ObjIndex,FusData,ObjNum,Veh_State,Type);        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,364" id="srcline364">364</a></span><span class="line">        <span class="comment">%  when cal Ld, x must &gt; 0, when cal fd, x must &lt; 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,365" id="srcline365">365</a></span><span class="line">        if (abs(Type-3) &lt; 0.5 &amp;&amp; FusData(k,2) &gt; 0)||(abs(Type-4) &lt; 0.5 &amp;&amp; FusData(k,2) &lt;= 0)            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,366" id="srcline366">366</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,367" id="srcline367">367</a></span><span class="line">            YoffsetTmp = (Info_Temp(1) - CalDis)*tan(LineAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,368" id="srcline368">368</a></span><span class="line">          </span></span>
+<span class="srcline"><span class="lineno"><a href="39,369" id="srcline369">369</a></span><span class="line">            if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,370" id="srcline370">370</a></span><span class="line">                OuterLim = TargetPosition + (Info_Temp(5) + Info_Me(5))/2 + LateralSafetyTol*1.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,371" id="srcline371">371</a></span><span class="line">                InnerLim = Info_Lo(2) + (Info_Temp(5) + Info_Lo(5))/2 + LateralSafetyTol/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,372" id="srcline372">372</a></span><span class="line">                if ((Info_Temp(2)-YoffsetTmp) &lt; OuterLim )&amp;&amp;((Info_Temp(2)-YoffsetTmp) &gt; InnerLim)             </span></span>
+<span class="srcline"><span class="lineno"><a href="39,373" id="srcline373">373</a></span><span class="line">                    if abs(Info_Temp(1)) &lt; AbsDis</span></span>
+<span class="srcline"><span class="lineno"><a href="39,374" id="srcline374">374</a></span><span class="line">                        AbsDis = abs(Info_Temp(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,375" id="srcline375">375</a></span><span class="line">                        IndTemp = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,376" id="srcline376">376</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,377" id="srcline377">377</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,378" id="srcline378">378</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,379" id="srcline379">379</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,380" id="srcline380">380</a></span><span class="line">                OuterLim = Info_Lo(2) - (Info_Temp(5) + Info_Lo(5))/2 - LateralSafetyTol/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,381" id="srcline381">381</a></span><span class="line">                InnerLim = TargetPosition - (Info_Temp(5) + Info_Me(5))/2 - LateralSafetyTol*1.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,382" id="srcline382">382</a></span><span class="line">                if ((Info_Temp(2)-YoffsetTmp) &lt; OuterLim )&amp;&amp;((Info_Temp(2)-YoffsetTmp) &gt; InnerLim)                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,383" id="srcline383">383</a></span><span class="line">                    if abs(Info_Temp(1)) &lt; AbsDis</span></span>
+<span class="srcline"><span class="lineno"><a href="39,384" id="srcline384">384</a></span><span class="line">                        AbsDis = abs(Info_Temp(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,385" id="srcline385">385</a></span><span class="line">                        IndTemp = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,386" id="srcline386">386</a></span><span class="line">                    end     </span></span>
+<span class="srcline"><span class="lineno"><a href="39,387" id="srcline387">387</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,388" id="srcline388">388</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,389" id="srcline389">389</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,390" id="srcline390">390</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,391" id="srcline391">391</a></span><span class="line">        k = k + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,392" id="srcline392">392</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,393" id="srcline393">393</a></span><span class="line">    Ind = IndTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,394" id="srcline394">394</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,395" id="srcline395">395</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,396" id="srcline396">396</a></span><span class="line">function InBetFlg = FusInBetFlgJudg(ToLeft,TargetPosition,Info_Me,Info_Lo,FusData,LineAng,CalDis,ObjNum,Type,Veh_State)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,397" id="srcline397">397</a></span><span class="line">    InBetFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,398" id="srcline398">398</a></span><span class="line">    k = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,399" id="srcline399">399</a></span><span class="line">    Info_Inbtwn = zeros(1,6);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,400" id="srcline400">400</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,401" id="srcline401">401</a></span><span class="line">        if (k &gt; 127) || (FusData(k,1)&lt; 0.5)                                        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,402" id="srcline402">402</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,403" id="srcline403">403</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,404" id="srcline404">404</a></span><span class="line">        ObjIndex = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,405" id="srcline405">405</a></span><span class="line">        Info_Inbtwn = ObjInfoMaker(ObjIndex,FusData,ObjNum,Veh_State,Type);          </span></span>
+<span class="srcline"><span class="lineno"><a href="39,406" id="srcline406">406</a></span><span class="line">        if abs(Info_Inbtwn(3)) &gt; 100||(Info_Inbtwn(1) &gt; 50)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,407" id="srcline407">407</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,408" id="srcline408">408</a></span><span class="line">            YoffsetTmp = (Info_Inbtwn(1) - CalDis)*tan(LineAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,409" id="srcline409">409</a></span><span class="line">            if ToLeft &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,410" id="srcline410">410</a></span><span class="line">                OuterLim = TargetPosition - (Info_Inbtwn(5) + Info_Me(5))/2 - 0.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,411" id="srcline411">411</a></span><span class="line">                InnerLim = Info_Lo(2) + (-Info_Inbtwn(5) + Info_Lo(5))/2 + 0.5;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,412" id="srcline412">412</a></span><span class="line">                if ((Info_Inbtwn(2) - YoffsetTmp) &lt; OuterLim)&amp;&amp;((Info_Inbtwn(2) - YoffsetTmp) &gt; InnerLim)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,413" id="srcline413">413</a></span><span class="line">                    InBetFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,414" id="srcline414">414</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,415" id="srcline415">415</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,416" id="srcline416">416</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,417" id="srcline417">417</a></span><span class="line">                OuterLim = Info_Lo(2) - (-Info_Inbtwn(5) + Info_Lo(5))/2 - 0.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,418" id="srcline418">418</a></span><span class="line">                InnerLim = TargetPosition + (Info_Inbtwn(5) + Info_Me(5))/2 + 0.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,419" id="srcline419">419</a></span><span class="line">                if ((Info_Inbtwn(2) - YoffsetTmp) &lt; OuterLim)&amp;&amp;((Info_Inbtwn(2) - YoffsetTmp) &gt; InnerLim)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,420" id="srcline420">420</a></span><span class="line">                    InBetFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,421" id="srcline421">421</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,422" id="srcline422">422</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,423" id="srcline423">423</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,424" id="srcline424">424</a></span><span class="line">        end     </span></span>
+<span class="srcline"><span class="lineno"><a href="39,425" id="srcline425">425</a></span><span class="line">        k = k + 1;   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,426" id="srcline426">426</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,427" id="srcline427">427</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,428" id="srcline428">428</a></span><span class="line">function [TargetPosition,LCSpaceEnough,InLaneLCFlg] = LCLateralSpaceCheck(Direction,Line_ShapeInfo,Lane_NumInfo,Info_Lo,Info_Me,LateralSafetyTol,Chg2NextLane,RightEnRelse,InLaneLCTol,BranchNum,FobDir)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,429" id="srcline429">429</a></span><span class="line"><span class="comment">% Left in Lane 1 Left cross Lane 2 Right in lane 3 Right cross Lane 4</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,430" id="srcline430">430</a></span><span class="line">    EgoLane_IndexIn = Lane_NumInfo(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,431" id="srcline431">431</a></span><span class="line">    LCSpaceEnough = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,432" id="srcline432">432</a></span><span class="line">    if Direction &lt; 2.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,433" id="srcline433">433</a></span><span class="line">        ToLeft = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,434" id="srcline434">434</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,435" id="srcline435">435</a></span><span class="line">        ToLeft = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,436" id="srcline436">436</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,437" id="srcline437">437</a></span><span class="line">    InLaneLCFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,438" id="srcline438">438</a></span><span class="line">    LineAng = -atan(Line_ShapeInfo(EgoLane_IndexIn,2));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,439" id="srcline439">439</a></span><span class="line">    if Info_Lo(1) &gt; min([Line_ShapeInfo(EgoLane_IndexIn,5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="39,440" id="srcline440">440</a></span><span class="line">        CalDis = min([Line_ShapeInfo(EgoLane_IndexIn,5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,441" id="srcline441">441</a></span><span class="line">    elseif Info_Lo(1) &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,442" id="srcline442">442</a></span><span class="line">        CalDis = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,443" id="srcline443">443</a></span><span class="line">    else </span></span>
+<span class="srcline"><span class="lineno"><a href="39,444" id="srcline444">444</a></span><span class="line">        CalDis = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,445" id="srcline445">445</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,446" id="srcline446">446</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,447" id="srcline447">447</a></span><span class="line">    if abs(Info_Lo(3)) &lt; 100 &amp;&amp; abs(BranchNum - 3)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,448" id="srcline448">448</a></span><span class="line">        if (Info_Lo(5) &gt; 1e-1)&amp;&amp;(Info_Lo(5) &lt; 10)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,449" id="srcline449">449</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,450" id="srcline450">450</a></span><span class="line">            <span class="comment">% Obj Width no clear, so inter lane change is prefered</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,451" id="srcline451">451</a></span><span class="line">            Info_Lo(5) = 2.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,452" id="srcline452">452</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,453" id="srcline453">453</a></span><span class="line">        if ToLeft &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,454" id="srcline454">454</a></span><span class="line">            TargetPosition = (Info_Lo(5) + Info_Me(5))/2 +  Info_Lo(2) + LateralSafetyTol;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,455" id="srcline455">455</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,456" id="srcline456">456</a></span><span class="line">            if (TargetPosition - tan(LineAng)*CalDis) &lt; 1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,457" id="srcline457">457</a></span><span class="line">                TargetPosition = tan(LineAng)*CalDis + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,458" id="srcline458">458</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,459" id="srcline459">459</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,460" id="srcline460">460</a></span><span class="line">            TargetPosition = -(Info_Lo(5) + Info_Me(5))/2 +  Info_Lo(2) - LateralSafetyTol;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,461" id="srcline461">461</a></span><span class="line">            if (TargetPosition - tan(LineAng)*CalDis) &gt; -1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,462" id="srcline462">462</a></span><span class="line">                TargetPosition = tan(LineAng)*CalDis - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,463" id="srcline463">463</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,464" id="srcline464">464</a></span><span class="line">        end       </span></span>
+<span class="srcline"><span class="lineno"><a href="39,465" id="srcline465">465</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,466" id="srcline466">466</a></span><span class="line">        TargetPosition = tan(LineAng)*CalDis;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,467" id="srcline467">467</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,468" id="srcline468">468</a></span><span class="line">    <span class="comment">% TargetPosition has to be modified to consider no zero init angle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,469" id="srcline469">469</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,470" id="srcline470">470</a></span><span class="line">    if Direction &gt; 3.5 &amp;&amp; Direction &lt; 4.5 &amp;&amp; abs(FobDir)&gt;0.5 &amp;&amp; abs(FobDir - 2)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,471" id="srcline471">471</a></span><span class="line">        TargetIndex = EgoLane_IndexIn + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,472" id="srcline472">472</a></span><span class="line">        if TargetIndex &lt; Lane_NumInfo(1) + 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,473" id="srcline473">473</a></span><span class="line">            DisToNextLane = LaneFuncCal(Line_ShapeInfo,TargetIndex,Info_Lo(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,474" id="srcline474">474</a></span><span class="line">            if Chg2NextLane &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,475" id="srcline475">475</a></span><span class="line">                if TargetPosition &gt;= (DisToNextLane - Line_ShapeInfo(TargetIndex,6)/2 + LateralSafetyTol/2);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,476" id="srcline476">476</a></span><span class="line">                    LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,477" id="srcline477">477</a></span><span class="line">                    if TargetPosition &gt;= DisToNextLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,478" id="srcline478">478</a></span><span class="line">                        TargetPosition = DisToNextLane;                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,479" id="srcline479">479</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,480" id="srcline480">480</a></span><span class="line">                    if abs(TargetPosition - DisToNextLane) &lt; 0.2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,481" id="srcline481">481</a></span><span class="line">                        InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,482" id="srcline482">482</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,483" id="srcline483">483</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,484" id="srcline484">484</a></span><span class="line">                    LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,485" id="srcline485">485</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,486" id="srcline486">486</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,487" id="srcline487">487</a></span><span class="line">                if TargetPosition &gt;= DisToNextLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,488" id="srcline488">488</a></span><span class="line">                    LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,489" id="srcline489">489</a></span><span class="line">                    TargetPosition = DisToNextLane;                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,490" id="srcline490">490</a></span><span class="line">                    InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,491" id="srcline491">491</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,492" id="srcline492">492</a></span><span class="line">                    LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,493" id="srcline493">493</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,494" id="srcline494">494</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,495" id="srcline495">495</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,496" id="srcline496">496</a></span><span class="line">            LCSpaceEnough = 0;   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,497" id="srcline497">497</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,498" id="srcline498">498</a></span><span class="line">    elseif Direction &gt; 2.5 &amp;&amp; Direction &lt; 3.5 &amp;&amp; Chg2NextLane &lt; 0.5 &amp;&amp; abs(FobDir)&gt;0.5 &amp;&amp; abs(FobDir - 2)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,499" id="srcline499">499</a></span><span class="line">        DisToEgoLane = LaneFuncCal(Line_ShapeInfo,EgoLane_IndexIn,Info_Lo(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,500" id="srcline500">500</a></span><span class="line">        TargetIndex = EgoLane_IndexIn + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,501" id="srcline501">501</a></span><span class="line">        if TargetIndex &lt; Lane_NumInfo(1) + 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,502" id="srcline502">502</a></span><span class="line">            if TargetPosition &gt;= (DisToEgoLane - Line_ShapeInfo(EgoLane_IndexIn,6)/2 + InLaneLCTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,503" id="srcline503">503</a></span><span class="line"><span class="comment">%             if TargetPosition &gt;= (DisToEgoLane - Line_ShapeInfo(EgoLane_IndexIn,6)/2 + LateralSafetyTol/2)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,504" id="srcline504">504</a></span><span class="line">                LCSpaceEnough = 1;    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,505" id="srcline505">505</a></span><span class="line">                if TargetPosition &gt;= DisToEgoLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,506" id="srcline506">506</a></span><span class="line">                    TargetPosition = DisToEgoLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,507" id="srcline507">507</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,508" id="srcline508">508</a></span><span class="line">                if abs(TargetPosition - DisToEgoLane) &lt; 0.2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,509" id="srcline509">509</a></span><span class="line">                    InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,510" id="srcline510">510</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,511" id="srcline511">511</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,512" id="srcline512">512</a></span><span class="line">                LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,513" id="srcline513">513</a></span><span class="line">            end </span></span>
+<span class="srcline"><span class="lineno"><a href="39,514" id="srcline514">514</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,515" id="srcline515">515</a></span><span class="line">            if TargetPosition &gt;= (DisToEgoLane - Line_ShapeInfo(EgoLane_IndexIn,6)/2 + LateralSafetyTol/2 + Info_Me(5)/2)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,516" id="srcline516">516</a></span><span class="line">                LCSpaceEnough = 1;    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,517" id="srcline517">517</a></span><span class="line">                if TargetPosition &gt;= DisToEgoLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,518" id="srcline518">518</a></span><span class="line">                    TargetPosition = DisToEgoLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,519" id="srcline519">519</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,520" id="srcline520">520</a></span><span class="line">                if abs(TargetPosition - DisToEgoLane) &lt; 0.2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,521" id="srcline521">521</a></span><span class="line">                    InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,522" id="srcline522">522</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,523" id="srcline523">523</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,524" id="srcline524">524</a></span><span class="line">                LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,525" id="srcline525">525</a></span><span class="line">            end </span></span>
+<span class="srcline"><span class="lineno"><a href="39,526" id="srcline526">526</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,527" id="srcline527">527</a></span><span class="line">    elseif Direction &gt; 1.5 &amp;&amp; Direction &lt; 2.5 &amp;&amp; abs(FobDir-1)&gt;0.5 &amp;&amp; abs(FobDir - 2)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,528" id="srcline528">528</a></span><span class="line">        TargetIndex = EgoLane_IndexIn - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,529" id="srcline529">529</a></span><span class="line">        if TargetIndex &gt; 0.5             </span></span>
+<span class="srcline"><span class="lineno"><a href="39,530" id="srcline530">530</a></span><span class="line">            DisToNextLane = LaneFuncCal(Line_ShapeInfo,TargetIndex,Info_Lo(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,531" id="srcline531">531</a></span><span class="line">            if Chg2NextLane &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,532" id="srcline532">532</a></span><span class="line">                if TargetPosition &lt;= (DisToNextLane + Line_ShapeInfo(TargetIndex,6)/2 - LateralSafetyTol/2)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,533" id="srcline533">533</a></span><span class="line">                    LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,534" id="srcline534">534</a></span><span class="line">                    if TargetPosition &lt;= DisToNextLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,535" id="srcline535">535</a></span><span class="line">                        TargetPosition = DisToNextLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,536" id="srcline536">536</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,537" id="srcline537">537</a></span><span class="line">                    if abs(TargetPosition - DisToNextLane) &lt; 0.2 &amp;&amp; RightEnRelse &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,538" id="srcline538">538</a></span><span class="line">                        InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,539" id="srcline539">539</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,540" id="srcline540">540</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,541" id="srcline541">541</a></span><span class="line">                    LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,542" id="srcline542">542</a></span><span class="line">                end      </span></span>
+<span class="srcline"><span class="lineno"><a href="39,543" id="srcline543">543</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,544" id="srcline544">544</a></span><span class="line">                if TargetPosition &lt;= DisToNextLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,545" id="srcline545">545</a></span><span class="line">                    LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,546" id="srcline546">546</a></span><span class="line">                    TargetPosition = DisToNextLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,547" id="srcline547">547</a></span><span class="line">                    if  RightEnRelse &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,548" id="srcline548">548</a></span><span class="line">                        InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,549" id="srcline549">549</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,550" id="srcline550">550</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,551" id="srcline551">551</a></span><span class="line">                    LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,552" id="srcline552">552</a></span><span class="line">                end                   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,553" id="srcline553">553</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,554" id="srcline554">554</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,555" id="srcline555">555</a></span><span class="line">            LCSpaceEnough = 0;           </span></span>
+<span class="srcline"><span class="lineno"><a href="39,556" id="srcline556">556</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,557" id="srcline557">557</a></span><span class="line">    elseif Direction &gt; 0.5 &amp;&amp; Direction &lt; 1.5 &amp;&amp; Chg2NextLane &lt; 0.5 &amp;&amp; abs(FobDir-1)&gt;0.5 &amp;&amp; abs(FobDir - 2)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,558" id="srcline558">558</a></span><span class="line">        <span class="comment">%if Direction &gt; 0.5</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,559" id="srcline559">559</a></span><span class="line">        <span class="comment">%In lane LC to Left        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,560" id="srcline560">560</a></span><span class="line">        DisToEgoLane = LaneFuncCal(Line_ShapeInfo,EgoLane_IndexIn,Info_Lo(1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,561" id="srcline561">561</a></span><span class="line">        TargetIndex = EgoLane_IndexIn - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,562" id="srcline562">562</a></span><span class="line">        if TargetIndex &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,563" id="srcline563">563</a></span><span class="line"><span class="comment">%             if TargetPosition &lt;= (DisToEgoLane + Line_ShapeInfo(EgoLane_IndexIn,6)/2 - LateralSafetyTol/2)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,564" id="srcline564">564</a></span><span class="line">            if TargetPosition &lt;= (DisToEgoLane + Line_ShapeInfo(EgoLane_IndexIn,6)/2 - InLaneLCTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,565" id="srcline565">565</a></span><span class="line">                LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,566" id="srcline566">566</a></span><span class="line">                if TargetPosition &lt;= DisToEgoLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,567" id="srcline567">567</a></span><span class="line">                    TargetPosition = DisToEgoLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,568" id="srcline568">568</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,569" id="srcline569">569</a></span><span class="line">                if abs(TargetPosition - DisToEgoLane) &lt; 0.2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,570" id="srcline570">570</a></span><span class="line">                    InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,571" id="srcline571">571</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,572" id="srcline572">572</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,573" id="srcline573">573</a></span><span class="line">                LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,574" id="srcline574">574</a></span><span class="line">            end </span></span>
+<span class="srcline"><span class="lineno"><a href="39,575" id="srcline575">575</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,576" id="srcline576">576</a></span><span class="line">            <span class="comment">%No Lane there</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,577" id="srcline577">577</a></span><span class="line">            if TargetPosition &lt;= (DisToEgoLane + Line_ShapeInfo(EgoLane_IndexIn,6)/2 - LateralSafetyTol/2 - Info_Me(5)/2)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,578" id="srcline578">578</a></span><span class="line">                LCSpaceEnough = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,579" id="srcline579">579</a></span><span class="line">                if TargetPosition &lt;= DisToEgoLane</span></span>
+<span class="srcline"><span class="lineno"><a href="39,580" id="srcline580">580</a></span><span class="line">                    TargetPosition = DisToEgoLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,581" id="srcline581">581</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,582" id="srcline582">582</a></span><span class="line">                if abs(TargetPosition - DisToEgoLane) &lt; 0.2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,583" id="srcline583">583</a></span><span class="line">                    InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,584" id="srcline584">584</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,585" id="srcline585">585</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,586" id="srcline586">586</a></span><span class="line">                LCSpaceEnough = 0;                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,587" id="srcline587">587</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,588" id="srcline588">588</a></span><span class="line">        end   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,589" id="srcline589">589</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,590" id="srcline590">590</a></span><span class="line">        LCSpaceEnough = 0;  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,591" id="srcline591">591</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,592" id="srcline592">592</a></span><span class="line">    <span class="comment">% This code is for debug only Just to trigger a non zero init angle LC conditions</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,593" id="srcline593">593</a></span><span class="line">    <span class="comment">% InLaneLCFlg = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,594" id="srcline594">594</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,595" id="srcline595">595</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,596" id="srcline596">596</a></span><span class="line">function IdArrayRes = BubbleSortSurObjId(Object_Info,IdArray)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,597" id="srcline597">597</a></span><span class="line">    for j = 1:length(IdArray(:,1))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,598" id="srcline598">598</a></span><span class="line">        SortLen = length(IdArray(j,:));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,599" id="srcline599">599</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,600" id="srcline600">600</a></span><span class="line">        for i =1:length(IdArray(j,:))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,601" id="srcline601">601</a></span><span class="line">            if IdArray(j,i)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,602" id="srcline602">602</a></span><span class="line">                SortLen = i - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,603" id="srcline603">603</a></span><span class="line">                break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,604" id="srcline604">604</a></span><span class="line">            end                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,605" id="srcline605">605</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,606" id="srcline606">606</a></span><span class="line">        if SortLen &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,607" id="srcline607">607</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,608" id="srcline608">608</a></span><span class="line">            <span class="comment">%First Sort</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,609" id="srcline609">609</a></span><span class="line">            for i=1:SortLen</span></span>
+<span class="srcline"><span class="lineno"><a href="39,610" id="srcline610">610</a></span><span class="line">                SortFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,611" id="srcline611">611</a></span><span class="line">                for k=0:SortLen</span></span>
+<span class="srcline"><span class="lineno"><a href="39,612" id="srcline612">612</a></span><span class="line">                    Index = SortLen - k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,613" id="srcline613">613</a></span><span class="line">                    if Index &gt; i</span></span>
+<span class="srcline"><span class="lineno"><a href="39,614" id="srcline614">614</a></span><span class="line">                        if abs(Object_Info(IdArray(j,Index),2)) &lt; abs(Object_Info(IdArray(j,Index-1),2))</span></span>
+<span class="srcline"><span class="lineno"><a href="39,615" id="srcline615">615</a></span><span class="line">                        <span class="comment">%Swap</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,616" id="srcline616">616</a></span><span class="line">                            SortFlg = 1; </span></span>
+<span class="srcline"><span class="lineno"><a href="39,617" id="srcline617">617</a></span><span class="line">                            [IdArray(j,Index),IdArray(j,Index-1)] = swapVal(IdArray(j,Index),IdArray(j,Index-1));</span></span>
+<span class="srcline"><span class="lineno"><a href="39,618" id="srcline618">618</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,619" id="srcline619">619</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,620" id="srcline620">620</a></span><span class="line">                        break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,621" id="srcline621">621</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,622" id="srcline622">622</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,623" id="srcline623">623</a></span><span class="line">                if SortFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,624" id="srcline624">624</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,625" id="srcline625">625</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,626" id="srcline626">626</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,627" id="srcline627">627</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,628" id="srcline628">628</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,629" id="srcline629">629</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,630" id="srcline630">630</a></span><span class="line">    IdArrayRes = IdArray;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,631" id="srcline631">631</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,632" id="srcline632">632</a></span><span class="line">function [Ares,Bres] =swapVal(A,B)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,633" id="srcline633">633</a></span><span class="line">    Ares = B;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,634" id="srcline634">634</a></span><span class="line">    Bres = A;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,635" id="srcline635">635</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,636" id="srcline636">636</a></span><span class="line">function DisToLane = LaneFuncCal(Line_ShapeInfo,CalLineNum,CalDis)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,637" id="srcline637">637</a></span><span class="line">    if CalDis &gt; min([Line_ShapeInfo(CalLineNum,5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="39,638" id="srcline638">638</a></span><span class="line">        CalDis = min([Line_ShapeInfo(CalLineNum,5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,639" id="srcline639">639</a></span><span class="line">    elseif CalDis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,640" id="srcline640">640</a></span><span class="line">        CalDis = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,641" id="srcline641">641</a></span><span class="line">    else        </span></span>
+<span class="srcline"><span class="lineno"><a href="39,642" id="srcline642">642</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,643" id="srcline643">643</a></span><span class="line">    DisToLane = Line_ShapeInfo(CalLineNum,1)+Line_ShapeInfo(CalLineNum,2)*CalDis+Line_ShapeInfo(CalLineNum,3)*CalDis^2+Line_ShapeInfo(CalLineNum,4)*CalDis^3;   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,644" id="srcline644">644</a></span><span class="line">    DisToLane = -1*DisToLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,645" id="srcline645">645</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,646" id="srcline646">646</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="39,647" id="srcline647">647</a></span><span class="line"><span class="keyword">function</span> [<span class="var type1" id="S214T1U3372">TargetIndex</span>,<span class="var type1" id="S215T1U3373">InLaneLCFlg</span>] = UpdateTargetIndex(<span class="var type1" id="S216T1U3376">Direction</span>,<span class="var type1" id="S217T1U3377">EgoLane_IndexIn</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,648" id="srcline648">648</a></span><span class="line">    <span class="mxinfo " id="T1:U5"><span class="var type1" id="S215T1U3380">InLaneLCFlg</span> = <span class="mxinfo " id="T1:U7">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,649" id="srcline649">649</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U8"><span class="var type1" id="S216T1U3385">Direction</span> &gt; <span class="mxinfo " id="T1:U10">3.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,650" id="srcline650">650</a></span><span class="line">        <span class="mxinfo " id="T1:U11"><span class="var type1" id="S214T1U3389">TargetIndex</span> = <span class="mxinfo " id="T1:U13"><span class="var type1" id="S217T1U3391">EgoLane_IndexIn</span> + <span class="mxinfo " id="T1:U15">1</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,651" id="srcline651">651</a></span><span class="line">    <span class="keyword">elseif</span> <span class="mxinfo " id="T8:U16"><span class="var type1" id="S216T1U3395">Direction</span> &gt; <span class="mxinfo " id="T1:U18">2.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,652" id="srcline652">652</a></span><span class="line">        <span class="mxinfo " id="T1:U19"><span class="var type1" id="S214T1U3399">TargetIndex</span> = <span class="var type1" id="S217T1U3400">EgoLane_IndexIn</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,653" id="srcline653">653</a></span><span class="line">        <span class="mxinfo " id="T1:U22"><span class="var type1" id="S215T1U3403">InLaneLCFlg</span> = <span class="mxinfo " id="T1:U24">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,654" id="srcline654">654</a></span><span class="line">    <span class="keyword">elseif</span> <span class="mxinfo " id="T8:U25"><span class="var type1" id="S216T1U3407">Direction</span> &gt; <span class="mxinfo " id="T1:U27">1.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,655" id="srcline655">655</a></span><span class="line">        <span class="mxinfo " id="T1:U28"><span class="var type1" id="S214T1U3411">TargetIndex</span> = <span class="mxinfo " id="T1:U30"><span class="var type1" id="S217T1U3413">EgoLane_IndexIn</span> - <span class="mxinfo " id="T1:U32">1</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,656" id="srcline656">656</a></span><span class="line">    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,657" id="srcline657">657</a></span><span class="line">        <span class="mxinfo " id="T1:U33"><span class="var type1" id="S214T1U3418">TargetIndex</span> = <span class="var type1" id="S217T1U3419">EgoLane_IndexIn</span></span>;   </span></span>
+<span class="srcline"><span class="lineno"><a href="39,658" id="srcline658">658</a></span><span class="line">        <span class="mxinfo " id="T1:U36"><span class="var type1" id="S215T1U3422">InLaneLCFlg</span> = <span class="mxinfo " id="T1:U38">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,659" id="srcline659">659</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,660" id="srcline660">660</a></span><span class="line"><span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,661" id="srcline661">661</a></span><span class="line"></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="39,662" id="srcline662">662</a></span><span class="line">function InbetweenFlg = InbetweenLaneObjCheck(Direction,Info_Ld,Info_Fd,Info_Me,LateralSafetyTol,TargetPosition)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,663" id="srcline663">663</a></span><span class="line">    InbetweenFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,664" id="srcline664">664</a></span><span class="line">    if TargetPosition &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,665" id="srcline665">665</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,666" id="srcline666">666</a></span><span class="line">        TargetPosition = TargetPosition * -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,667" id="srcline667">667</a></span><span class="line">        Info_Ld(2) = Info_Ld(2) * -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,668" id="srcline668">668</a></span><span class="line">        Info_Fd(2) = Info_Fd(2) * -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,669" id="srcline669">669</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,670" id="srcline670">670</a></span><span class="line">    if abs(Direction - 2)&lt;1e-1 || abs(Direction - 4)&lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="39,671" id="srcline671">671</a></span><span class="line">        if Info_Ld(3) &gt; 100</span></span>
+<span class="srcline"><span class="lineno"><a href="39,672" id="srcline672">672</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,673" id="srcline673">673</a></span><span class="line">            if Info_Ld(2) &lt; TargetPosition - (Info_Ld(5) + Info_Me(5) + 0*LateralSafetyTol)/2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,674" id="srcline674">674</a></span><span class="line"><span class="comment">%                 if Info_Ld(2) &lt; TargetPosition + (Info_Ld(5) + Info_Me(5) + LateralSafetyTol)/2</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,675" id="srcline675">675</a></span><span class="line">                    InbetweenFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,676" id="srcline676">676</a></span><span class="line"><span class="comment">%                 end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,677" id="srcline677">677</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,678" id="srcline678">678</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,679" id="srcline679">679</a></span><span class="line">        if InbetweenFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,680" id="srcline680">680</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,681" id="srcline681">681</a></span><span class="line">            if Info_Fd(3) &lt; -100</span></span>
+<span class="srcline"><span class="lineno"><a href="39,682" id="srcline682">682</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,683" id="srcline683">683</a></span><span class="line">                if Info_Fd(2) &lt; TargetPosition - (Info_Fd(5) + Info_Me(5) + 0*LateralSafetyTol)/2</span></span>
+<span class="srcline"><span class="lineno"><a href="39,684" id="srcline684">684</a></span><span class="line"><span class="comment">%                     if Info_Ld(2) &lt; TargetPosition + (Info_Ld(5) + Info_Me(5) + LateralSafetyTol)/2</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,685" id="srcline685">685</a></span><span class="line">                        InbetweenFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,686" id="srcline686">686</a></span><span class="line"><span class="comment">%                     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,687" id="srcline687">687</a></span><span class="line">                end            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,688" id="srcline688">688</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,689" id="srcline689">689</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,690" id="srcline690">690</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,691" id="srcline691">691</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,692" id="srcline692">692</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="39,693" id="srcline693">693</a></span><span class="line">function [ObjIndex,Info_Lo,FobDir] = FusIndSeletLo(Info_Me,FusData,LineAng,ObjNum,Veh_State,UseFakeCIPVEn,CIPVFilterLongTol,CIPVFilterLatTol,CIPVFilterTimeTol,CIPVFilterEn,LatSpdTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,694" id="srcline694">694</a></span><span class="line">    ObjIndex = 128;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,695" id="srcline695">695</a></span><span class="line">    IndTemp = 128;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,696" id="srcline696">696</a></span><span class="line">    Info_LoPre = [255,0,255,0,0,0];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,697" id="srcline697">697</a></span><span class="line">    Info_Lo = [65535,0,65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,698" id="srcline698">698</a></span><span class="line">    FobPre = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,699" id="srcline699">699</a></span><span class="line">    k = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,700" id="srcline700">700</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,701" id="srcline701">701</a></span><span class="line">        if (k &gt; 127 || FusData(k,1)&lt; 0.5)|| UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,702" id="srcline702">702</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,703" id="srcline703">703</a></span><span class="line">        else                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,704" id="srcline704">704</a></span><span class="line">            ObjIndex = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,705" id="srcline705">705</a></span><span class="line">            Info_Lo = ObjInfoMaker(ObjIndex,FusData,ObjNum,Veh_State,1);  </span></span>
+<span class="srcline"><span class="lineno"><a href="39,706" id="srcline706">706</a></span><span class="line">            YoffsetTmp = Info_Lo(1)*tan(LineAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,707" id="srcline707">707</a></span><span class="line">            if(Info_Lo(1)&lt;100)&amp;&amp;(Info_Lo(1) &gt; 5)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,708" id="srcline708">708</a></span><span class="line">                Info_Lo(2) = Info_Lo(2) - YoffsetTmp;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,709" id="srcline709">709</a></span><span class="line">                if abs(Info_Lo(2)) &lt; (Info_Me(5)/2 + Info_Lo(5)/2 + CIPVFilterLatTol)                    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,710" id="srcline710">710</a></span><span class="line">                    if (FusData(ObjIndex,4) * FusData(ObjIndex,5)) &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,711" id="srcline711">711</a></span><span class="line">                        Time2LeaveEgoPath = ((Info_Me(5)/2 + Info_Lo(5)/2 + CIPVFilterLatTol) + abs(FusData(ObjIndex,4)))/abs(FusData(ObjIndex,5) + 0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,712" id="srcline712">712</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,713" id="srcline713">713</a></span><span class="line">                        Time2LeaveEgoPath = ((Info_Me(5)/2 + Info_Lo(5)/2 + CIPVFilterLatTol) - abs(FusData(ObjIndex,4)))/abs(FusData(ObjIndex,5) + 0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,714" id="srcline714">714</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,715" id="srcline715">715</a></span><span class="line">                    if FusData(ObjIndex,3) &gt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="39,716" id="srcline716">716</a></span><span class="line">                        Time2Collision = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,717" id="srcline717">717</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,718" id="srcline718">718</a></span><span class="line">                        Time2Collision =  (abs(FusData(ObjIndex,2)) - CIPVFilterLongTol)/(abs(FusData(ObjIndex,3)) +  0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,719" id="srcline719">719</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,720" id="srcline720">720</a></span><span class="line">                    if ((Time2LeaveEgoPath &lt; CIPVFilterTimeTol) &amp;&amp; (Time2Collision &gt; Time2LeaveEgoPath)) &amp;&amp; CIPVFilterEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,721" id="srcline721">721</a></span><span class="line">                        <span class="comment">%Obj is not discarded </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,722" id="srcline722">722</a></span><span class="line">                        Info_Lo = [65535,0,65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,723" id="srcline723">723</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,724" id="srcline724">724</a></span><span class="line">                        <span class="comment">% Enlarge previous obj and find fobdir </span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,725" id="srcline725">725</a></span><span class="line">                        if Info_Lo(1) &lt; Info_LoPre(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="39,726" id="srcline726">726</a></span><span class="line">                            IndTemp = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,727" id="srcline727">727</a></span><span class="line">                            if Info_Lo(1) &gt; (Info_LoPre(1) - 5)                             </span></span>
+<span class="srcline"><span class="lineno"><a href="39,728" id="srcline728">728</a></span><span class="line">                                Upper = max([Info_Lo(2) + Info_Lo(5)/2,Info_LoPre(2) + Info_LoPre(5)/2]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,729" id="srcline729">729</a></span><span class="line">                                Lower = min([Info_Lo(2) - Info_Lo(5)/2,Info_LoPre(2) - Info_LoPre(5)/2]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,730" id="srcline730">730</a></span><span class="line">                                Info_LoPre(2) = (Upper + Lower)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,731" id="srcline731">731</a></span><span class="line">                                Info_LoPre(5) = (Upper - Lower)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,732" id="srcline732">732</a></span><span class="line">                                Info_LoPre(1) = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,733" id="srcline733">733</a></span><span class="line">                                Info_LoPre(3) = Info_Lo(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,734" id="srcline734">734</a></span><span class="line">                                Info_LoPre(4) = Info_Lo(4);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,735" id="srcline735">735</a></span><span class="line">                                Info_LoPre(6) = Info_Lo(6);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,736" id="srcline736">736</a></span><span class="line">                                if FusData(k,5) &gt; LatSpdTol</span></span>
+<span class="srcline"><span class="lineno"><a href="39,737" id="srcline737">737</a></span><span class="line">                                    if abs(FobPre)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,738" id="srcline738">738</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,739" id="srcline739">739</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,740" id="srcline740">740</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,741" id="srcline741">741</a></span><span class="line">                                        FobPre = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,742" id="srcline742">742</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,743" id="srcline743">743</a></span><span class="line">                                elseif FusData(k,5) &lt; -LatSpdTol</span></span>
+<span class="srcline"><span class="lineno"><a href="39,744" id="srcline744">744</a></span><span class="line">                                    if abs(FobPre-1)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,745" id="srcline745">745</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,746" id="srcline746">746</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,747" id="srcline747">747</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,748" id="srcline748">748</a></span><span class="line">                                        FobPre = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,749" id="srcline749">749</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,750" id="srcline750">750</a></span><span class="line">                                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,751" id="srcline751">751</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,752" id="srcline752">752</a></span><span class="line">                            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,753" id="srcline753">753</a></span><span class="line">                                <span class="comment">% Refresh Lo</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,754" id="srcline754">754</a></span><span class="line">                                Info_LoPre = Info_Lo;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,755" id="srcline755">755</a></span><span class="line">                                FobPre = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,756" id="srcline756">756</a></span><span class="line">                                if FusData(k,5) &gt; 0.8</span></span>
+<span class="srcline"><span class="lineno"><a href="39,757" id="srcline757">757</a></span><span class="line">                                    if abs(FobPre)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,758" id="srcline758">758</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,759" id="srcline759">759</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,760" id="srcline760">760</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,761" id="srcline761">761</a></span><span class="line">                                        FobPre = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,762" id="srcline762">762</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,763" id="srcline763">763</a></span><span class="line">                                elseif FusData(k,5) &lt; -0.8</span></span>
+<span class="srcline"><span class="lineno"><a href="39,764" id="srcline764">764</a></span><span class="line">                                    if abs(FobPre-1)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,765" id="srcline765">765</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,766" id="srcline766">766</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,767" id="srcline767">767</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,768" id="srcline768">768</a></span><span class="line">                                        FobPre = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,769" id="srcline769">769</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,770" id="srcline770">770</a></span><span class="line">                                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,771" id="srcline771">771</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,772" id="srcline772">772</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,773" id="srcline773">773</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,774" id="srcline774">774</a></span><span class="line">                            <span class="comment">% Only Enlarge</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,775" id="srcline775">775</a></span><span class="line">                            if Info_Lo(1) &lt; (Info_LoPre(1) + 5)                             </span></span>
+<span class="srcline"><span class="lineno"><a href="39,776" id="srcline776">776</a></span><span class="line">                                Upper = max([Info_Lo(2) + Info_Lo(5)/2,Info_LoPre(2) + Info_LoPre(5)/2]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,777" id="srcline777">777</a></span><span class="line">                                Lower = max([Info_Lo(2) - Info_Lo(5)/2,Info_LoPre(2) - Info_LoPre(5)/2]);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,778" id="srcline778">778</a></span><span class="line">                                Info_LoPre(2) = (Upper + Lower)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,779" id="srcline779">779</a></span><span class="line">                                Info_LoPre(5) = (Upper - Lower)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,780" id="srcline780">780</a></span><span class="line">                                if FusData(k,5) &gt; 0.8</span></span>
+<span class="srcline"><span class="lineno"><a href="39,781" id="srcline781">781</a></span><span class="line">                                    if abs(FobPre)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,782" id="srcline782">782</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,783" id="srcline783">783</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,784" id="srcline784">784</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,785" id="srcline785">785</a></span><span class="line">                                        FobPre = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,786" id="srcline786">786</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,787" id="srcline787">787</a></span><span class="line">                                elseif FusData(k,5) &lt; -0.8</span></span>
+<span class="srcline"><span class="lineno"><a href="39,788" id="srcline788">788</a></span><span class="line">                                    if abs(FobPre-1)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="39,789" id="srcline789">789</a></span><span class="line">                                        <span class="comment">% Right + Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,790" id="srcline790">790</a></span><span class="line">                                        FobPre = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,791" id="srcline791">791</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,792" id="srcline792">792</a></span><span class="line">                                        FobPre = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,793" id="srcline793">793</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,794" id="srcline794">794</a></span><span class="line">                                else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,795" id="srcline795">795</a></span><span class="line">                                end                                </span></span>
+<span class="srcline"><span class="lineno"><a href="39,796" id="srcline796">796</a></span><span class="line">                            else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,797" id="srcline797">797</a></span><span class="line">                                <span class="comment">% obj is discarded</span></span></span>
+<span class="srcline"><span class="lineno"><a href="39,798" id="srcline798">798</a></span><span class="line">                            end                            </span></span>
+<span class="srcline"><span class="lineno"><a href="39,799" id="srcline799">799</a></span><span class="line">                        end                          </span></span>
+<span class="srcline"><span class="lineno"><a href="39,800" id="srcline800">800</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,801" id="srcline801">801</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,802" id="srcline802">802</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,803" id="srcline803">803</a></span><span class="line">            k = k + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,804" id="srcline804">804</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,805" id="srcline805">805</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="39,806" id="srcline806">806</a></span><span class="line">    if IndTemp &lt;= 127</span></span>
+<span class="srcline"><span class="lineno"><a href="39,807" id="srcline807">807</a></span><span class="line">        Info_Lo = Info_LoPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,808" id="srcline808">808</a></span><span class="line">        YoffsetTmp = Info_Lo(1) * tan(LineAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="39,809" id="srcline809">809</a></span><span class="line">        Info_Lo(2) = Info_Lo(2) + YoffsetTmp;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,810" id="srcline810">810</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,811" id="srcline811">811</a></span><span class="line">        Info_Lo = [65535,50*tan(LineAng),65535,2.5,1.5,Veh_State(3)];</span></span>
+<span class="srcline"><span class="lineno"><a href="39,812" id="srcline812">812</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,813" id="srcline813">813</a></span><span class="line">    if Info_Lo(1) &lt; 40</span></span>
+<span class="srcline"><span class="lineno"><a href="39,814" id="srcline814">814</a></span><span class="line">        FobDir = FobPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,815" id="srcline815">815</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="39,816" id="srcline816">816</a></span><span class="line">        FobDir =  3;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,817" id="srcline817">817</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,818" id="srcline818">818</a></span><span class="line">    ObjIndex = IndTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="39,819" id="srcline819">819</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="39,820" id="srcline820">820</a></span><span class="line"> </span></span>
+</pre>
+</div>

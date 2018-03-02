@@ -1,0 +1,549 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="59,1" id="srcline1">  1</a></span><span class="line">function [StopFlg,StopArc,ArcNex,ArcPre,VPre,VNex,aCal,CIPOInfo,...</span></span>
+<span class="srcline"><span class="lineno"><a href="59,2" id="srcline2">  2</a></span><span class="line">          StopReason] = MonitorObjDebugVersion(PPEn,RoadInfo,CurOp,MonitorEn,Fusobj,Info_Me,...</span></span>
+<span class="srcline"><span class="lineno"><a href="59,3" id="srcline3">  3</a></span><span class="line">                                               PreTime, NexTime,alimitCal,FOffset,LOffset,...</span></span>
+<span class="srcline"><span class="lineno"><a href="59,4" id="srcline4">  4</a></span><span class="line">                                               FOffsetLim,LOffsetLim,TimeSafeTol,aTrig,SafeDisTol,...</span></span>
+<span class="srcline"><span class="lineno"><a href="59,5" id="srcline5">  5</a></span><span class="line">                                               OutOfRoadEn,kur,Line_ShapeInfo,Lane_NumInfo,Tim2EnterTol,APar,ByPassVy)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,6" id="srcline6">  6</a></span><span class="line"><span class="comment">%     Fusobj = zeros(127,26);    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,7" id="srcline7">  7</a></span><span class="line">    persistent StopArcLo StopFlgLo EgoOrig PaCal Cnt PStopReasonTemp PStopReasonTempCnt</span></span>
+<span class="srcline"><span class="lineno"><a href="59,8" id="srcline8">  8</a></span><span class="line">    if isempty(StopArcLo)||(MonitorEn&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,9" id="srcline9">  9</a></span><span class="line">        StopArcLo = 0;StopFlgLo = 0;EgoOrig = [0,0];PaCal = 0;Cnt = 0;PStopReasonTemp=0; PStopReasonTempCnt = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,10" id="srcline10"> 10</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,11" id="srcline11"> 11</a></span><span class="line">    StopFlg = 0;V_me = Info_Me(3);ArcNex = V_me*NexTime;ArcPre = V_me*PreTime;VPre = V_me;VNex=V_me;aCal = 0;Idx = 128;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,12" id="srcline12"> 12</a></span><span class="line">    <span class="comment">% StopReason 0 - NoStop 1 Obj stay in Safety Zone 2 Obj will not leave to avoid collision 3 Obj will enter to collision </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,13" id="srcline13"> 13</a></span><span class="line">    StopReason = 0;StopReasonTemp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,14" id="srcline14"> 14</a></span><span class="line">    DistoStopTemp = 255;StopArc = StopArcLo;Time2ColidF = 100; Time2LeaveL = 0;CIPOInfo = [255,255,0,0,0];Time2EnterL = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,15" id="srcline15"> 15</a></span><span class="line">    Cnt = Cnt + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,16" id="srcline16"> 16</a></span><span class="line">    if (PPEn&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,17" id="srcline17"> 17</a></span><span class="line">        aCal = 0;aCalTemp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,18" id="srcline18"> 18</a></span><span class="line">        <span class="comment">%Only now dangerous obj is considered, all the possible obj is</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,19" id="srcline19"> 19</a></span><span class="line">        <span class="comment">%not considered        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,20" id="srcline20"> 20</a></span><span class="line">            CIPOInfo = [255,255,0,0,0];CIPOInfoTemp = CIPOInfo;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,21" id="srcline21"> 21</a></span><span class="line">            for i = 1:127 </span></span>
+<span class="srcline"><span class="lineno"><a href="59,22" id="srcline22"> 22</a></span><span class="line">                if (Fusobj(i,1)&lt;0.5)  </span></span>
+<span class="srcline"><span class="lineno"><a href="59,23" id="srcline23"> 23</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,24" id="srcline24"> 24</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,25" id="srcline25"> 25</a></span><span class="line">                    if (Fusobj(i,2) &gt; 0)       </span></span>
+<span class="srcline"><span class="lineno"><a href="59,26" id="srcline26"> 26</a></span><span class="line">                        CIPOInfoTemp = [Fusobj(i,2),Fusobj(i,4),Fusobj(i,3)+V_me,Fusobj(i,5),Fusobj(i,7)];</span></span>
+<span class="srcline"><span class="lineno"><a href="59,27" id="srcline27"> 27</a></span><span class="line"><span class="comment">%                         if abs(CIPOInfoTemp(4))&lt;0.6</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,28" id="srcline28"> 28</a></span><span class="line"><span class="comment">%                             CIPOInfoTemp(4) = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,29" id="srcline29"> 29</a></span><span class="line"><span class="comment">%                         end                        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,30" id="srcline30"> 30</a></span><span class="line">                        InRoadFlg = InRoadJudgement(Line_ShapeInfo,Lane_NumInfo,CIPOInfoTemp);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,31" id="srcline31"> 31</a></span><span class="line">                        if InRoadFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,32" id="srcline32"> 32</a></span><span class="line">                            InRoadObjId = Fusobj(i,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,33" id="srcline33"> 33</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,34" id="srcline34"> 34</a></span><span class="line"><span class="comment">%                         InRoadFlg = 1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,35" id="srcline35"> 35</a></span><span class="line">                        if (InRoadFlg &lt; 0.5&amp;&amp;abs(CurOp - 5)&lt;0.5)&amp;&amp;((OutOfRoadEn &lt; 0.5)||(sqrt(Fusobj(i,3)^2+Fusobj(i,5)^2)&lt;0.5))</span></span>
+<span class="srcline"><span class="lineno"><a href="59,36" id="srcline36"> 36</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,37" id="srcline37"> 37</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,38" id="srcline38"> 38</a></span><span class="line">                            [Xpos,Ypos,Vx2,Vy2]=ObjOffsetCal(kur,RoadInfo(2,1),RoadInfo(2,2),RoadInfo(2,3),CIPOInfoTemp(1),CIPOInfoTemp(2),CIPOInfoTemp(3),CIPOInfoTemp(4),4.5);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,39" id="srcline39"> 39</a></span><span class="line">                            if Xpos == 255</span></span>
+<span class="srcline"><span class="lineno"><a href="59,40" id="srcline40"> 40</a></span><span class="line">                                Xpos = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,41" id="srcline41"> 41</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,42" id="srcline42"> 42</a></span><span class="line">                            if Ypos &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,43" id="srcline43"> 43</a></span><span class="line">                                if Vy2 &lt; 0.6 &amp;&amp; Vy2 &gt; 0 </span></span>
+<span class="srcline"><span class="lineno"><a href="59,44" id="srcline44"> 44</a></span><span class="line">                                    Vy2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,45" id="srcline45"> 45</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,46" id="srcline46"> 46</a></span><span class="line">                            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,47" id="srcline47"> 47</a></span><span class="line">                                if Vy2 &lt; 0 &amp;&amp; Vy2 &gt; -0.6</span></span>
+<span class="srcline"><span class="lineno"><a href="59,48" id="srcline48"> 48</a></span><span class="line">                                    Vy2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,49" id="srcline49"> 49</a></span><span class="line">                                end                                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,50" id="srcline50"> 50</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,51" id="srcline51"> 51</a></span><span class="line">                            if ByPassVy&gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,52" id="srcline52"> 52</a></span><span class="line">                                Vy2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,53" id="srcline53"> 53</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,54" id="srcline54"> 54</a></span><span class="line">                            Xpos = Xpos - SafeDisTol + 4.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,55" id="srcline55"> 55</a></span><span class="line">                            if abs(1-CIPOInfoTemp(2)*kur)&gt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="59,56" id="srcline56"> 56</a></span><span class="line">                                Theta = atan(CIPOInfoTemp(1)*kur/(1+CIPOInfoTemp(2)*kur));    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,57" id="srcline57"> 57</a></span><span class="line">                                StopReasonTemp = 0;Time2EnterL = 100;Time2LeaveL = 0;Time2ColidF = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,58" id="srcline58"> 58</a></span><span class="line">                                if ((LOffset + CIPOInfoTemp(5)/2) - abs(Ypos))&gt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,59" id="srcline59"> 59</a></span><span class="line">                                    if Vy2 &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,60" id="srcline60"> 60</a></span><span class="line">                                        Time2LeaveL = 2*((LOffset + CIPOInfoTemp(5)/2) - Ypos*1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,61" id="srcline61"> 61</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,62" id="srcline62"> 62</a></span><span class="line">                                        Time2LeaveL = 2*((LOffset + CIPOInfoTemp(5)/2) - Ypos*-1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,63" id="srcline63"> 63</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,64" id="srcline64"> 64</a></span><span class="line">                                    Time2EnterL = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,65" id="srcline65"> 65</a></span><span class="line">                                else                                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,66" id="srcline66"> 66</a></span><span class="line">                                    <span class="comment">%Time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,67" id="srcline67"> 67</a></span><span class="line">                                    if Ypos*Vy2&lt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,68" id="srcline68"> 68</a></span><span class="line">                                        if Vy2 &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,69" id="srcline69"> 69</a></span><span class="line">                                            Time2EnterL = -((LOffset + CIPOInfoTemp(5)/2) + Ypos*1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,70" id="srcline70"> 70</a></span><span class="line">                                            Time2LeaveL = 2*((LOffset + CIPOInfoTemp(5)/2) - Ypos*1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,71" id="srcline71"> 71</a></span><span class="line">                                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,72" id="srcline72"> 72</a></span><span class="line">                                            Time2EnterL = -((LOffset + CIPOInfoTemp(5)/2) + Ypos*-1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,73" id="srcline73"> 73</a></span><span class="line">                                            Time2LeaveL = 2*((LOffset + CIPOInfoTemp(5)/2) - Ypos*-1)/(abs(Vy2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,74" id="srcline74"> 74</a></span><span class="line">                                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,75" id="srcline75"> 75</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,76" id="srcline76"> 76</a></span><span class="line">                                        Time2EnterL = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,77" id="srcline77"> 77</a></span><span class="line">                                        Time2LeaveL = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,78" id="srcline78"> 78</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,79" id="srcline79"> 79</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,80" id="srcline80"> 80</a></span><span class="line">                                if Xpos &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,81" id="srcline81"> 81</a></span><span class="line">                                    if (FOffset - Xpos)&gt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,82" id="srcline82"> 82</a></span><span class="line">                                        if (Vx2 - V_me)&gt;=0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,83" id="srcline83"> 83</a></span><span class="line">                                            Time2ColidF = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,84" id="srcline84"> 84</a></span><span class="line">                                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,85" id="srcline85"> 85</a></span><span class="line">                                            Time2ColidF = Xpos/(abs(V_me - Vx2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,86" id="srcline86"> 86</a></span><span class="line">                                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,87" id="srcline87"> 87</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,88" id="srcline88"> 88</a></span><span class="line">                                        if Vx2 - V_me&gt;=0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,89" id="srcline89"> 89</a></span><span class="line">                                            Time2ColidF = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,90" id="srcline90"> 90</a></span><span class="line">                                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,91" id="srcline91"> 91</a></span><span class="line">                                            Time2ColidF = Xpos/(abs(V_me - Vx2)+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,92" id="srcline92"> 92</a></span><span class="line">                                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,93" id="srcline93"> 93</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,94" id="srcline94"> 94</a></span><span class="line">                                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,95" id="srcline95"> 95</a></span><span class="line">                                    Time2ColidF = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,96" id="srcline96"> 96</a></span><span class="line">                                end   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,97" id="srcline97"> 97</a></span><span class="line">                                aCalTemp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,98" id="srcline98"> 98</a></span><span class="line">              <span class="comment">%                         a Stop is request</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,99" id="srcline99"> 99</a></span><span class="line">                                if ((LOffsetLim + CIPOInfoTemp(5)/2) &gt; abs(Ypos))&amp;&amp;(FOffsetLim &gt; Xpos)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,100" id="srcline100">100</a></span><span class="line">                                    StopReasonTemp = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,101" id="srcline101">101</a></span><span class="line">                                elseif((Time2ColidF &lt; Time2LeaveL+0.5) &amp;&amp; (Time2ColidF &lt; TimeSafeTol)) &amp;&amp; (Time2ColidF &gt; Time2EnterL) &amp;&amp; (Time2EnterL &lt; Tim2EnterTol)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,102" id="srcline102">102</a></span><span class="line">                                    StopReasonTemp = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,103" id="srcline103">103</a></span><span class="line">                                    Fusobj(i,1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,104" id="srcline104">104</a></span><span class="line">    <span class="comment">%                             elseif( &amp;&amp; (Time2ColidF &lt; TimeSafeTol)) </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,105" id="srcline105">105</a></span><span class="line">    <span class="comment">%                                 StopReasonTemp = 3;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,106" id="srcline106">106</a></span><span class="line">                                else   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,107" id="srcline107">107</a></span><span class="line">                                    StopReasonTemp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,108" id="srcline108">108</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,109" id="srcline109">109</a></span><span class="line">                                if StopReasonTemp &gt; 0        </span></span>
+<span class="srcline"><span class="lineno"><a href="59,110" id="srcline110">110</a></span><span class="line">                                    Id = Fusobj(i,1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,111" id="srcline111">111</a></span><span class="line">                                    Idx = i;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,112" id="srcline112">112</a></span><span class="line">                                    Xpos = Xpos</span></span>
+<span class="srcline"><span class="lineno"><a href="59,113" id="srcline113">113</a></span><span class="line">                                    Ypos = Ypos</span></span>
+<span class="srcline"><span class="lineno"><a href="59,114" id="srcline114">114</a></span><span class="line">                                    Vx2 = Vx2</span></span>
+<span class="srcline"><span class="lineno"><a href="59,115" id="srcline115">115</a></span><span class="line">                                    Vy2 = Vy2                                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,116" id="srcline116">116</a></span><span class="line">                                    if Xpos &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,117" id="srcline117">117</a></span><span class="line">                                        if (Vx2)&lt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,118" id="srcline118">118</a></span><span class="line">                                            aCalTemp = (-V_me^2 + 2*V_me*Vx2)/2/(Xpos+0.01);                    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,119" id="srcline119">119</a></span><span class="line">                                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,120" id="srcline120">120</a></span><span class="line">                                            aCalTemp = -(V_me - Vx2)^2/2/(Xpos+0.01);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,121" id="srcline121">121</a></span><span class="line">                                        end                                                       </span></span>
+<span class="srcline"><span class="lineno"><a href="59,122" id="srcline122">122</a></span><span class="line">                                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,123" id="srcline123">123</a></span><span class="line">                                        aCalTemp = -alimitCal;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,124" id="srcline124">124</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,125" id="srcline125">125</a></span><span class="line">                                    StopFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,126" id="srcline126">126</a></span><span class="line">                                    aCalTemp = aCalTemp *1.1; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,127" id="srcline127">127</a></span><span class="line">                                    if (StopReasonTemp - 1)&lt;0.5 &amp;&amp; aCalTemp &gt; -aTrig</span></span>
+<span class="srcline"><span class="lineno"><a href="59,128" id="srcline128">128</a></span><span class="line">                                        aCalTemp = -aTrig; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,129" id="srcline129">129</a></span><span class="line">                                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,130" id="srcline130">130</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,131" id="srcline131">131</a></span><span class="line">                                if aCalTemp &lt; -alimitCal</span></span>
+<span class="srcline"><span class="lineno"><a href="59,132" id="srcline132">132</a></span><span class="line">                                    aCalTemp = -alimitCal;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,133" id="srcline133">133</a></span><span class="line">                                else                            </span></span>
+<span class="srcline"><span class="lineno"><a href="59,134" id="srcline134">134</a></span><span class="line">                                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,135" id="srcline135">135</a></span><span class="line">            <span class="comment">%                     aCal = aCalTemp;                    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,136" id="srcline136">136</a></span><span class="line">                                <span class="comment">%Not consider rear obj     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,137" id="srcline137">137</a></span><span class="line">                            end                            </span></span>
+<span class="srcline"><span class="lineno"><a href="59,138" id="srcline138">138</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,139" id="srcline139">139</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,140" id="srcline140">140</a></span><span class="line">                    if aCal &gt; aCalTemp</span></span>
+<span class="srcline"><span class="lineno"><a href="59,141" id="srcline141">141</a></span><span class="line">                        aCal = aCalTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,142" id="srcline142">142</a></span><span class="line">                        CIPOInfo = CIPOInfoTemp; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,143" id="srcline143">143</a></span><span class="line">                        StopReason= StopReasonTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,144" id="srcline144">144</a></span><span class="line">                        CIPOInfo(1) = CIPOInfo(1)+SafeDisTol;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,145" id="srcline145">145</a></span><span class="line">                        if aCal &lt;= -alimitCal</span></span>
+<span class="srcline"><span class="lineno"><a href="59,146" id="srcline146">146</a></span><span class="line">                            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,147" id="srcline147">147</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,148" id="srcline148">148</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,149" id="srcline149">149</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,150" id="srcline150">150</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,151" id="srcline151">151</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,152" id="srcline152">152</a></span><span class="line">        <span class="comment">% Debounce</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,153" id="srcline153">153</a></span><span class="line"><span class="comment">%         figure(13)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,154" id="srcline154">154</a></span><span class="line"><span class="comment">%         plot(Cnt/100,PaCal,'r.');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,155" id="srcline155">155</a></span><span class="line"><span class="comment">%         hold on</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,156" id="srcline156">156</a></span><span class="line"><span class="comment">%         plot(Cnt/100,aCal,'b.');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,157" id="srcline157">157</a></span><span class="line"><span class="comment">%         figure(11)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,158" id="srcline158">158</a></span><span class="line">        if StopReasonTemp &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,159" id="srcline159">159</a></span><span class="line">            if PStopReasonTempCnt &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,160" id="srcline160">160</a></span><span class="line">                PStopReasonTemp = StopReasonTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,161" id="srcline161">161</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,162" id="srcline162">162</a></span><span class="line">                PStopReasonTempCnt = PStopReasonTempCnt - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,163" id="srcline163">163</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,164" id="srcline164">164</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,165" id="srcline165">165</a></span><span class="line">            PStopReasonTemp = StopReasonTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,166" id="srcline166">166</a></span><span class="line">            PStopReasonTempCnt = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,167" id="srcline167">167</a></span><span class="line">        end   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,168" id="srcline168">168</a></span><span class="line">        aCal1 = aCal;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,169" id="srcline169">169</a></span><span class="line">        aCal = PaCal + ( aCal - PaCal ) * APar;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,170" id="srcline170">170</a></span><span class="line">        PaCal = aCal;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,171" id="srcline171">171</a></span><span class="line">        if (aCal1 &lt;= -aTrig) || (aCal &lt;= -aTrig)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,172" id="srcline172">172</a></span><span class="line">            StopFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,173" id="srcline173">173</a></span><span class="line">            TimeToStop = abs(V_me/aCal);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,174" id="srcline174">174</a></span><span class="line">            if TimeToStop &gt; PreTime</span></span>
+<span class="srcline"><span class="lineno"><a href="59,175" id="srcline175">175</a></span><span class="line">                ArcPre = V_me*PreTime + aCal*PreTime^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,176" id="srcline176">176</a></span><span class="line">                VPre = V_me + aCal*PreTime;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,177" id="srcline177">177</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,178" id="srcline178">178</a></span><span class="line">                ArcPre = abs(V_me^2/2/aCal);VPre = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,179" id="srcline179">179</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,180" id="srcline180">180</a></span><span class="line">            if TimeToStop &gt; NexTime</span></span>
+<span class="srcline"><span class="lineno"><a href="59,181" id="srcline181">181</a></span><span class="line">                ArcNex = V_me*NexTime + aCal*NexTime^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,182" id="srcline182">182</a></span><span class="line">                VNex = V_me + aCal*NexTime;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,183" id="srcline183">183</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,184" id="srcline184">184</a></span><span class="line">                ArcNex = abs(V_me^2/2/aCal);VNex = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,185" id="srcline185">185</a></span><span class="line">            end       </span></span>
+<span class="srcline"><span class="lineno"><a href="59,186" id="srcline186">186</a></span><span class="line">        else        </span></span>
+<span class="srcline"><span class="lineno"><a href="59,187" id="srcline187">187</a></span><span class="line"><span class="comment">%             aCal = 0;ArcNex = V_me*NexTime;ArcPre = V_me*PreTime;VPre = V_me;VNex = V_me;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,188" id="srcline188">188</a></span><span class="line">            if PStopReasonTemp &gt; 0.5 &amp;&amp; V_me &lt; 1</span></span>
+<span class="srcline"><span class="lineno"><a href="59,189" id="srcline189">189</a></span><span class="line">                aCal = -aTrig;StopFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,190" id="srcline190">190</a></span><span class="line">                TimeToStop = abs(V_me/aCal);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,191" id="srcline191">191</a></span><span class="line">                if TimeToStop &gt; PreTime</span></span>
+<span class="srcline"><span class="lineno"><a href="59,192" id="srcline192">192</a></span><span class="line">                    ArcPre = V_me*PreTime + aCal*PreTime^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,193" id="srcline193">193</a></span><span class="line">                    VPre = V_me + aCal*PreTime;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,194" id="srcline194">194</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,195" id="srcline195">195</a></span><span class="line">                    ArcPre = abs(V_me^2/2/aCal);VPre = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,196" id="srcline196">196</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,197" id="srcline197">197</a></span><span class="line">                if TimeToStop &gt; NexTime</span></span>
+<span class="srcline"><span class="lineno"><a href="59,198" id="srcline198">198</a></span><span class="line">                    ArcNex = V_me*NexTime + aCal*NexTime^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,199" id="srcline199">199</a></span><span class="line">                    VNex = V_me + aCal*NexTime;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,200" id="srcline200">200</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,201" id="srcline201">201</a></span><span class="line">                    ArcNex = abs(V_me^2/2/aCal);VNex = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,202" id="srcline202">202</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,203" id="srcline203">203</a></span><span class="line">            else                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,204" id="srcline204">204</a></span><span class="line">                ArcPre= 0;VPre= 0;ArcNex= 0;VNex= 0;aCal = -aTrig;StopFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,205" id="srcline205">205</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,206" id="srcline206">206</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,207" id="srcline207">207</a></span><span class="line">        if (StopFlg &gt; 0.5)&amp;&amp;(StopFlgLo &lt; 0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,208" id="srcline208">208</a></span><span class="line">            StopFlgLo  = 1;StopArcLo = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,209" id="srcline209">209</a></span><span class="line">            EgoOrig(1) = Info_Me(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,210" id="srcline210">210</a></span><span class="line">            EgoOrig(2) = Info_Me(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,211" id="srcline211">211</a></span><span class="line">        elseif StopFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,212" id="srcline212">212</a></span><span class="line">            StopFlgLo = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,213" id="srcline213">213</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,214" id="srcline214">214</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,215" id="srcline215">215</a></span><span class="line">        if StopFlgLo &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,216" id="srcline216">216</a></span><span class="line"><span class="comment">%             StopArcLo = StopArcLo + ArcNex;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,217" id="srcline217">217</a></span><span class="line">            StopArcLo = sqrt((Info_Me(1)-EgoOrig(1))^2+(Info_Me(2)-EgoOrig(2))^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,218" id="srcline218">218</a></span><span class="line">            <span class="comment">% This had better to use accumulate len to calculate Now not</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,219" id="srcline219">219</a></span><span class="line">            <span class="comment">% consider</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,220" id="srcline220">220</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,221" id="srcline221">221</a></span><span class="line">        end </span></span>
+<span class="srcline"><span class="lineno"><a href="59,222" id="srcline222">222</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,223" id="srcline223">223</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,224" id="srcline224">224</a></span><span class="line">        StopArcLo = 0;StopFlgLo= 0;PStopReasonTempCnt = 20;PStopReasonTemp = 0; PaCal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,225" id="srcline225">225</a></span><span class="line">    end        </span></span>
+<span class="srcline"><span class="lineno"><a href="59,226" id="srcline226">226</a></span><span class="line">    if MonitorEn&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,227" id="srcline227">227</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,228" id="srcline228">228</a></span><span class="line">        StopFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,229" id="srcline229">229</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,230" id="srcline230">230</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,231" id="srcline231">231</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,232" id="srcline232">232</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,233" id="srcline233">233</a></span><span class="line">function InRoadFlg = InRoadJudgement(Line_ShapeInfo,Lane_NumInfo,CIPOInfoTemp)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,234" id="srcline234">234</a></span><span class="line">    InRoadFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,235" id="srcline235">235</a></span><span class="line">    <span class="comment">% 1 3 5</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,236" id="srcline236">236</a></span><span class="line">    if Lane_NumInfo(1) &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="59,237" id="srcline237">237</a></span><span class="line">        for i = 1:Lane_NumInfo(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,238" id="srcline238">238</a></span><span class="line">            if  (abs(Lane_NumInfo(2) - i) &lt; 1e-1) &amp;&amp; (abs(Line_ShapeInfo(i,1)) &gt; 10 || abs(Line_ShapeInfo(i,2)) &gt; 10)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,239" id="srcline239">239</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,240" id="srcline240">240</a></span><span class="line">                DisToLaneTmp = LaneFuncCal(Line_ShapeInfo,i,CIPOInfoTemp);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,241" id="srcline241">241</a></span><span class="line">                if DisToLaneTmp &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,242" id="srcline242">242</a></span><span class="line">                    DisToLane = DisToLaneTmp * cos(atan(Line_ShapeInfo(1,2))) - CIPOInfoTemp(5)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,243" id="srcline243">243</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,244" id="srcline244">244</a></span><span class="line">                    DisToLane = DisToLaneTmp * cos(atan(Line_ShapeInfo(1,2))) + CIPOInfoTemp(5)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,245" id="srcline245">245</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,246" id="srcline246">246</a></span><span class="line">                if abs(DisToLane)&lt;(Line_ShapeInfo(i,6)/2 + 0.2)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,247" id="srcline247">247</a></span><span class="line">                    InRoadFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,248" id="srcline248">248</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,249" id="srcline249">249</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,250" id="srcline250">250</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,251" id="srcline251">251</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,252" id="srcline252">252</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,253" id="srcline253">253</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,254" id="srcline254">254</a></span><span class="line">        InRoadFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,255" id="srcline255">255</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,256" id="srcline256">256</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,257" id="srcline257">257</a></span><span class="line">function DisToLane = LaneFuncCal(Line_ShapeInfo,CalLineNum,CIPOInfoTemp)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,258" id="srcline258">258</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,259" id="srcline259">259</a></span><span class="line">    x1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,260" id="srcline260">260</a></span><span class="line">    y1 = -Line_ShapeInfo(CalLineNum,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,261" id="srcline261">261</a></span><span class="line">    LaneAng = -atan(Line_ShapeInfo(CalLineNum,2));</span></span>
+<span class="srcline"><span class="lineno"><a href="59,262" id="srcline262">262</a></span><span class="line">    xobj = CIPOInfoTemp(1);yobj = CIPOInfoTemp(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,263" id="srcline263">263</a></span><span class="line">    [DisToLane,Dir] = DisCal2Lane(LaneAng,x1,y1,xobj,yobj);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,264" id="srcline264">264</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,265" id="srcline265">265</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,266" id="srcline266">266</a></span><span class="line">function [OffsetX,OffsetY,OffsetVx,OffsetVy] = ObjOffsetCal(Kur,Xout,Yout,Angleout,Xobj,Yobj,Vxobj,Vyobj,L)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,267" id="srcline267">267</a></span><span class="line">    <span class="comment">% remove left to left edge</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,268" id="srcline268">268</a></span><span class="line">    [Dis2Kur,Dir2Kur] = DisCal2Arc(Kur,Xobj,Yobj);    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,269" id="srcline269">269</a></span><span class="line">    A1 = sin(Angleout);B1 = -cos(Angleout);C1 = Yout*cos(Angleout) - Xout*sin(Angleout);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,270" id="srcline270">270</a></span><span class="line">    A2 = cos(Angleout);B2 = sin(Angleout);C2 = -Yobj*sin(Angleout) - Xobj*cos(Angleout);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,271" id="srcline271">271</a></span><span class="line">    CordObjMapLane = [(C1*B2-C2*B1)/(A2*B1-A1*B2),(A1*C2-A2*C1)/(A2*B1-A1*B2)];</span></span>
+<span class="srcline"><span class="lineno"><a href="59,272" id="srcline272">272</a></span><span class="line">    CordKurCrsLane = zeros(3,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,273" id="srcline273">273</a></span><span class="line">    ThetaKurCrsLane = 0;ThetaKur = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,274" id="srcline274">274</a></span><span class="line">    Kur2 = Kur/sqrt(L^2*Kur^2 + 1);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,275" id="srcline275">275</a></span><span class="line">    if abs(Kur)&gt;1e-4          </span></span>
+<span class="srcline"><span class="lineno"><a href="59,276" id="srcline276">276</a></span><span class="line">        FrontOffset = abs(atan(L*Kur))*abs(1/Kur2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,277" id="srcline277">277</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,278" id="srcline278">278</a></span><span class="line">        FrontOffset = L;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,279" id="srcline279">279</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,280" id="srcline280">280</a></span><span class="line"><span class="comment">%     figure(12)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,281" id="srcline281">281</a></span><span class="line"><span class="comment">%     hold off</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,282" id="srcline282">282</a></span><span class="line"><span class="comment">%     plot(0,0,'*');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,283" id="srcline283">283</a></span><span class="line"><span class="comment">%     hold on</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,284" id="srcline284">284</a></span><span class="line"><span class="comment">%     plot([Xout - 100*cos(Angleout),Xout + 100*cos(Angleout)],[Yout - 100*sin(Angleout),Yout + 100*sin(Angleout)],'g');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,285" id="srcline285">285</a></span><span class="line"><span class="comment">%     th = pi:0.1:2*pi;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,286" id="srcline286">286</a></span><span class="line"><span class="comment">%     if abs(Kur)&gt;1e-4</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,287" id="srcline287">287</a></span><span class="line"><span class="comment">%         xkur = 1/Kur.*sin(th);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,288" id="srcline288">288</a></span><span class="line"><span class="comment">%         ykur = 1/Kur.*cos(th) + 1/Kur;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,289" id="srcline289">289</a></span><span class="line"><span class="comment">%         plot(xkur,ykur,'r');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,290" id="srcline290">290</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,291" id="srcline291">291</a></span><span class="line"><span class="comment">%         plot([0,100],[0,0],'r');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,292" id="srcline292">292</a></span><span class="line"><span class="comment">%     end    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,293" id="srcline293">293</a></span><span class="line">    if abs(Kur)&gt;1e-4                  </span></span>
+<span class="srcline"><span class="lineno"><a href="59,294" id="srcline294">294</a></span><span class="line">        Dis2Kur = Dis2Kur + 1/Kur2 - 1/Kur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,295" id="srcline295">295</a></span><span class="line">        [DisKur2Lane,Dir2Lane] = DisCal2Lane(Angleout,Xout,Yout,0,1/Kur);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,296" id="srcline296">296</a></span><span class="line">        if abs(DisKur2Lane) &gt; abs(1/Kur2)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,297" id="srcline297">297</a></span><span class="line">            <span class="comment">% No Cross  </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,298" id="srcline298">298</a></span><span class="line">            <span class="comment">% Use Ego Traj to cal</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,299" id="srcline299">299</a></span><span class="line">            <span class="comment">% Not Cross But we can use this to calculate offset</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,300" id="srcline300">300</a></span><span class="line">            CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,301" id="srcline301">301</a></span><span class="line">            ThetaKurCrsLane = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,302" id="srcline302">302</a></span><span class="line">            CordKurCrsLane = [1/Kur2*sin(ThetaKurCrsLane),(-1/Kur2*cos(ThetaKurCrsLane) + 1/Kur)];   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,303" id="srcline303">303</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="59,304" id="srcline304">304</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,305" id="srcline305">305</a></span><span class="line">            AngleoutTmp = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,306" id="srcline306">306</a></span><span class="line">            while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,307" id="srcline307">307</a></span><span class="line">               if AngleoutTmp &lt; -pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,308" id="srcline308">308</a></span><span class="line">                   AngleoutTmp = AngleoutTmp + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,309" id="srcline309">309</a></span><span class="line">               elseif AngleoutTmp &gt;= pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,310" id="srcline310">310</a></span><span class="line">                   AngleoutTmp = AngleoutTmp - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,311" id="srcline311">311</a></span><span class="line">               else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,312" id="srcline312">312</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,313" id="srcline313">313</a></span><span class="line">               end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,314" id="srcline314">314</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,315" id="srcline315">315</a></span><span class="line">            <span class="comment">%Cross2Kur</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,316" id="srcline316">316</a></span><span class="line">            ThetaKurCrsLane1 = AngleoutTmp - acos(abs(DisKur2Lane*Kur2));</span></span>
+<span class="srcline"><span class="lineno"><a href="59,317" id="srcline317">317</a></span><span class="line"><span class="comment">%             while(1)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,318" id="srcline318">318</a></span><span class="line"><span class="comment">%                if ThetaKurCrsLane1 &lt; 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,319" id="srcline319">319</a></span><span class="line"><span class="comment">%                    ThetaKurCrsLane1 = ThetaKurCrsLane1 + 2*pi;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,320" id="srcline320">320</a></span><span class="line"><span class="comment">%                elseif ThetaKurCrsLane1 &gt;= 2*pi</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,321" id="srcline321">321</a></span><span class="line"><span class="comment">%                    ThetaKurCrsLane1 = ThetaKurCrsLane1 - 2*pi;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,322" id="srcline322">322</a></span><span class="line"><span class="comment">%                else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,323" id="srcline323">323</a></span><span class="line"><span class="comment">%                     break;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,324" id="srcline324">324</a></span><span class="line"><span class="comment">%                end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,325" id="srcline325">325</a></span><span class="line"><span class="comment">%             end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,326" id="srcline326">326</a></span><span class="line">            ThetaKurCrsLane2 = AngleoutTmp + acos(abs(DisKur2Lane*Kur2));</span></span>
+<span class="srcline"><span class="lineno"><a href="59,327" id="srcline327">327</a></span><span class="line"><span class="comment">%             while(1)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,328" id="srcline328">328</a></span><span class="line"><span class="comment">%                if ThetaKurCrsLane2 &lt; 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,329" id="srcline329">329</a></span><span class="line"><span class="comment">%                    ThetaKurCrsLane2 = ThetaKurCrsLane2 + 2*pi;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,330" id="srcline330">330</a></span><span class="line"><span class="comment">%                elseif ThetaKurCrsLane2 &gt;= 2*pi</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,331" id="srcline331">331</a></span><span class="line"><span class="comment">%                    ThetaKurCrsLane2 = ThetaKurCrsLane2 - 2*pi;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,332" id="srcline332">332</a></span><span class="line"><span class="comment">%                else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,333" id="srcline333">333</a></span><span class="line"><span class="comment">%                     break;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,334" id="srcline334">334</a></span><span class="line"><span class="comment">%                end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,335" id="srcline335">335</a></span><span class="line"><span class="comment">%             end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,336" id="srcline336">336</a></span><span class="line">            if Kur &gt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,337" id="srcline337">337</a></span><span class="line">                if ThetaKurCrsLane1 &gt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,338" id="srcline338">338</a></span><span class="line">                    CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,339" id="srcline339">339</a></span><span class="line">                    ThetaKurCrsLane = ThetaKurCrsLane1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,340" id="srcline340">340</a></span><span class="line">                    CordKurCrsLane = [1/Kur2*sin(ThetaKurCrsLane),(-1/Kur2*cos(ThetaKurCrsLane) + 1/Kur)];   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,341" id="srcline341">341</a></span><span class="line">                elseif ThetaKurCrsLane2 &gt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,342" id="srcline342">342</a></span><span class="line">                    CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,343" id="srcline343">343</a></span><span class="line">                    ThetaKurCrsLane = ThetaKurCrsLane2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,344" id="srcline344">344</a></span><span class="line">                    CordKurCrsLane = [1/Kur2*sin(ThetaKurCrsLane),(-1/Kur2*cos(ThetaKurCrsLane) + 1/Kur)];   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,345" id="srcline345">345</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,346" id="srcline346">346</a></span><span class="line">                    CrossFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,347" id="srcline347">347</a></span><span class="line">                end                    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,348" id="srcline348">348</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,349" id="srcline349">349</a></span><span class="line">                if ThetaKurCrsLane2 &lt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,350" id="srcline350">350</a></span><span class="line">                    CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,351" id="srcline351">351</a></span><span class="line">                    ThetaKurCrsLane = ThetaKurCrsLane2;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,352" id="srcline352">352</a></span><span class="line">                    CordKurCrsLane = [1/Kur2*sin(ThetaKurCrsLane),(-1/Kur2*cos(ThetaKurCrsLane) + 1/Kur)];   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,353" id="srcline353">353</a></span><span class="line">                elseif ThetaKurCrsLane1 &lt;= 0</span></span>
+<span class="srcline"><span class="lineno"><a href="59,354" id="srcline354">354</a></span><span class="line">                    CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,355" id="srcline355">355</a></span><span class="line">                    ThetaKurCrsLane = ThetaKurCrsLane1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,356" id="srcline356">356</a></span><span class="line">                    CordKurCrsLane = [1/Kur2*sin(ThetaKurCrsLane),(-1/Kur2*cos(ThetaKurCrsLane) + 1/Kur)];   </span></span>
+<span class="srcline"><span class="lineno"><a href="59,357" id="srcline357">357</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,358" id="srcline358">358</a></span><span class="line">                    CrossFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,359" id="srcline359">359</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,360" id="srcline360">360</a></span><span class="line">            end                                    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,361" id="srcline361">361</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,362" id="srcline362">362</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,363" id="srcline363">363</a></span><span class="line">        if A1*C1 &gt;= 0 </span></span>
+<span class="srcline"><span class="lineno"><a href="59,364" id="srcline364">364</a></span><span class="line">            CrossFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,365" id="srcline365">365</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,366" id="srcline366">366</a></span><span class="line">            <span class="comment">%Cross</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,367" id="srcline367">367</a></span><span class="line">            CrossFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,368" id="srcline368">368</a></span><span class="line">            CordKurCrsLane = [-C1/A1,0]; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,369" id="srcline369">369</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,370" id="srcline370">370</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,371" id="srcline371">371</a></span><span class="line">    if CrossFlg &gt; 0.5        </span></span>
+<span class="srcline"><span class="lineno"><a href="59,372" id="srcline372">372</a></span><span class="line">        if CordObjMapLane(1) &gt; CordKurCrsLane(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,373" id="srcline373">373</a></span><span class="line">            [Dis2Lane,Dir2Lane] = DisCal2Lane(Angleout,Xout,Yout,Xobj,Yobj);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,374" id="srcline374">374</a></span><span class="line">            if abs(Kur)&gt;1e-4</span></span>
+<span class="srcline"><span class="lineno"><a href="59,375" id="srcline375">375</a></span><span class="line"><span class="comment">%                 ThetaLane = Angleout - acos(DisKur2Lane*Kur);                                      </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,376" id="srcline376">376</a></span><span class="line"><span class="comment">%                 CordKurMapLane = [(1/Kur*cos(ThetaLane) - 1/Kur),1/Kur*sin(ThetaLane)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,377" id="srcline377">377</a></span><span class="line"><span class="comment">%                 OffsetYLane = Dis2Lane;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,378" id="srcline378">378</a></span><span class="line"><span class="comment">%                 OffsetXLane = sqrt((CordObjMapLane(1)-CordKurMapLane(1))^2 + (CordObjMapLane(2)-CordKurMapLane(2))^2) + abs(ThetaLane * 1/Kur);     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,379" id="srcline379">379</a></span><span class="line">                OffsetYLane = Dis2Lane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,380" id="srcline380">380</a></span><span class="line">                OffsetXLane = sqrt((CordObjMapLane(1)-CordKurCrsLane(1))^2 + (CordObjMapLane(2)-CordKurCrsLane(2))^2) + abs(ThetaKurCrsLane * 1/Kur2) + sqrt((CordObjMapLane(1)-Xobj)^2 + (CordObjMapLane(2)-Yobj)^2); </span></span>
+<span class="srcline"><span class="lineno"><a href="59,381" id="srcline381">381</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,382" id="srcline382">382</a></span><span class="line">                OffsetYLane = Dis2Lane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,383" id="srcline383">383</a></span><span class="line">                OffsetXLane = sqrt((CordObjMapLane(1)-CordKurCrsLane(1))^2 + (CordObjMapLane(2)-CordKurCrsLane(2))^2) + abs(CordKurCrsLane(1)) + sqrt((CordObjMapLane(1)-Xobj)^2 + (CordObjMapLane(2)-Yobj)^2);             </span></span>
+<span class="srcline"><span class="lineno"><a href="59,384" id="srcline384">384</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,385" id="srcline385">385</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,386" id="srcline386">386</a></span><span class="line">            OffsetYLane = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,387" id="srcline387">387</a></span><span class="line">            OffsetXLane = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,388" id="srcline388">388</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,389" id="srcline389">389</a></span><span class="line">        if abs(Kur)&gt;1e-4      </span></span>
+<span class="srcline"><span class="lineno"><a href="59,390" id="srcline390">390</a></span><span class="line">            ThetaObjMapKur = atan(Xobj*Kur/(1-Yobj*Kur)); </span></span>
+<span class="srcline"><span class="lineno"><a href="59,391" id="srcline391">391</a></span><span class="line">            while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,392" id="srcline392">392</a></span><span class="line">               if ThetaObjMapKur &lt; -pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,393" id="srcline393">393</a></span><span class="line">                   ThetaObjMapKur = ThetaObjMapKur + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,394" id="srcline394">394</a></span><span class="line">               elseif ThetaObjMapKur &gt;= pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,395" id="srcline395">395</a></span><span class="line">                   ThetaObjMapKur = ThetaObjMapKur - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,396" id="srcline396">396</a></span><span class="line">               else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,397" id="srcline397">397</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,398" id="srcline398">398</a></span><span class="line">               end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,399" id="srcline399">399</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,400" id="srcline400">400</a></span><span class="line">            if abs(ThetaObjMapKur) &lt; abs(ThetaKurCrsLane)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,401" id="srcline401">401</a></span><span class="line">                OffsetYKur = Dis2Kur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,402" id="srcline402">402</a></span><span class="line">                ThetaKur = ThetaObjMapKur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,403" id="srcline403">403</a></span><span class="line">                OffsetXKur = abs(1/Kur2*ThetaKur);  </span></span>
+<span class="srcline"><span class="lineno"><a href="59,404" id="srcline404">404</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,405" id="srcline405">405</a></span><span class="line">                [Dis2Lane,Dir2Lane] = DisCal2Lane(Angleout,Xout,Yout,Xobj,Yobj);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,406" id="srcline406">406</a></span><span class="line">                if abs(Kur)&gt;1e-4</span></span>
+<span class="srcline"><span class="lineno"><a href="59,407" id="srcline407">407</a></span><span class="line">    <span class="comment">%                 ThetaLane = Angleout - acos(DisKur2Lane*Kur);                                      </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,408" id="srcline408">408</a></span><span class="line">    <span class="comment">%                 CordKurMapLane = [(1/Kur*cos(ThetaLane) - 1/Kur),1/Kur*sin(ThetaLane)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,409" id="srcline409">409</a></span><span class="line">    <span class="comment">%                 OffsetYLane = Dis2Lane;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,410" id="srcline410">410</a></span><span class="line">    <span class="comment">%                 OffsetXLane = sqrt((CordObjMapLane(1)-CordKurMapLane(1))^2 + (CordObjMapLane(2)-CordKurMapLane(2))^2) + abs(ThetaLane * 1/Kur);     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,411" id="srcline411">411</a></span><span class="line">                    OffsetYLane = Dis2Lane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,412" id="srcline412">412</a></span><span class="line">                    OffsetXLane = sqrt((CordObjMapLane(1)-CordKurCrsLane(1))^2 + (CordObjMapLane(2)-CordKurCrsLane(2))^2) + abs(ThetaKurCrsLane * 1/Kur2) + sqrt((CordObjMapLane(1)-Xobj)^2 + (CordObjMapLane(2)-Yobj)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,413" id="srcline413">413</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,414" id="srcline414">414</a></span><span class="line">                    OffsetYLane = Dis2Lane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,415" id="srcline415">415</a></span><span class="line">                    OffsetXLane = sqrt((CordObjMapLane(1)-CordKurCrsLane(1))^2 + (CordObjMapLane(2)-CordKurCrsLane(2))^2) + abs(CordKurCrsLane(1)) + sqrt((CordObjMapLane(1)-Xobj)^2 + (CordObjMapLane(2)-Yobj)^2);           </span></span>
+<span class="srcline"><span class="lineno"><a href="59,416" id="srcline416">416</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="59,417" id="srcline417">417</a></span><span class="line">                ThetaKur = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,418" id="srcline418">418</a></span><span class="line">                OffsetYKur = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,419" id="srcline419">419</a></span><span class="line">                OffsetXKur = 255; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,420" id="srcline420">420</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,421" id="srcline421">421</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,422" id="srcline422">422</a></span><span class="line">            if Xobj &lt; CordKurCrsLane(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,423" id="srcline423">423</a></span><span class="line">                ThetaKur = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,424" id="srcline424">424</a></span><span class="line">                OffsetYKur = Yobj;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,425" id="srcline425">425</a></span><span class="line">                OffsetXKur = Xobj;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,426" id="srcline426">426</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,427" id="srcline427">427</a></span><span class="line">                ThetaKur = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,428" id="srcline428">428</a></span><span class="line">                OffsetYKur = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,429" id="srcline429">429</a></span><span class="line">                OffsetXKur = 255; </span></span>
+<span class="srcline"><span class="lineno"><a href="59,430" id="srcline430">430</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,431" id="srcline431">431</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,432" id="srcline432">432</a></span><span class="line">        if abs(OffsetYLane) &lt; abs(OffsetYKur)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,433" id="srcline433">433</a></span><span class="line"><span class="comment">%             NearLane = 1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,434" id="srcline434">434</a></span><span class="line">            OffsetX = OffsetXLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,435" id="srcline435">435</a></span><span class="line">            OffsetY = OffsetYLane;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,436" id="srcline436">436</a></span><span class="line">            Theta = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,437" id="srcline437">437</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,438" id="srcline438">438</a></span><span class="line"><span class="comment">%             NearLane = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,439" id="srcline439">439</a></span><span class="line">            OffsetX = OffsetXKur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,440" id="srcline440">440</a></span><span class="line">            OffsetY = OffsetYKur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,441" id="srcline441">441</a></span><span class="line">            Theta = ThetaKur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,442" id="srcline442">442</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,443" id="srcline443">443</a></span><span class="line">        OffsetVy = Vyobj*cos(Theta) - Vxobj*sin(Theta);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,444" id="srcline444">444</a></span><span class="line">        OffsetVx = Vyobj*sin(Theta) + Vxobj*cos(Theta);         </span></span>
+<span class="srcline"><span class="lineno"><a href="59,445" id="srcline445">445</a></span><span class="line">        OffsetX = OffsetX - FrontOffset;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,446" id="srcline446">446</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,447" id="srcline447">447</a></span><span class="line">        <span class="comment">%Use Ego traj        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,448" id="srcline448">448</a></span><span class="line">        if abs(Kur)&gt; 1e-4</span></span>
+<span class="srcline"><span class="lineno"><a href="59,449" id="srcline449">449</a></span><span class="line">            ThetaKur = atan(Xobj*Kur/(1-Yobj*Kur));</span></span>
+<span class="srcline"><span class="lineno"><a href="59,450" id="srcline450">450</a></span><span class="line">            OffsetX = abs(1/Kur2*ThetaKur);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,451" id="srcline451">451</a></span><span class="line">            Theta = ThetaKur;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,452" id="srcline452">452</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,453" id="srcline453">453</a></span><span class="line">            OffsetX = Xobj;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,454" id="srcline454">454</a></span><span class="line">            Theta = Angleout;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,455" id="srcline455">455</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,456" id="srcline456">456</a></span><span class="line">        OffsetX = OffsetX - L;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,457" id="srcline457">457</a></span><span class="line">        OffsetY = Dis2Kur;  </span></span>
+<span class="srcline"><span class="lineno"><a href="59,458" id="srcline458">458</a></span><span class="line">        OffsetVy = Vyobj*cos(Theta) - Vxobj*sin(Theta);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,459" id="srcline459">459</a></span><span class="line">        OffsetVx = Vyobj*sin(Theta) + Vxobj*cos(Theta);         </span></span>
+<span class="srcline"><span class="lineno"><a href="59,460" id="srcline460">460</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,461" id="srcline461">461</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,462" id="srcline462">462</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,463" id="srcline463">463</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,464" id="srcline464">464</a></span><span class="line">function [Dis,Dir] = DisCal2Lane(LaneAng,x1,y1,xobj,yobj)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,465" id="srcline465">465</a></span><span class="line"><span class="comment">%      A*x + B*y + C</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,466" id="srcline466">466</a></span><span class="line"><span class="comment">%d = -----------------</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,467" id="srcline467">467</a></span><span class="line"><span class="comment">%      sqrt(A^2 + B^2)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,468" id="srcline468">468</a></span><span class="line"><span class="comment">%</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,469" id="srcline469">469</a></span><span class="line"><span class="comment">%Dir Front 1 Rear 0 Left 1 Right 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,470" id="srcline470">470</a></span><span class="line"><span class="comment">%example 11 FL 10 FR 1 RL 0 RR</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,471" id="srcline471">471</a></span><span class="line"><span class="comment">%Xdirection Front and Rear Ydirection Left and Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,472" id="srcline472">472</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,473" id="srcline473">473</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,474" id="srcline474">474</a></span><span class="line">       if LaneAng &lt; -pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,475" id="srcline475">475</a></span><span class="line">           LaneAng = LaneAng + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,476" id="srcline476">476</a></span><span class="line">       elseif LaneAng &gt; pi</span></span>
+<span class="srcline"><span class="lineno"><a href="59,477" id="srcline477">477</a></span><span class="line">           LaneAng = LaneAng - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,478" id="srcline478">478</a></span><span class="line">       else           </span></span>
+<span class="srcline"><span class="lineno"><a href="59,479" id="srcline479">479</a></span><span class="line">            if LaneAng &gt; pi/2</span></span>
+<span class="srcline"><span class="lineno"><a href="59,480" id="srcline480">480</a></span><span class="line">                LaneAng = LaneAng - pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,481" id="srcline481">481</a></span><span class="line">            elseif LaneAng &lt; -pi/2</span></span>
+<span class="srcline"><span class="lineno"><a href="59,482" id="srcline482">482</a></span><span class="line">                LaneAng = LaneAng + pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,483" id="srcline483">483</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,484" id="srcline484">484</a></span><span class="line">            end           </span></span>
+<span class="srcline"><span class="lineno"><a href="59,485" id="srcline485">485</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,486" id="srcline486">486</a></span><span class="line">       end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,487" id="srcline487">487</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,488" id="srcline488">488</a></span><span class="line"><span class="comment">%Convert LaneAng to -pi/2 - pi/2    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,489" id="srcline489">489</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,490" id="srcline490">490</a></span><span class="line">    if abs(sin(LaneAng))&gt;1.414</span></span>
+<span class="srcline"><span class="lineno"><a href="59,491" id="srcline491">491</a></span><span class="line">        InvK = cot(LaneAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,492" id="srcline492">492</a></span><span class="line">        A = 1;B = -InvK;C = InvK*y1 - x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,493" id="srcline493">493</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,494" id="srcline494">494</a></span><span class="line">        K = tan(LaneAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,495" id="srcline495">495</a></span><span class="line">        A = K;B = -1;C = y1-K*x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,496" id="srcline496">496</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,497" id="srcline497">497</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,498" id="srcline498">498</a></span><span class="line">    Dis = (A*xobj + B*yobj + C)/sqrt(A^2 + B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,499" id="srcline499">499</a></span><span class="line">    <span class="comment">%Left or Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,500" id="srcline500">500</a></span><span class="line">    if abs(A)&lt;abs(B)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,501" id="srcline501">501</a></span><span class="line">        if (B * Dis &gt; 0)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,502" id="srcline502">502</a></span><span class="line">            Dir = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,503" id="srcline503">503</a></span><span class="line">            Dis = abs(Dis);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,504" id="srcline504">504</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,505" id="srcline505">505</a></span><span class="line">            Dir = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,506" id="srcline506">506</a></span><span class="line">            Dis = -1*abs(Dis);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,507" id="srcline507">507</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,508" id="srcline508">508</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,509" id="srcline509">509</a></span><span class="line">        if (A * Dis &gt; 0)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,510" id="srcline510">510</a></span><span class="line">            <span class="comment">%Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,511" id="srcline511">511</a></span><span class="line">            Dir = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,512" id="srcline512">512</a></span><span class="line">            Dis = -1*abs(Dis);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,513" id="srcline513">513</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="59,514" id="srcline514">514</a></span><span class="line">            <span class="comment">%Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,515" id="srcline515">515</a></span><span class="line">            Dir = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,516" id="srcline516">516</a></span><span class="line">            Dis = abs(Dis);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,517" id="srcline517">517</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="59,518" id="srcline518">518</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,519" id="srcline519">519</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="59,520" id="srcline520">520</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="59,521" id="srcline521">521</a></span><span class="line"><span class="comment">%     Dis = abs(Dis);    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,522" id="srcline522">522</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="59,523" id="srcline523">523</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="59,524" id="srcline524">524</a></span><span class="line"><span class="keyword">function</span> [<span class="var type1" id="S163T1U2868">Dis</span>,<span class="var type1" id="S164T1U2869">Dir</span>] = DisCal2Arc(<span class="var type1" id="S165T1U2872">kur</span>,<span class="var type1" id="S166T1U2873">xobj</span>,<span class="var type1" id="S167T1U2874">yobj</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="59,525" id="srcline525">525</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U6"><span class="mxinfo " id="T1:U7">abs(<span class="var type1" id="S165T1U2880">kur</span>)</span> &lt; <span class="mxinfo " id="T1:U9">1e-3</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,526" id="srcline526">526</a></span><span class="line">        <span class="comment">% Treat as a straight lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,527" id="srcline527">527</a></span><span class="line">        [<span class="var type1" id="S163T1U2885">Dis</span>,<span class="var type1" id="S164T1U2886">Dir</span>] = <span class="fcn" id="F123N25:B2888">DisCal2Lane</span>(<span class="mxinfo " id="T1:U12">0</span>,<span class="mxinfo " id="T1:U13">0</span>,<span class="mxinfo " id="T1:U14">0</span>,<span class="var type1" id="S166T1U2892">xobj</span>,<span class="var type1" id="S167T1U2893">yobj</span>);</span></span>
+<span class="srcline"><span class="lineno"><a href="59,528" id="srcline528">528</a></span><span class="line">    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,529" id="srcline529">529</a></span><span class="line">        <span class="comment">% Treat as a circle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,530" id="srcline530">530</a></span><span class="line">        <span class="mxinfo " id="T1:U17"><span class="var type1" id="S170T1U2897">CircleX</span> = <span class="mxinfo " id="T1:U19">0</span></span>;<span class="mxinfo " id="T1:U20"><span class="var type1" id="S171T1U2901">CircleY</span> = <span class="mxinfo " id="T1:U22"><span class="mxinfo " id="T1:U23">1</span>/<span class="var type1" id="S165T1U2904">kur</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,531" id="srcline531">531</a></span><span class="line">        <span class="mxinfo " id="T1:U25"><span class="var type1" id="S163T1U2907">Dis</span> = <span class="mxinfo " id="T1:U27"><span class="mxinfo " id="T1:U28">sqrt(<span class="mxinfo " id="T1:U29"><span class="mxinfo " id="T1:U30">(<span class="mxinfo " id="T1:U31"><span class="var type1" id="S166T1U2915">xobj</span>-<span class="var type1" id="S170T1U2916">CircleX</span></span>)^2</span>+<span class="mxinfo " id="T1:U34">(<span class="mxinfo " id="T1:U35"><span class="var type1" id="S167T1U2921">yobj</span>-<span class="var type1" id="S171T1U2922">CircleY</span></span>)^2</span></span>)</span>-<span class="mxinfo " id="T1:U38">abs(<span class="var type1" id="S171T1U2926">CircleY</span>)</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,532" id="srcline532">532</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U40"><span class="mxinfo " id="T1:U41"><span class="var type1" id="S165T1U2931">kur</span>*<span class="var type1" id="S163T1U2932">Dis</span></span>&gt;<span class="mxinfo " id="T1:U44">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,533" id="srcline533">533</a></span><span class="line">            <span class="comment">%Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,534" id="srcline534">534</a></span><span class="line">            <span class="mxinfo " id="T1:U45"><span class="var type1" id="S164T1U2936">Dir</span> = <span class="mxinfo " id="T1:U47">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,535" id="srcline535">535</a></span><span class="line">            <span class="mxinfo " id="T1:U48"><span class="var type1" id="S163T1U2940">Dis</span> = <span class="mxinfo " id="T1:U50"><span class="mxinfo " id="T1:U51">-<span class="mxinfo " id="T1:U52">1</span></span>*<span class="mxinfo " id="T1:U53">abs(<span class="var type1" id="S163T1U2946">Dis</span>)</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,536" id="srcline536">536</a></span><span class="line">        <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,537" id="srcline537">537</a></span><span class="line">            <span class="comment">%Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,538" id="srcline538">538</a></span><span class="line">            <span class="mxinfo " id="T1:U55"><span class="var type1" id="S164T1U2950">Dir</span> = <span class="mxinfo " id="T1:U57">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,539" id="srcline539">539</a></span><span class="line">            <span class="mxinfo " id="T1:U58"><span class="var type1" id="S163T1U2954">Dis</span> = <span class="mxinfo " id="T1:U60">abs(<span class="var type1" id="S163T1U2957">Dis</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="59,540" id="srcline540">540</a></span><span class="line">        <span class="keyword">end</span>        </span></span>
+<span class="srcline"><span class="lineno"><a href="59,541" id="srcline541">541</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="59,542" id="srcline542">542</a></span><span class="line"><span class="keyword">end</span></span></span>
+</pre>

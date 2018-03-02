@@ -1,0 +1,277 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="56,1" id="srcline1">  1</a></span><span class="line">function [TimeLimit,EnterZoneEnFlg] = UpdateSideObjRes(Curoperation,FusData,RoadInfo,kur,TurnTimeLowerBound,UseFakeCIPVEn,ByPassEnterZoneFlg,TurnDebncCnt,RightLimitTar,LeftLimitTar,RightLimitEgo,LeftLimitEgo)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,2" id="srcline2">  2</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="56,3" id="srcline3">  3</a></span><span class="line">    persistent EnterZoneDebounceCnt</span></span>
+<span class="srcline"><span class="lineno"><a href="56,4" id="srcline4">  4</a></span><span class="line">    if isempty(EnterZoneDebounceCnt)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,5" id="srcline5">  5</a></span><span class="line">        EnterZoneDebounceCnt = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,6" id="srcline6">  6</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,7" id="srcline7">  7</a></span><span class="line">    Time2Enter = 255; Time2Exit = 0;EnterZoneEnFlg = 1;EnterZoneEn = 0;TimeLimit = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,8" id="srcline8">  8</a></span><span class="line">    if abs(Curoperation - 1)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,9" id="srcline9">  9</a></span><span class="line">        if UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,10" id="srcline10"> 10</a></span><span class="line">            Time2Enter = 10*TurnTimeLowerBound;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,11" id="srcline11"> 11</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,12" id="srcline12"> 12</a></span><span class="line">            for i =1:127</span></span>
+<span class="srcline"><span class="lineno"><a href="56,13" id="srcline13"> 13</a></span><span class="line">                if FusData(i,1) &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,14" id="srcline14"> 14</a></span><span class="line">                    break;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,15" id="srcline15"> 15</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,16" id="srcline16"> 16</a></span><span class="line">                    xobj = FusData(i,2);yobj = FusData(i,4);Vyobj = FusData(i,5);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,17" id="srcline17"> 17</a></span><span class="line">                    x1 = RoadInfo(2,1);y1 = RoadInfo(2,2);LaneAng = RoadInfo(2,3);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,18" id="srcline18"> 18</a></span><span class="line">                    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,19" id="srcline19"> 19</a></span><span class="line">                    [Time2ExitTemp,Time2EnterTemp,InColidZone]=ObjIntersectionRangeCheck(kur,xobj,yobj,Vyobj,x1,y1,LaneAng,RightLimitTar,LeftLimitTar,RightLimitEgo,LeftLimitEgo);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,20" id="srcline20"> 20</a></span><span class="line">                    if (InColidZone &gt; 0.5)&amp;&amp;(InColidZone &lt; 1.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,21" id="srcline21"> 21</a></span><span class="line">                        if Time2ExitTemp &gt; Time2Exit</span></span>
+<span class="srcline"><span class="lineno"><a href="56,22" id="srcline22"> 22</a></span><span class="line">                            Time2Exit = Time2ExitTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,23" id="srcline23"> 23</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,24" id="srcline24"> 24</a></span><span class="line">                        if Time2EnterTemp &lt; Time2Enter</span></span>
+<span class="srcline"><span class="lineno"><a href="56,25" id="srcline25"> 25</a></span><span class="line">                            Time2Enter = Time2EnterTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,26" id="srcline26"> 26</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,27" id="srcline27"> 27</a></span><span class="line">                    elseif (InColidZone &gt; 1.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,28" id="srcline28"> 28</a></span><span class="line">                        if Time2ExitTemp &lt; TurnTimeLowerBound/2</span></span>
+<span class="srcline"><span class="lineno"><a href="56,29" id="srcline29"> 29</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,30" id="srcline30"> 30</a></span><span class="line">                            if Time2ExitTemp &gt; Time2Exit</span></span>
+<span class="srcline"><span class="lineno"><a href="56,31" id="srcline31"> 31</a></span><span class="line">                                Time2Exit = Time2ExitTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,32" id="srcline32"> 32</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,33" id="srcline33"> 33</a></span><span class="line">                            if Time2EnterTemp &lt; Time2Enter</span></span>
+<span class="srcline"><span class="lineno"><a href="56,34" id="srcline34"> 34</a></span><span class="line">                                Time2Enter = Time2EnterTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,35" id="srcline35"> 35</a></span><span class="line">                            end                         </span></span>
+<span class="srcline"><span class="lineno"><a href="56,36" id="srcline36"> 36</a></span><span class="line">                        end                        </span></span>
+<span class="srcline"><span class="lineno"><a href="56,37" id="srcline37"> 37</a></span><span class="line">                    else                    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,38" id="srcline38"> 38</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,39" id="srcline39"> 39</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,40" id="srcline40"> 40</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,41" id="srcline41"> 41</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,42" id="srcline42"> 42</a></span><span class="line">        <span class="comment">% Time2ExitEgo &lt;= Time2EnterObj || Time2EnterEgo &gt;= Time2ExitObj</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,43" id="srcline43"> 43</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="56,44" id="srcline44"> 44</a></span><span class="line">        if Time2Enter &gt; TurnTimeLowerBound</span></span>
+<span class="srcline"><span class="lineno"><a href="56,45" id="srcline45"> 45</a></span><span class="line">            <span class="comment">% TimeLimit of Ego Exit is Time2Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,46" id="srcline46"> 46</a></span><span class="line">            TimeLimit = Time2Enter;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,47" id="srcline47"> 47</a></span><span class="line">            EnterZoneEn = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,48" id="srcline48"> 48</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,49" id="srcline49"> 49</a></span><span class="line">        </span></span>
+<span class="srcline"><span class="lineno"><a href="56,50" id="srcline50"> 50</a></span><span class="line">        if EnterZoneEn &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,51" id="srcline51"> 51</a></span><span class="line">            EnterZoneDebounceCnt = TurnDebncCnt;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,52" id="srcline52"> 52</a></span><span class="line">            EnterZoneEnFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,53" id="srcline53"> 53</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,54" id="srcline54"> 54</a></span><span class="line">            if EnterZoneDebounceCnt &lt; 1 || UseFakeCIPVEn &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,55" id="srcline55"> 55</a></span><span class="line">                EnterZoneEnFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,56" id="srcline56"> 56</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,57" id="srcline57"> 57</a></span><span class="line">                EnterZoneEnFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,58" id="srcline58"> 58</a></span><span class="line">                EnterZoneDebounceCnt = EnterZoneDebounceCnt - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,59" id="srcline59"> 59</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,60" id="srcline60"> 60</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="56,61" id="srcline61"> 61</a></span><span class="line">        if ByPassEnterZoneFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="56,62" id="srcline62"> 62</a></span><span class="line">            TimeLimit = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,63" id="srcline63"> 63</a></span><span class="line">            EnterZoneEnFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,64" id="srcline64"> 64</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,65" id="srcline65"> 65</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,66" id="srcline66"> 66</a></span><span class="line">        EnterZoneDebounceCnt = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,67" id="srcline67"> 67</a></span><span class="line">        TimeLimit = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,68" id="srcline68"> 68</a></span><span class="line">        EnterZoneEnFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,69" id="srcline69"> 69</a></span><span class="line">    end </span></span>
+<span class="srcline"><span class="lineno"><a href="56,70" id="srcline70"> 70</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,71" id="srcline71"> 71</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="56,72" id="srcline72"> 72</a></span><span class="line"><span class="keyword">function</span> [<span class="var type1" id="S34T1U288">Time2Exit</span>,<span class="var type1" id="S35T1U289">Time2Enter</span>,<span class="var type1" id="S36T1U290">InColidZone</span>]=ObjIntersectionRangeCheck(<span class="var type1" id="S37T1U293">kur</span>,<span class="var type1" id="S38T1U294">xobj</span>,<span class="var type1" id="S39T1U295">yobj</span>,<span class="var type1" id="S40T1U296">Vyobj</span>,<span class="var type1" id="S41T1U297">x1</span>,<span class="var type1" id="S42T1U298">y1</span>,<span class="var type1" id="S43T1U299">LaneAng</span>,<span class="var type1" id="S44T1U300">RightLimitTar</span>,<span class="var type1" id="S45T1U301">LeftLimitTar</span>,<span class="var type1" id="S46T1U302">RightLimitEgo</span>,<span class="var type1" id="S47T1U303">LeftLimitEgo</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,73" id="srcline73"> 73</a></span><span class="line">    <span class="mxinfo " id="T1:U15"><span class="var type1" id="S48T1U306">InRangeFlgTar</span> = <span class="mxinfo " id="T1:U17">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,74" id="srcline74"> 74</a></span><span class="line">    <span class="comment">% Target Lane Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,75" id="srcline75"> 75</a></span><span class="line">    [<span class="var type1" id="S49T1U311">Dis</span>,<span class="var type1" id="S50T1U312">Dir</span>] = <span class="fcn" id="F117N108:B314">DisCal2Lane</span>(<span class="var type1" id="S43T1U315">LaneAng</span>,<span class="var type1" id="S41T1U316">x1</span>,<span class="var type1" id="S42T1U317">y1</span>,<span class="var type1" id="S38T1U318">xobj</span>,<span class="var type1" id="S39T1U319">yobj</span>);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,76" id="srcline76"> 76</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U25"><span class="var type1" id="S50T1U323">Dir</span>&gt;<span class="mxinfo " id="T1:U27">0.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,77" id="srcline77"> 77</a></span><span class="line">        <span class="comment">%Right Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,78" id="srcline78"> 78</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U28"><span class="var type1" id="S49T1U328">Dis</span> &gt; <span class="var type1" id="S44T1U329">RightLimitTar</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,79" id="srcline79"> 79</a></span><span class="line">        <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,80" id="srcline80"> 80</a></span><span class="line">            <span class="mxinfo " id="T1:U31"><span class="var type1" id="S48T1U333">InRangeFlgTar</span> = <span class="mxinfo " id="T1:U33">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,81" id="srcline81"> 81</a></span><span class="line">        <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,82" id="srcline82"> 82</a></span><span class="line">    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,83" id="srcline83"> 83</a></span><span class="line">        <span class="comment">%Left Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,84" id="srcline84"> 84</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U34"><span class="var type1" id="S49T1U339">Dis</span> &gt; <span class="var type1" id="S45T1U340">LeftLimitTar</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,85" id="srcline85"> 85</a></span><span class="line">        <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,86" id="srcline86"> 86</a></span><span class="line">            <span class="mxinfo " id="T1:U37"><span class="var type1" id="S48T1U344">InRangeFlgTar</span> = <span class="mxinfo " id="T1:U39">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,87" id="srcline87"> 87</a></span><span class="line">        <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,88" id="srcline88"> 88</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,89" id="srcline89"> 89</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,90" id="srcline90"> 90</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U40"><span class="mxinfo " id="T1:U41">sin(<span class="var type1" id="S43T1U351">LaneAng</span>)</span> &gt;= <span class="mxinfo " id="T1:U43">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,91" id="srcline91"> 91</a></span><span class="line">        <span class="mxinfo " id="T1:U44"><span class="var type1" id="S53T1U355">ToLeft</span> = <span class="mxinfo " id="T1:U46">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,92" id="srcline92"> 92</a></span><span class="line">    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,93" id="srcline93"> 93</a></span><span class="line">        <span class="mxinfo " id="T1:U47"><span class="var type1" id="S53T1U360">ToLeft</span> = <span class="mxinfo " id="T1:U49">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,94" id="srcline94"> 94</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,95" id="srcline95"> 95</a></span><span class="line">    <span class="mxinfo " id="T1:U50"><span class="var type1" id="S34T1U364">Time2Exit</span> = <span class="mxinfo " id="T1:U52">0</span></span>;<span class="mxinfo " id="T1:U53"><span class="var type1" id="S35T1U368">Time2Enter</span> = <span class="mxinfo " id="T1:U55">255</span></span>;<span class="mxinfo " id="T1:U56"><span class="var type1" id="S36T1U372">InColidZone</span> = <span class="mxinfo " id="T1:U58">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,96" id="srcline96"> 96</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U59"><span class="var type1" id="S48T1U377">InRangeFlgTar</span> &gt; <span class="mxinfo " id="T1:U61">0.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,97" id="srcline97"> 97</a></span><span class="line">        <span class="comment">% Ego Lane Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,98" id="srcline98"> 98</a></span><span class="line">        [<span class="var type1" id="S54T1U382">Dis2Ego</span>,<span class="var type1" id="S55T1U383">Dir2Ego</span>] = <span class="fcn" id="F118N107:B385">DisCal2Arc</span>(<span class="var type1" id="S37T1U386">kur</span>,<span class="var type1" id="S38T1U387">xobj</span>,<span class="var type1" id="S39T1U388">yobj</span>);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,99" id="srcline99"> 99</a></span><span class="line">        [<span class="var type1" id="S57T1U392">Dis2End</span>,<span class="var type1" id="S58T1U393">Dir2End</span>] = <span class="fcn" id="F117N108:B395">DisCal2Lane</span>((<span class="mxinfo " id="T1:U69"><span class="var type1" id="S43T1U398">LaneAng</span>+<span class="mxinfo " id="T1:U71"><span class="mxinfo " id="T1:U72">pi</span>/<span class="mxinfo " id="T1:U73">2</span></span></span>),<span class="var type1" id="S41T1U403">x1</span>,<span class="var type1" id="S42T1U404">y1</span>,<span class="var type1" id="S38T1U405">xobj</span>,<span class="var type1" id="S39T1U406">yobj</span>);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,100" id="srcline100">100</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="56,101" id="srcline101">101</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U78"><span class="var type1" id="S53T1U410">ToLeft</span> &gt; <span class="mxinfo " id="T1:U80">0.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,102" id="srcline102">102</a></span><span class="line">            <span class="comment">%EgoRight</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,103" id="srcline103">103</a></span><span class="line">            <span class="keyword">if</span> (<span class="mxinfo " id="T8:U81"><span class="var type1" id="S55T1U417">Dir2Ego</span> &gt; <span class="mxinfo " id="T1:U83">0.5</span></span> &amp;&amp; <span class="mxinfo " id="T8:U84"><span class="var type1" id="S54T1U420">Dis2Ego</span> &gt; <span class="var type1" id="S46T1U421">RightLimitEgo</span></span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,104" id="srcline104">104</a></span><span class="line">                <span class="comment">%Out of Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,105" id="srcline105">105</a></span><span class="line">                <span class="comment">%if direction is reverse or static then remove</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,106" id="srcline106">106</a></span><span class="line">                <span class="comment">%else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,107" id="srcline107">107</a></span><span class="line">                <span class="keyword">if</span> <span class="mxinfo " id="T8:U87"><span class="var type1" id="S40T1U425">Vyobj</span>&lt;=<span class="mxinfo " id="T1:U89">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,108" id="srcline108">108</a></span><span class="line">                    <span class="comment">%ReverseOrStatic</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,109" id="srcline109">109</a></span><span class="line">                <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,110" id="srcline110">110</a></span><span class="line">                    <span class="mxinfo " id="T1:U90"><span class="var type1" id="S36T1U430">InColidZone</span> = <span class="mxinfo " id="T1:U92">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,111" id="srcline111">111</a></span><span class="line">                    <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,112" id="srcline112">112</a></span><span class="line">                    <span class="mxinfo " id="T1:U93"><span class="var type1" id="S35T1U434">Time2Enter</span> = <span class="mxinfo " id="T1:U95">(<span class="mxinfo " id="T1:U96"><span class="var type1" id="S54T1U438">Dis2Ego</span> - <span class="var type1" id="S46T1U439">RightLimitEgo</span></span>)/<span class="var type1" id="S40T1U440">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,113" id="srcline113">113</a></span><span class="line">                    <span class="comment">%Calculate time to Exit</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,114" id="srcline114">114</a></span><span class="line">                    <span class="mxinfo " id="T1:U100"><span class="var type1" id="S34T1U443">Time2Exit</span> = <span class="mxinfo " id="T1:U102"><span class="var type1" id="S57T1U445">Dis2End</span>/<span class="var type1" id="S40T1U446">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,115" id="srcline115">115</a></span><span class="line">                <span class="keyword">end</span>                </span></span>
+<span class="srcline"><span class="lineno"><a href="56,116" id="srcline116">116</a></span><span class="line">            <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,117" id="srcline117">117</a></span><span class="line">            <span class="comment">%EgoLeft</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,118" id="srcline118">118</a></span><span class="line">                <span class="comment">%In Zone</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,119" id="srcline119">119</a></span><span class="line">                <span class="keyword">if</span> <span class="mxinfo " id="T8:U105"><span class="var type1" id="S58T1U451">Dir2End</span> &gt; <span class="mxinfo " id="T1:U107">0.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,120" id="srcline120">120</a></span><span class="line">                    <span class="mxinfo " id="T1:U108"><span class="var type1" id="S36T1U455">InColidZone</span> = <span class="mxinfo " id="T1:U110">2</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,121" id="srcline121">121</a></span><span class="line">                    <span class="comment">%Calculate time to Exit Zone</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,122" id="srcline122">122</a></span><span class="line">                    <span class="mxinfo " id="T1:U111"><span class="var type1" id="S35T1U459">Time2Enter</span> = <span class="mxinfo " id="T1:U113">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,123" id="srcline123">123</a></span><span class="line">                    <span class="keyword">if</span> <span class="mxinfo " id="T8:U114"><span class="var type1" id="S40T1U464">Vyobj</span> &gt; <span class="mxinfo " id="T1:U116">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,124" id="srcline124">124</a></span><span class="line">                        <span class="mxinfo " id="T1:U117"><span class="var type1" id="S34T1U468">Time2Exit</span> = <span class="mxinfo " id="T1:U119"><span class="var type1" id="S57T1U470">Dis2End</span>/<span class="var type1" id="S40T1U471">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,125" id="srcline125">125</a></span><span class="line">                    <span class="keyword">elseif</span> <span class="mxinfo " id="T8:U122"><span class="var type1" id="S40T1U474">Vyobj</span> &lt; <span class="mxinfo " id="T1:U124">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,126" id="srcline126">126</a></span><span class="line">                        <span class="mxinfo " id="T1:U125"><span class="var type1" id="S34T1U478">Time2Exit</span> = <span class="mxinfo " id="T1:U127"><span class="mxinfo " id="T1:U128">-(<span class="mxinfo " id="T1:U129"><span class="var type1" id="S54T1U483">Dis2Ego</span>+<span class="var type1" id="S46T1U484">RightLimitEgo</span></span>)</span>/<span class="var type1" id="S40T1U485">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,127" id="srcline127">127</a></span><span class="line">                    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,128" id="srcline128">128</a></span><span class="line">                        <span class="mxinfo " id="T1:U133"><span class="var type1" id="S34T1U489">Time2Exit</span> = <span class="mxinfo " id="T1:U135">255</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,129" id="srcline129">129</a></span><span class="line">                    <span class="keyword">end</span>                          </span></span>
+<span class="srcline"><span class="lineno"><a href="56,130" id="srcline130">130</a></span><span class="line">                <span class="keyword">else</span>                </span></span>
+<span class="srcline"><span class="lineno"><a href="56,131" id="srcline131">131</a></span><span class="line">                <span class="comment">%if direction is reverse or static then remove</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,132" id="srcline132">132</a></span><span class="line">                <span class="comment">%else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,133" id="srcline133">133</a></span><span class="line">                <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,134" id="srcline134">134</a></span><span class="line">                    <span class="keyword">if</span> <span class="mxinfo " id="T8:U136"><span class="var type1" id="S40T1U495">Vyobj</span>&gt;=<span class="mxinfo " id="T1:U138">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,135" id="srcline135">135</a></span><span class="line">                        <span class="comment">%ReverseOrStatic                    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,136" id="srcline136">136</a></span><span class="line">                    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,137" id="srcline137">137</a></span><span class="line">                        <span class="mxinfo " id="T1:U139"><span class="var type1" id="S36T1U500">InColidZone</span> = <span class="mxinfo " id="T1:U141">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,138" id="srcline138">138</a></span><span class="line">                        <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,139" id="srcline139">139</a></span><span class="line">                        <span class="mxinfo " id="T1:U142"><span class="var type1" id="S35T1U504">Time2Enter</span> = <span class="mxinfo " id="T1:U144"><span class="mxinfo " id="T1:U145">-<span class="var type1" id="S57T1U507">Dis2End</span></span>/<span class="var type1" id="S40T1U508">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,140" id="srcline140">140</a></span><span class="line">                        <span class="comment">%Calculate time to Exit</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,141" id="srcline141">141</a></span><span class="line">                        <span class="mxinfo " id="T1:U148"><span class="var type1" id="S34T1U511">Time2Exit</span> = <span class="mxinfo " id="T1:U150"><span class="mxinfo " id="T1:U151">-(<span class="mxinfo " id="T1:U152"><span class="var type1" id="S54T1U516">Dis2Ego</span>+<span class="var type1" id="S46T1U517">RightLimitEgo</span></span>)</span>/<span class="var type1" id="S40T1U518">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,142" id="srcline142">142</a></span><span class="line">                    <span class="keyword">end</span> </span></span>
+<span class="srcline"><span class="lineno"><a href="56,143" id="srcline143">143</a></span><span class="line">                <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,144" id="srcline144">144</a></span><span class="line">            <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,145" id="srcline145">145</a></span><span class="line">        <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,146" id="srcline146">146</a></span><span class="line">            <span class="comment">%EgoLeft</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,147" id="srcline147">147</a></span><span class="line">            <span class="keyword">if</span> (<span class="mxinfo " id="T8:U156"><span class="var type1" id="S55T1U525">Dir2Ego</span> &lt; <span class="mxinfo " id="T1:U158">0.5</span></span> &amp;&amp; <span class="mxinfo " id="T8:U159"><span class="var type1" id="S54T1U528">Dis2Ego</span> &gt; <span class="var type1" id="S47T1U529">LeftLimitEgo</span></span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,148" id="srcline148">148</a></span><span class="line">                <span class="comment">%Out of Range</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,149" id="srcline149">149</a></span><span class="line">                <span class="comment">%if direction is reverse or static then remove</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,150" id="srcline150">150</a></span><span class="line">                <span class="comment">%else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,151" id="srcline151">151</a></span><span class="line">                <span class="keyword">if</span> <span class="mxinfo " id="T8:U162"><span class="var type1" id="S40T1U533">Vyobj</span>&gt;=<span class="mxinfo " id="T1:U164">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,152" id="srcline152">152</a></span><span class="line">                    <span class="comment">%ReverseOrStatic</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,153" id="srcline153">153</a></span><span class="line">                <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,154" id="srcline154">154</a></span><span class="line">                    <span class="mxinfo " id="T1:U165"><span class="var type1" id="S36T1U538">InColidZone</span> = <span class="mxinfo " id="T1:U167">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,155" id="srcline155">155</a></span><span class="line">                    <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,156" id="srcline156">156</a></span><span class="line">                    <span class="mxinfo " id="T1:U168"><span class="var type1" id="S35T1U542">Time2Enter</span> = <span class="mxinfo " id="T1:U170"><span class="mxinfo " id="T1:U171">-(<span class="mxinfo " id="T1:U172"><span class="var type1" id="S54T1U547">Dis2Ego</span> - <span class="var type1" id="S47T1U548">LeftLimitEgo</span></span>)</span>/<span class="var type1" id="S40T1U549">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,157" id="srcline157">157</a></span><span class="line">                    <span class="comment">%Calculate time to Exit</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,158" id="srcline158">158</a></span><span class="line">                    <span class="mxinfo " id="T1:U176"><span class="var type1" id="S34T1U552">Time2Exit</span> = <span class="mxinfo " id="T1:U178"><span class="mxinfo " id="T1:U179">-<span class="var type1" id="S57T1U555">Dis2End</span></span>/<span class="var type1" id="S40T1U556">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,159" id="srcline159">159</a></span><span class="line">                <span class="keyword">end</span>                </span></span>
+<span class="srcline"><span class="lineno"><a href="56,160" id="srcline160">160</a></span><span class="line">            <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,161" id="srcline161">161</a></span><span class="line">            <span class="comment">%EgoRight</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,162" id="srcline162">162</a></span><span class="line">                <span class="comment">%In Zone</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,163" id="srcline163">163</a></span><span class="line">                <span class="keyword">if</span> <span class="mxinfo " id="T8:U182"><span class="var type1" id="S58T1U561">Dir2End</span> &lt; <span class="mxinfo " id="T1:U184">0.5</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,164" id="srcline164">164</a></span><span class="line">                    <span class="mxinfo " id="T1:U185"><span class="var type1" id="S36T1U565">InColidZone</span> = <span class="mxinfo " id="T1:U187">2</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,165" id="srcline165">165</a></span><span class="line">                    <span class="comment">%Calculate time to Exit Zone</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,166" id="srcline166">166</a></span><span class="line">                    <span class="mxinfo " id="T1:U188"><span class="var type1" id="S35T1U569">Time2Enter</span> = <span class="mxinfo " id="T1:U190">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,167" id="srcline167">167</a></span><span class="line">                    <span class="keyword">if</span> <span class="mxinfo " id="T8:U191"><span class="var type1" id="S40T1U574">Vyobj</span> &gt; <span class="mxinfo " id="T1:U193">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,168" id="srcline168">168</a></span><span class="line">                        <span class="mxinfo " id="T1:U194"><span class="var type1" id="S34T1U578">Time2Exit</span> = <span class="mxinfo " id="T1:U196">(<span class="mxinfo " id="T1:U197"><span class="var type1" id="S54T1U582">Dis2Ego</span>+<span class="var type1" id="S47T1U583">LeftLimitEgo</span></span>)/<span class="var type1" id="S40T1U584">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,169" id="srcline169">169</a></span><span class="line">                    <span class="keyword">elseif</span> <span class="mxinfo " id="T8:U201"><span class="var type1" id="S40T1U587">Vyobj</span> &lt; <span class="mxinfo " id="T1:U203">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,170" id="srcline170">170</a></span><span class="line">                        <span class="mxinfo " id="T1:U204"><span class="var type1" id="S34T1U591">Time2Exit</span> = <span class="mxinfo " id="T1:U206"><span class="mxinfo " id="T1:U207">-<span class="var type1" id="S57T1U594">Dis2End</span></span>/<span class="var type1" id="S40T1U595">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,171" id="srcline171">171</a></span><span class="line">                    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,172" id="srcline172">172</a></span><span class="line">                        <span class="mxinfo " id="T1:U210"><span class="var type1" id="S34T1U599">Time2Exit</span> = <span class="mxinfo " id="T1:U212">255</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,173" id="srcline173">173</a></span><span class="line">                    <span class="keyword">end</span>                          </span></span>
+<span class="srcline"><span class="lineno"><a href="56,174" id="srcline174">174</a></span><span class="line">                <span class="keyword">else</span>                </span></span>
+<span class="srcline"><span class="lineno"><a href="56,175" id="srcline175">175</a></span><span class="line">                <span class="comment">%if direction is reverse or static then remove</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,176" id="srcline176">176</a></span><span class="line">                <span class="comment">%else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,177" id="srcline177">177</a></span><span class="line">                <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,178" id="srcline178">178</a></span><span class="line">                    <span class="keyword">if</span> <span class="mxinfo " id="T8:U213"><span class="var type1" id="S40T1U605">Vyobj</span>&lt;=<span class="mxinfo " id="T1:U215">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,179" id="srcline179">179</a></span><span class="line">                        <span class="comment">%ReverseOrStatic                    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,180" id="srcline180">180</a></span><span class="line">                    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,181" id="srcline181">181</a></span><span class="line">                        <span class="mxinfo " id="T1:U216"><span class="var type1" id="S36T1U610">InColidZone</span> = <span class="mxinfo " id="T1:U218">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,182" id="srcline182">182</a></span><span class="line">                        <span class="comment">%Calculate time to Enter</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,183" id="srcline183">183</a></span><span class="line">                        <span class="mxinfo " id="T1:U219"><span class="var type1" id="S35T1U614">Time2Enter</span> = <span class="mxinfo " id="T1:U221"><span class="var type1" id="S57T1U616">Dis2End</span>/<span class="var type1" id="S40T1U617">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,184" id="srcline184">184</a></span><span class="line">                        <span class="comment">%Calculate time to Exit</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,185" id="srcline185">185</a></span><span class="line">                        <span class="mxinfo " id="T1:U224"><span class="var type1" id="S34T1U620">Time2Exit</span> = <span class="mxinfo " id="T1:U226">(<span class="mxinfo " id="T1:U227"><span class="var type1" id="S54T1U624">Dis2Ego</span>+<span class="var type1" id="S47T1U625">LeftLimitEgo</span></span>)/<span class="var type1" id="S40T1U626">Vyobj</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,186" id="srcline186">186</a></span><span class="line">                    <span class="keyword">end</span> </span></span>
+<span class="srcline"><span class="lineno"><a href="56,187" id="srcline187">187</a></span><span class="line">                <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,188" id="srcline188">188</a></span><span class="line">            <span class="keyword">end</span>      </span></span>
+<span class="srcline"><span class="lineno"><a href="56,189" id="srcline189">189</a></span><span class="line">        <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,190" id="srcline190">190</a></span><span class="line">    <span class="keyword">else</span>        </span></span>
+<span class="srcline"><span class="lineno"><a href="56,191" id="srcline191">191</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,192" id="srcline192">192</a></span><span class="line">   </span></span>
+<span class="srcline"><span class="lineno"><a href="56,193" id="srcline193">193</a></span><span class="line"><span class="keyword">end</span></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="56,194" id="srcline194">194</a></span><span class="line">function [Dis,Dir] = DisCal2Lane(LaneAng,x1,y1,xobj,yobj)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,195" id="srcline195">195</a></span><span class="line"><span class="comment">%      A*x + B*y + C</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,196" id="srcline196">196</a></span><span class="line"><span class="comment">%d = -----------------</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,197" id="srcline197">197</a></span><span class="line"><span class="comment">%      sqrt(A^2 + B^2)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,198" id="srcline198">198</a></span><span class="line"><span class="comment">%</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,199" id="srcline199">199</a></span><span class="line"><span class="comment">%Dir Front 1 Rear 0 Left 1 Right 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,200" id="srcline200">200</a></span><span class="line"><span class="comment">%example 11 FL 10 FR 1 RL 0 RR</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,201" id="srcline201">201</a></span><span class="line"><span class="comment">%Xdirection Front and Rear Ydirection Left and Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,202" id="srcline202">202</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,203" id="srcline203">203</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,204" id="srcline204">204</a></span><span class="line">       if LaneAng &lt; -pi</span></span>
+<span class="srcline"><span class="lineno"><a href="56,205" id="srcline205">205</a></span><span class="line">           LaneAng = LaneAng + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,206" id="srcline206">206</a></span><span class="line">       elseif LaneAng &gt; pi</span></span>
+<span class="srcline"><span class="lineno"><a href="56,207" id="srcline207">207</a></span><span class="line">           LaneAng = LaneAng - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,208" id="srcline208">208</a></span><span class="line">       else           </span></span>
+<span class="srcline"><span class="lineno"><a href="56,209" id="srcline209">209</a></span><span class="line">            if LaneAng &gt; pi/2</span></span>
+<span class="srcline"><span class="lineno"><a href="56,210" id="srcline210">210</a></span><span class="line">                LaneAng = LaneAng - pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,211" id="srcline211">211</a></span><span class="line">            elseif LaneAng &lt; -pi/2</span></span>
+<span class="srcline"><span class="lineno"><a href="56,212" id="srcline212">212</a></span><span class="line">                LaneAng = LaneAng + pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,213" id="srcline213">213</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,214" id="srcline214">214</a></span><span class="line">            end           </span></span>
+<span class="srcline"><span class="lineno"><a href="56,215" id="srcline215">215</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,216" id="srcline216">216</a></span><span class="line">       end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,217" id="srcline217">217</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,218" id="srcline218">218</a></span><span class="line"><span class="comment">%Convert LaneAng to -pi/2 - pi/2    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,219" id="srcline219">219</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="56,220" id="srcline220">220</a></span><span class="line">    if abs(sin(LaneAng))&gt;1.414</span></span>
+<span class="srcline"><span class="lineno"><a href="56,221" id="srcline221">221</a></span><span class="line">        InvK = cot(LaneAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,222" id="srcline222">222</a></span><span class="line">        A = 1;B = -InvK;C = InvK*y1 - x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,223" id="srcline223">223</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,224" id="srcline224">224</a></span><span class="line">        K = tan(LaneAng);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,225" id="srcline225">225</a></span><span class="line">        A = K;B = -1;C = y1-K*x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,226" id="srcline226">226</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,227" id="srcline227">227</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,228" id="srcline228">228</a></span><span class="line">    Dis = (A*xobj + B*yobj + C)/sqrt(A^2 + B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,229" id="srcline229">229</a></span><span class="line">    <span class="comment">%Left or Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,230" id="srcline230">230</a></span><span class="line">    if abs(A)&lt;abs(B)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,231" id="srcline231">231</a></span><span class="line">        if (B * Dis &gt; 0)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,232" id="srcline232">232</a></span><span class="line">            Dir = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,233" id="srcline233">233</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,234" id="srcline234">234</a></span><span class="line">            Dir = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,235" id="srcline235">235</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,236" id="srcline236">236</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,237" id="srcline237">237</a></span><span class="line">        if (A * Dis &gt; 0)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,238" id="srcline238">238</a></span><span class="line">            <span class="comment">%Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,239" id="srcline239">239</a></span><span class="line">            Dir = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,240" id="srcline240">240</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,241" id="srcline241">241</a></span><span class="line">            <span class="comment">%Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,242" id="srcline242">242</a></span><span class="line">            Dir = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="56,243" id="srcline243">243</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,244" id="srcline244">244</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,245" id="srcline245">245</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,246" id="srcline246">246</a></span><span class="line">    Dis = abs(Dis);    </span></span>
+<span class="srcline"><span class="lineno"><a href="56,247" id="srcline247">247</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,248" id="srcline248">248</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="56,249" id="srcline249">249</a></span><span class="line">function [Dis,Dir] = DisCal2Arc(kur,xobj,yobj)</span></span>
+<span class="srcline"><span class="lineno"><a href="56,250" id="srcline250">250</a></span><span class="line">    if abs(kur) &lt; 1e-3</span></span>
+<span class="srcline"><span class="lineno"><a href="56,251" id="srcline251">251</a></span><span class="line">        <span class="comment">% Treat as a straight lane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,252" id="srcline252">252</a></span><span class="line">        [Dis,Dir] = DisCal2Lane(0,0,0,xobj,yobj);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,253" id="srcline253">253</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,254" id="srcline254">254</a></span><span class="line">        <span class="comment">% Treat as a circle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,255" id="srcline255">255</a></span><span class="line">        CircleX = 0;CircleY = 1/kur;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,256" id="srcline256">256</a></span><span class="line">        Dis = sqrt((xobj-CircleX)^2+(yobj-CircleY)^2)-abs(CircleY);</span></span>
+<span class="srcline"><span class="lineno"><a href="56,257" id="srcline257">257</a></span><span class="line">        if kur*Dis&gt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="56,258" id="srcline258">258</a></span><span class="line">            <span class="comment">%Right</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,259" id="srcline259">259</a></span><span class="line">            Dir = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,260" id="srcline260">260</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="56,261" id="srcline261">261</a></span><span class="line">            <span class="comment">%Left</span></span></span>
+<span class="srcline"><span class="lineno"><a href="56,262" id="srcline262">262</a></span><span class="line">            Dir = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="56,263" id="srcline263">263</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="56,264" id="srcline264">264</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,265" id="srcline265">265</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="56,266" id="srcline266">266</a></span><span class="line"> </span></span>
+</pre>
+</div>

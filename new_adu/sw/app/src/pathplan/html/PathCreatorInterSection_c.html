@@ -1,0 +1,977 @@
+<!-- saved from url=(0014)about:internet -->
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>RTW Report - PathCreatorInterSection.c</title>
+<script language="JavaScript" type="text/javascript" src="rtwreport_utils.js"></script>
+</head>
+<body bgcolor="#eeeeee" text="#1122aa" onload="try {if (top) { if (top.rtwFileOnLoad) top.rtwFileOnLoad(window.document); else local_onload();}} catch(err) {};">
+<p>
+<table border="0" cellspacing="0" cellpadding="6" width="100%%" height="100%%"><tr><td width="100%%" valign="top" bgcolor="#ffffff">
+<h4>File: <a href="../PathCreatorInterSection.c" target="rtwreport_document_frame" id="linkToText_plain">PathCreatorInterSection.c</a></h4>
+<pre id="RTWcode">
+<a name="1"><font color="#888888 "><i>    1   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="2"><font color="#888888 "><i>    2   </i></font></a><font color="#117755"><I> * File: PathCreatorInterSection.c</i></font>
+<a name="3"><font color="#888888 "><i>    3   </i></font></a><font color="#117755"><I> *</i></font>
+<a name="4"><font color="#888888 "><i>    4   </i></font></a><font color="#117755"><I> * MATLAB Coder version            : 3.2</i></font>
+<a name="5"><font color="#888888 "><i>    5   </i></font></a><font color="#117755"><I> * C/C++ source code generated on  : 17-Oct-2017 11:00:48</i></font>
+<a name="6"><font color="#888888 "><i>    6   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="7"><font color="#888888 "><i>    7   </i></font></a>
+<a name="8"><font color="#888888 "><i>    8   </i></font></a><font color="#117755"><i>/* Include Files */</i></font>
+<a name="9"><font color="#888888 "><i>    9   </i></font></a><font color="#992211">#</font><font color="#992211"><b>include</b></font> <font color="#992211">&quot;rt_nonfinite.h&quot;</font>
+<a name="10"><font color="#888888 "><i>   10   </i></font></a><font color="#992211">#</font><font color="#992211"><b>include</b></font> <font color="#992211">&quot;DebugMain.h&quot;</font>
+<a name="11"><font color="#888888 "><i>   11   </i></font></a><font color="#992211">#</font><font color="#992211"><b>include</b></font> <font color="#992211">&quot;PathCreatorInterSection.h&quot;</font>
+<a name="12"><font color="#888888 "><i>   12   </i></font></a><font color="#992211">#</font><font color="#992211"><b>include</b></font> <font color="#992211">&quot;DebugMain_data.h&quot;</font>
+<a name="13"><font color="#888888 "><i>   13   </i></font></a>
+<a name="14"><font color="#888888 "><i>   14   </i></font></a><font color="#117755"><i>/* Variable Definitions */</i></font>
+<a name="15"><font color="#888888 "><i>   15   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_Pxoptres">Pxoptres</a>;
+<a name="16"><font color="#888888 "><i>   16   </i></font></a><font color="#112266"><b>static</b></font> <a href="rtwtypes_h.html#type_boolean_T" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'type_boolean_T');" target="_self"><font color="#1122aa">boolean_T</font></a> <a name="var_Pxoptres_not_empty">Pxoptres_not_empty</a>;
+<a name="17"><font color="#888888 "><i>   17   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PDeltaout">PDeltaout</a>;
+<a name="18"><font color="#888888 "><i>   18   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PArclengthout">PArclengthout</a>;
+<a name="19"><font color="#888888 "><i>   19   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PT_long">PT_long</a>;
+<a name="20"><font color="#888888 "><i>   20   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PT_lat">PT_lat</a>;
+<a name="21"><font color="#888888 "><i>   21   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PPlanRes">PPlanRes</a>;
+<a name="22"><font color="#888888 "><i>   22   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_PKurMax">PKurMax</a>;
+<a name="23"><font color="#888888 "><i>   23   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>double</b></font> <a name="var_InitFlg">InitFlg</a>;
+<a name="24"><font color="#888888 "><i>   24   </i></font></a>
+<a name="25"><font color="#888888 "><i>   25   </i></font></a><font color="#117755"><i>/* Function Declarations */</i></font>
+<a name="26"><font color="#888888 "><i>   26   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a href="#fcn_ArcPosCalInterSection" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ArcPosCalInterSection');" target="_self"><font color="#1122aa">ArcPosCalInterSection</font></a>(<font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> c_angle_in, <font color="#112266"><b>double</b></font>
+<a name="27"><font color="#888888 "><i>   27   </i></font></a>  c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> x0, <font color="#112266"><b>double</b></font> x1,
+<a name="28"><font color="#888888 "><i>   28   </i></font></a>  <font color="#112266"><b>double</b></font> xtarFr, <font color="#112266"><b>double</b></font> xtarRl, <font color="#112266"><b>double</b></font> *ArcFr, <font color="#112266"><b>double</b></font> *ArcRl, <font color="#112266"><b>double</b></font>
+<a name="29"><font color="#888888 "><i>   29   </i></font></a>  *ypositionFr, <font color="#112266"><b>double</b></font> *ypositionRl);
+<a name="30"><font color="#888888 "><i>   30   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a href="#fcn_ElementaryPathPlot" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPathPlot');" target="_self"><font color="#1122aa">ElementaryPathPlot</font></a>(<font color="#112266"><b>double</b></font> c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font> c_angle_in,
+<a name="31"><font color="#888888 "><i>   31   </i></font></a>  <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> *c_Delta, <font color="#112266"><b>double</b></font>
+<a name="32"><font color="#888888 "><i>   32   </i></font></a>  *c_k_localmax, <font color="#112266"><b>double</b></font> *c_Arclength);
+<a name="33"><font color="#888888 "><i>   33   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(<font color="#112266"><b>double</b></font> Arc, <font color="#112266"><b>double</b></font> c_Delta, <font color="#112266"><b>double</b></font> c_Arclength,
+<a name="34"><font color="#888888 "><i>   34   </i></font></a>  <font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> c_angle_in, <font color="#112266"><b>double</b></font> c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font>
+<a name="35"><font color="#888888 "><i>   35   </i></font></a>  c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> *xposition, <font color="#112266"><b>double</b></font> *yposition, <font color="#112266"><b>double</b></font> *Theta);
+<a name="36"><font color="#888888 "><i>   36   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(<font color="#112266"><b>double</b></font> Xin, <font color="#112266"><b>double</b></font> UB, <font color="#112266"><b>double</b></font> *Pval, <font color="#112266"><b>double</b></font> *hminx);
+<a name="37"><font color="#888888 "><i>   37   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a href="#fcn_PreGlbVal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_PreGlbVal');" target="_self"><font color="#1122aa">PreGlbVal</font></a>(<font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Ld[6], <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Fd[6], <font color="#112266"><b>const</b></font>
+<a name="38"><font color="#888888 "><i>   38   </i></font></a>                      <font color="#112266"><b>double</b></font> Info_Me[6], <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out);
+<a name="39"><font color="#888888 "><i>   39   </i></font></a>
+<a name="40"><font color="#888888 "><i>   40   </i></font></a><font color="#117755"><i>/* Function Definitions */</i></font>
+<a name="41"><font color="#888888 "><i>   41   </i></font></a>
+<a name="42"><font color="#888888 "><i>   42   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="43"><font color="#888888 "><i>   43   </i></font></a><font color="#117755"><I> * Arguments    : double c_angle_out</i></font>
+<a name="44"><font color="#888888 "><i>   44   </i></font></a><font color="#117755"><I> *                double c_angle_in</i></font>
+<a name="45"><font color="#888888 "><i>   45   </i></font></a><font color="#117755"><I> *                double c_x_in</i></font>
+<a name="46"><font color="#888888 "><i>   46   </i></font></a><font color="#117755"><I> *                double c_y_in</i></font>
+<a name="47"><font color="#888888 "><i>   47   </i></font></a><font color="#117755"><I> *                double c_x_out</i></font>
+<a name="48"><font color="#888888 "><i>   48   </i></font></a><font color="#117755"><I> *                double c_y_out</i></font>
+<a name="49"><font color="#888888 "><i>   49   </i></font></a><font color="#117755"><I> *                double x0</i></font>
+<a name="50"><font color="#888888 "><i>   50   </i></font></a><font color="#117755"><I> *                double x1</i></font>
+<a name="51"><font color="#888888 "><i>   51   </i></font></a><font color="#117755"><I> *                double xtarFr</i></font>
+<a name="52"><font color="#888888 "><i>   52   </i></font></a><font color="#117755"><I> *                double xtarRl</i></font>
+<a name="53"><font color="#888888 "><i>   53   </i></font></a><font color="#117755"><I> *                double *ArcFr</i></font>
+<a name="54"><font color="#888888 "><i>   54   </i></font></a><font color="#117755"><I> *                double *ArcRl</i></font>
+<a name="55"><font color="#888888 "><i>   55   </i></font></a><font color="#117755"><I> *                double *ypositionFr</i></font>
+<a name="56"><font color="#888888 "><i>   56   </i></font></a><font color="#117755"><I> *                double *ypositionRl</i></font>
+<a name="57"><font color="#888888 "><i>   57   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="58"><font color="#888888 "><i>   58   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="59"><font color="#888888 "><i>   59   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a name="fcn_ArcPosCalInterSection">ArcPosCalInterSection</a>(<font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> c_angle_in, <font color="#112266"><b>double</b></font>
+<a name="60"><font color="#888888 "><i>   60   </i></font></a>  c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> x0, <font color="#112266"><b>double</b></font> x1,
+<a name="61"><font color="#888888 "><i>   61   </i></font></a>  <font color="#112266"><b>double</b></font> xtarFr, <font color="#112266"><b>double</b></font> xtarRl, <font color="#112266"><b>double</b></font> *ArcFr, <font color="#112266"><b>double</b></font> *ArcRl, <font color="#112266"><b>double</b></font>
+<a name="62"><font color="#888888 "><i>   62   </i></font></a>  *ypositionFr, <font color="#112266"><b>double</b></font> *ypositionRl)
+<a name="63"><font color="#888888 "><i>   63   </i></font></a><b>{</b>
+<a name="64"><font color="#888888 "><i>   64   </i></font></a>  <font color="#112266"><b>double</b></font> temp2;
+<a name="65"><font color="#888888 "><i>   65   </i></font></a>  <font color="#112266"><b>double</b></font> xposition;
+<a name="66"><font color="#888888 "><i>   66   </i></font></a>  <font color="#112266"><b>double</b></font> funx1;
+<a name="67"><font color="#888888 "><i>   67   </i></font></a>  <font color="#112266"><b>double</b></font> Theta;
+<a name="68"><font color="#888888 "><i>   68   </i></font></a>  <font color="#112266"><b>double</b></font> xpositionFrtemp;
+<a name="69"><font color="#888888 "><i>   69   </i></font></a>  <font color="#112266"><b>int</b></font> Sectn;
+<a name="70"><font color="#888888 "><i>   70   </i></font></a>  temp2 = x1;
+<a name="71"><font color="#888888 "><i>   71   </i></font></a>
+<a name="72"><font color="#888888 "><i>   72   </i></font></a>  <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="73"><font color="#888888 "><i>   73   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="74"><font color="#888888 "><i>   74   </i></font></a>  <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="75"><font color="#888888 "><i>   75   </i></font></a>  <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="76"><font color="#888888 "><i>   76   </i></font></a>  <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="77"><font color="#888888 "><i>   77   </i></font></a>  <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="78"><font color="#888888 "><i>   78   </i></font></a>  <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(x0, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in, c_y_in,
+<a name="79"><font color="#888888 "><i>   79   </i></font></a>                   c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="80"><font color="#888888 "><i>   80   </i></font></a>  xpositionFrtemp = (xposition + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * cos(Theta)) + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0;
+<a name="81"><font color="#888888 "><i>   81   </i></font></a>
+<a name="82"><font color="#888888 "><i>   82   </i></font></a>  <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="83"><font color="#888888 "><i>   83   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="84"><font color="#888888 "><i>   84   </i></font></a>  <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="85"><font color="#888888 "><i>   85   </i></font></a>  <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="86"><font color="#888888 "><i>   86   </i></font></a>  <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="87"><font color="#888888 "><i>   87   </i></font></a>  <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="88"><font color="#888888 "><i>   88   </i></font></a>  <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(x1, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in, c_y_in,
+<a name="89"><font color="#888888 "><i>   89   </i></font></a>                   c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="90"><font color="#888888 "><i>   90   </i></font></a>  *ypositionFr = (funx1 + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * sin(Theta)) - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * cos(Theta) / 2.0;
+<a name="91"><font color="#888888 "><i>   91   </i></font></a>  funx1 = ((xposition + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * cos(Theta)) + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0) - xtarFr;
+<a name="92"><font color="#888888 "><i>   92   </i></font></a>  *ArcRl = x1 - funx1 * (x1 - x0) / (funx1 - (xpositionFrtemp - xtarFr));
+<a name="93"><font color="#888888 "><i>   93   </i></font></a>  Sectn = 0;
+<a name="94"><font color="#888888 "><i>   94   </i></font></a>  <font color="#112266"><b>while</b></font> ((fabs(x1 - x0) &gt;= 0.1) &amp;&amp; (Sectn &lt;= 20)) <b>{</b>
+<a name="95"><font color="#888888 "><i>   95   </i></font></a>    x0 = x1;
+<a name="96"><font color="#888888 "><i>   96   </i></font></a>    x1 = *ArcRl;
+<a name="97"><font color="#888888 "><i>   97   </i></font></a>
+<a name="98"><font color="#888888 "><i>   98   </i></font></a>    <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="99"><font color="#888888 "><i>   99   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="100"><font color="#888888 "><i>  100   </i></font></a>    <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="101"><font color="#888888 "><i>  101   </i></font></a>    <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="102"><font color="#888888 "><i>  102   </i></font></a>    <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="103"><font color="#888888 "><i>  103   </i></font></a>    <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="104"><font color="#888888 "><i>  104   </i></font></a>    <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(x0, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="105"><font color="#888888 "><i>  105   </i></font></a>                     c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="106"><font color="#888888 "><i>  106   </i></font></a>    xpositionFrtemp = (xposition + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * cos(Theta)) + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0;
+<a name="107"><font color="#888888 "><i>  107   </i></font></a>
+<a name="108"><font color="#888888 "><i>  108   </i></font></a>    <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="109"><font color="#888888 "><i>  109   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="110"><font color="#888888 "><i>  110   </i></font></a>    <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="111"><font color="#888888 "><i>  111   </i></font></a>    <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="112"><font color="#888888 "><i>  112   </i></font></a>    <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="113"><font color="#888888 "><i>  113   </i></font></a>    <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="114"><font color="#888888 "><i>  114   </i></font></a>    <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(*ArcRl, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="115"><font color="#888888 "><i>  115   </i></font></a>                     c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="116"><font color="#888888 "><i>  116   </i></font></a>    *ypositionFr = (funx1 + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * sin(Theta)) - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * cos(Theta) / 2.0;
+<a name="117"><font color="#888888 "><i>  117   </i></font></a>    funx1 = ((xposition + <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> * cos(Theta)) + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0) - xtarFr;
+<a name="118"><font color="#888888 "><i>  118   </i></font></a>    *ArcRl -= funx1 * (*ArcRl - x0) / (funx1 - (xpositionFrtemp - xtarFr));
+<a name="119"><font color="#888888 "><i>  119   </i></font></a>    Sectn++;
+<a name="120"><font color="#888888 "><i>  120   </i></font></a>  <b>}</b>
+<a name="121"><font color="#888888 "><i>  121   </i></font></a>
+<a name="122"><font color="#888888 "><i>  122   </i></font></a>  *ArcFr = *ArcRl;
+<a name="123"><font color="#888888 "><i>  123   </i></font></a>
+<a name="124"><font color="#888888 "><i>  124   </i></font></a>  <font color="#117755"><i>/*      x0 = temp1; */</i></font>
+<a name="125"><font color="#888888 "><i>  125   </i></font></a>  x0 = *ArcRl;
+<a name="126"><font color="#888888 "><i>  126   </i></font></a>  x1 = temp2;
+<a name="127"><font color="#888888 "><i>  127   </i></font></a>
+<a name="128"><font color="#888888 "><i>  128   </i></font></a>  <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="129"><font color="#888888 "><i>  129   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="130"><font color="#888888 "><i>  130   </i></font></a>  <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="131"><font color="#888888 "><i>  131   </i></font></a>  <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="132"><font color="#888888 "><i>  132   </i></font></a>  <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="133"><font color="#888888 "><i>  133   </i></font></a>  <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="134"><font color="#888888 "><i>  134   </i></font></a>  <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(*ArcRl, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="135"><font color="#888888 "><i>  135   </i></font></a>                   c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="136"><font color="#888888 "><i>  136   </i></font></a>  xpositionFrtemp = xposition - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0;
+<a name="137"><font color="#888888 "><i>  137   </i></font></a>
+<a name="138"><font color="#888888 "><i>  138   </i></font></a>  <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="139"><font color="#888888 "><i>  139   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="140"><font color="#888888 "><i>  140   </i></font></a>  <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="141"><font color="#888888 "><i>  141   </i></font></a>  <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="142"><font color="#888888 "><i>  142   </i></font></a>  <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="143"><font color="#888888 "><i>  143   </i></font></a>  <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="144"><font color="#888888 "><i>  144   </i></font></a>  <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(temp2, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="145"><font color="#888888 "><i>  145   </i></font></a>                   c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="146"><font color="#888888 "><i>  146   </i></font></a>  *ypositionRl = funx1 + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * cos(Theta) / 2.0;
+<a name="147"><font color="#888888 "><i>  147   </i></font></a>  funx1 = (xposition - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0) - xtarRl;
+<a name="148"><font color="#888888 "><i>  148   </i></font></a>  *ArcRl = temp2 - funx1 * (temp2 - *ArcRl) / (funx1 - (xpositionFrtemp - xtarRl));
+<a name="149"><font color="#888888 "><i>  149   </i></font></a>  Sectn = 0;
+<a name="150"><font color="#888888 "><i>  150   </i></font></a>  <font color="#112266"><b>while</b></font> ((fabs(x1 - x0) &gt;= 0.1) &amp;&amp; (Sectn &lt;= 20)) <b>{</b>
+<a name="151"><font color="#888888 "><i>  151   </i></font></a>    x0 = x1;
+<a name="152"><font color="#888888 "><i>  152   </i></font></a>    x1 = *ArcRl;
+<a name="153"><font color="#888888 "><i>  153   </i></font></a>
+<a name="154"><font color="#888888 "><i>  154   </i></font></a>    <font color="#117755"><i>/* x2=x1-fun(x1)*(x1-x0)/(fun(x1)-fun(x0));             */</i></font>
+<a name="155"><font color="#888888 "><i>  155   </i></font></a>    <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="156"><font color="#888888 "><i>  156   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="157"><font color="#888888 "><i>  157   </i></font></a>    <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="158"><font color="#888888 "><i>  158   </i></font></a>    <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="159"><font color="#888888 "><i>  159   </i></font></a>    <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="160"><font color="#888888 "><i>  160   </i></font></a>    <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="161"><font color="#888888 "><i>  161   </i></font></a>    <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(x0, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="162"><font color="#888888 "><i>  162   </i></font></a>                     c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="163"><font color="#888888 "><i>  163   </i></font></a>    xpositionFrtemp = xposition - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0;
+<a name="164"><font color="#888888 "><i>  164   </i></font></a>
+<a name="165"><font color="#888888 "><i>  165   </i></font></a>    <font color="#117755"><i>/* UNTITLED3 Summary of this function goes here */</i></font>
+<a name="166"><font color="#888888 "><i>  166   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="167"><font color="#888888 "><i>  167   </i></font></a>    <font color="#117755"><i>/*    Num == 1 Calculate All */</i></font>
+<a name="168"><font color="#888888 "><i>  168   </i></font></a>    <font color="#117755"><i>/*    Num == 0 Calculate None */</i></font>
+<a name="169"><font color="#888888 "><i>  169   </i></font></a>    <font color="#117755"><i>/*    Num == 2 Calculate Fr only */</i></font>
+<a name="170"><font color="#888888 "><i>  170   </i></font></a>    <font color="#117755"><i>/*    Num == 3 Calculate Rl only */</i></font>
+<a name="171"><font color="#888888 "><i>  171   </i></font></a>    <a href="#fcn_ElementaryPosCal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPosCal');" target="_self"><font color="#1122aa">ElementaryPosCal</font></a>(*ArcRl, <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, c_angle_out, c_angle_in, c_x_in,
+<a name="172"><font color="#888888 "><i>  172   </i></font></a>                     c_y_in, c_x_out, c_y_out, &amp;xposition, &amp;funx1, &amp;Theta);
+<a name="173"><font color="#888888 "><i>  173   </i></font></a>    *ypositionRl = funx1 + <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * cos(Theta) / 2.0;
+<a name="174"><font color="#888888 "><i>  174   </i></font></a>    funx1 = (xposition - <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> * sin(Theta) / 2.0) - xtarRl;
+<a name="175"><font color="#888888 "><i>  175   </i></font></a>    *ArcRl -= funx1 * (*ArcRl - x0) / (funx1 - (xpositionFrtemp - xtarRl));
+<a name="176"><font color="#888888 "><i>  176   </i></font></a>    Sectn++;
+<a name="177"><font color="#888888 "><i>  177   </i></font></a>  <b>}</b>
+<a name="178"><font color="#888888 "><i>  178   </i></font></a><b>}</b>
+<a name="179"><font color="#888888 "><i>  179   </i></font></a>
+<a name="180"><font color="#888888 "><i>  180   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="181"><font color="#888888 "><i>  181   </i></font></a><font color="#117755"><I> * Arguments    : double c_x_in</i></font>
+<a name="182"><font color="#888888 "><i>  182   </i></font></a><font color="#117755"><I> *                double c_y_in</i></font>
+<a name="183"><font color="#888888 "><i>  183   </i></font></a><font color="#117755"><I> *                double c_angle_in</i></font>
+<a name="184"><font color="#888888 "><i>  184   </i></font></a><font color="#117755"><I> *                double c_x_out</i></font>
+<a name="185"><font color="#888888 "><i>  185   </i></font></a><font color="#117755"><I> *                double c_y_out</i></font>
+<a name="186"><font color="#888888 "><i>  186   </i></font></a><font color="#117755"><I> *                double c_angle_out</i></font>
+<a name="187"><font color="#888888 "><i>  187   </i></font></a><font color="#117755"><I> *                double *c_Delta</i></font>
+<a name="188"><font color="#888888 "><i>  188   </i></font></a><font color="#117755"><I> *                double *c_k_localmax</i></font>
+<a name="189"><font color="#888888 "><i>  189   </i></font></a><font color="#117755"><I> *                double *c_Arclength</i></font>
+<a name="190"><font color="#888888 "><i>  190   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="191"><font color="#888888 "><i>  191   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="192"><font color="#888888 "><i>  192   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a name="fcn_ElementaryPathPlot">ElementaryPathPlot</a>(<font color="#112266"><b>double</b></font> c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font> c_angle_in,
+<a name="193"><font color="#888888 "><i>  193   </i></font></a>  <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> *c_Delta, <font color="#112266"><b>double</b></font>
+<a name="194"><font color="#888888 "><i>  194   </i></font></a>  *c_k_localmax, <font color="#112266"><b>double</b></font> *c_Arclength)
+<a name="195"><font color="#888888 "><i>  195   </i></font></a><b>{</b>
+<a name="196"><font color="#888888 "><i>  196   </i></font></a>  <font color="#112266"><b>double</b></font> Beta;
+<a name="197"><font color="#888888 "><i>  197   </i></font></a>  <font color="#112266"><b>double</b></font> ulimit;
+<a name="198"><font color="#888888 "><i>  198   </i></font></a>  <font color="#112266"><b>double</b></font> D_BetaVal;
+<a name="199"><font color="#888888 "><i>  199   </i></font></a>  <font color="#112266"><b>double</b></font> r;
+<a name="200"><font color="#888888 "><i>  200   </i></font></a>  <font color="#112266"><b>double</b></font> SignBeta;
+<a name="201"><font color="#888888 "><i>  201   </i></font></a>  Beta = (c_angle_out - c_angle_in) / 2.0;
+<a name="202"><font color="#888888 "><i>  202   </i></font></a>  ulimit = c_x_in - c_x_out;
+<a name="203"><font color="#888888 "><i>  203   </i></font></a>  D_BetaVal = c_y_in - c_y_out;
+<a name="204"><font color="#888888 "><i>  204   </i></font></a>  r = sqrt(ulimit * ulimit + D_BetaVal * D_BetaVal);
+<a name="205"><font color="#888888 "><i>  205   </i></font></a>  <font color="#112266"><b>if</b></font> (Beta &lt; 0.0) <b>{</b>
+<a name="206"><font color="#888888 "><i>  206   </i></font></a>    SignBeta = -1.0;
+<a name="207"><font color="#888888 "><i>  207   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Beta &gt; 0.0) <b>{</b>
+<a name="208"><font color="#888888 "><i>  208   </i></font></a>    SignBeta = 1.0;
+<a name="209"><font color="#888888 "><i>  209   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Beta == 0.0) <b>{</b>
+<a name="210"><font color="#888888 "><i>  210   </i></font></a>    SignBeta = 0.0;
+<a name="211"><font color="#888888 "><i>  211   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="212"><font color="#888888 "><i>  212   </i></font></a>    SignBeta = Beta;
+<a name="213"><font color="#888888 "><i>  213   </i></font></a>  <b>}</b>
+<a name="214"><font color="#888888 "><i>  214   </i></font></a>
+<a name="215"><font color="#888888 "><i>  215   </i></font></a>  Beta = fabs(Beta);
+<a name="216"><font color="#888888 "><i>  216   </i></font></a>  ulimit = sqrt(Beta);
+<a name="217"><font color="#888888 "><i>  217   </i></font></a>
+<a name="218"><font color="#888888 "><i>  218   </i></font></a>  <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="219"><font color="#888888 "><i>  219   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="220"><font color="#888888 "><i>  220   </i></font></a>  <font color="#117755"><i>/*  this function is used to calculate the integral of sin(x^2),which is used */</i></font>
+<a name="221"><font color="#888888 "><i>  221   </i></font></a>  <font color="#117755"><i>/*  to calculate y position */</i></font>
+<a name="222"><font color="#888888 "><i>  222   </i></font></a>  <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="223"><font color="#888888 "><i>  223   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="224"><font color="#888888 "><i>  224   </i></font></a>  <font color="#117755"><i>/*  this function is used to calculate the integral of cos(x^2),which is used */</i></font>
+<a name="225"><font color="#888888 "><i>  225   </i></font></a>  <font color="#117755"><i>/*  to calculate x position */</i></font>
+<a name="226"><font color="#888888 "><i>  226   </i></font></a>  D_BetaVal = sin(Beta) * <a href="DebugMain_data_c.html#var_quadsinu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadsinu2tbl');" target="_self"><font color="#1122aa">quadsinu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)(floor(ulimit / 0.005) + 1.0) - 1] +
+<a name="227"><font color="#888888 "><i>  227   </i></font></a>    cos(Beta) * <a href="DebugMain_data_c.html#var_quadcosu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadcosu2tbl');" target="_self"><font color="#1122aa">quadcosu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)(floor(ulimit / 0.005) + 1.0) - 1];
+<a name="228"><font color="#888888 "><i>  228   </i></font></a>
+<a name="229"><font color="#888888 "><i>  229   </i></font></a>  <font color="#117755"><i>/* Droot = fzero(@(x) sin(x)*quadsinu2(x)+cos(x)*quadcosu2(x), pi); */</i></font>
+<a name="230"><font color="#888888 "><i>  230   </i></font></a>  *c_Delta = 8.0 * SignBeta * (D_BetaVal * D_BetaVal) / (r * r);
+<a name="231"><font color="#888888 "><i>  231   </i></font></a>
+<a name="232"><font color="#888888 "><i>  232   </i></font></a>  <font color="#117755"><i>/* longth of the trajectary      */</i></font>
+<a name="233"><font color="#888888 "><i>  233   </i></font></a>  *c_Arclength = 2.0 * sqrt(2.0 * fabs(Beta / *c_Delta * SignBeta));
+<a name="234"><font color="#888888 "><i>  234   </i></font></a>  *c_k_localmax = *c_Delta * *c_Arclength / 2.0;
+<a name="235"><font color="#888888 "><i>  235   </i></font></a><b>}</b>
+<a name="236"><font color="#888888 "><i>  236   </i></font></a>
+<a name="237"><font color="#888888 "><i>  237   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="238"><font color="#888888 "><i>  238   </i></font></a><font color="#117755"><I> * UNTITLED Summary of this function goes here</i></font>
+<a name="239"><font color="#888888 "><i>  239   </i></font></a><font color="#117755"><I> *    Detailed explanation goes here</i></font>
+<a name="240"><font color="#888888 "><i>  240   </i></font></a><font color="#117755"><I> * Arguments    : double Arc</i></font>
+<a name="241"><font color="#888888 "><i>  241   </i></font></a><font color="#117755"><I> *                double c_Delta</i></font>
+<a name="242"><font color="#888888 "><i>  242   </i></font></a><font color="#117755"><I> *                double c_Arclength</i></font>
+<a name="243"><font color="#888888 "><i>  243   </i></font></a><font color="#117755"><I> *                double c_angle_out</i></font>
+<a name="244"><font color="#888888 "><i>  244   </i></font></a><font color="#117755"><I> *                double c_angle_in</i></font>
+<a name="245"><font color="#888888 "><i>  245   </i></font></a><font color="#117755"><I> *                double c_x_in</i></font>
+<a name="246"><font color="#888888 "><i>  246   </i></font></a><font color="#117755"><I> *                double c_y_in</i></font>
+<a name="247"><font color="#888888 "><i>  247   </i></font></a><font color="#117755"><I> *                double c_x_out</i></font>
+<a name="248"><font color="#888888 "><i>  248   </i></font></a><font color="#117755"><I> *                double c_y_out</i></font>
+<a name="249"><font color="#888888 "><i>  249   </i></font></a><font color="#117755"><I> *                double *xposition</i></font>
+<a name="250"><font color="#888888 "><i>  250   </i></font></a><font color="#117755"><I> *                double *yposition</i></font>
+<a name="251"><font color="#888888 "><i>  251   </i></font></a><font color="#117755"><I> *                double *Theta</i></font>
+<a name="252"><font color="#888888 "><i>  252   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="253"><font color="#888888 "><i>  253   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="254"><font color="#888888 "><i>  254   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a name="fcn_ElementaryPosCal">ElementaryPosCal</a>(<font color="#112266"><b>double</b></font> Arc, <font color="#112266"><b>double</b></font> c_Delta, <font color="#112266"><b>double</b></font> c_Arclength,
+<a name="255"><font color="#888888 "><i>  255   </i></font></a>  <font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> c_angle_in, <font color="#112266"><b>double</b></font> c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font>
+<a name="256"><font color="#888888 "><i>  256   </i></font></a>  c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> *xposition, <font color="#112266"><b>double</b></font> *yposition, <font color="#112266"><b>double</b></font> *Theta)
+<a name="257"><font color="#888888 "><i>  257   </i></font></a><b>{</b>
+<a name="258"><font color="#888888 "><i>  258   </i></font></a>  <font color="#112266"><b>double</b></font> Beta;
+<a name="259"><font color="#888888 "><i>  259   </i></font></a>  <font color="#112266"><b>double</b></font> x_outRot;
+<a name="260"><font color="#888888 "><i>  260   </i></font></a>  <font color="#112266"><b>double</b></font> y_outRot;
+<a name="261"><font color="#888888 "><i>  261   </i></font></a>  <font color="#112266"><b>double</b></font> SignBeta;
+<a name="262"><font color="#888888 "><i>  262   </i></font></a>  <font color="#112266"><b>double</b></font> ulimit;
+<a name="263"><font color="#888888 "><i>  263   </i></font></a>  <font color="#112266"><b>double</b></font> ypositionMirrTemp;
+<a name="264"><font color="#888888 "><i>  264   </i></font></a>  <font color="#112266"><b>double</b></font> b_ypositionMirrTemp;
+<a name="265"><font color="#888888 "><i>  265   </i></font></a>  <font color="#112266"><b>double</b></font> xpositionMirrTemp;
+<a name="266"><font color="#888888 "><i>  266   </i></font></a>  <font color="#112266"><b>double</b></font> c_ypositionMirrTemp;
+<a name="267"><font color="#888888 "><i>  267   </i></font></a>  Beta = (c_angle_out - c_angle_in) / 2.0;
+<a name="268"><font color="#888888 "><i>  268   </i></font></a>  x_outRot = (c_x_out - c_x_in) * cos(c_angle_in) + (c_y_out - c_y_in) * sin
+<a name="269"><font color="#888888 "><i>  269   </i></font></a>    (c_angle_in);
+<a name="270"><font color="#888888 "><i>  270   </i></font></a>  y_outRot = (c_y_out - c_y_in) * cos(c_angle_in) - (c_x_out - c_x_in) * sin
+<a name="271"><font color="#888888 "><i>  271   </i></font></a>    (c_angle_in);
+<a name="272"><font color="#888888 "><i>  272   </i></font></a>  <font color="#112266"><b>if</b></font> (Beta == 0.0) <b>{</b>
+<a name="273"><font color="#888888 "><i>  273   </i></font></a>    SignBeta = 1.0;
+<a name="274"><font color="#888888 "><i>  274   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Beta &lt; 0.0) <b>{</b>
+<a name="275"><font color="#888888 "><i>  275   </i></font></a>    SignBeta = -1.0;
+<a name="276"><font color="#888888 "><i>  276   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Beta &gt; 0.0) <b>{</b>
+<a name="277"><font color="#888888 "><i>  277   </i></font></a>    SignBeta = 1.0;
+<a name="278"><font color="#888888 "><i>  278   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Beta == 0.0) <b>{</b>
+<a name="279"><font color="#888888 "><i>  279   </i></font></a>    SignBeta = 0.0;
+<a name="280"><font color="#888888 "><i>  280   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="281"><font color="#888888 "><i>  281   </i></font></a>    SignBeta = Beta;
+<a name="282"><font color="#888888 "><i>  282   </i></font></a>  <b>}</b>
+<a name="283"><font color="#888888 "><i>  283   </i></font></a>
+<a name="284"><font color="#888888 "><i>  284   </i></font></a>  <font color="#112266"><b>if</b></font> (Arc &lt; 0.0) <b>{</b>
+<a name="285"><font color="#888888 "><i>  285   </i></font></a>    y_outRot = Arc * cos(c_angle_in) + c_x_in;
+<a name="286"><font color="#888888 "><i>  286   </i></font></a>    x_outRot = Arc * sin(c_angle_in) + c_y_in;
+<a name="287"><font color="#888888 "><i>  287   </i></font></a>    *Theta = c_angle_in;
+<a name="288"><font color="#888888 "><i>  288   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> (Arc &lt;= c_Arclength / 2.0) <b>{</b>
+<a name="289"><font color="#888888 "><i>  289   </i></font></a>    ulimit = Arc * sqrt(fabs(c_Delta) / 2.0);
+<a name="290"><font color="#888888 "><i>  290   </i></font></a>    *Theta = c_Delta * (Arc * Arc) / 2.0;
+<a name="291"><font color="#888888 "><i>  291   </i></font></a>
+<a name="292"><font color="#888888 "><i>  292   </i></font></a>    <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="293"><font color="#888888 "><i>  293   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="294"><font color="#888888 "><i>  294   </i></font></a>    <font color="#117755"><i>/*  this function is used to calculate the integral of cos(x^2),which is used */</i></font>
+<a name="295"><font color="#888888 "><i>  295   </i></font></a>    <font color="#117755"><i>/*  to calculate x position */</i></font>
+<a name="296"><font color="#888888 "><i>  296   </i></font></a>    y_outRot = sqrt(2.0 / fabs(c_Delta)) * <a href="DebugMain_data_c.html#var_quadcosu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadcosu2tbl');" target="_self"><font color="#1122aa">quadcosu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)(floor(ulimit /
+<a name="297"><font color="#888888 "><i>  297   </i></font></a>      0.005) + 1.0) - 1];
+<a name="298"><font color="#888888 "><i>  298   </i></font></a>
+<a name="299"><font color="#888888 "><i>  299   </i></font></a>    <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="300"><font color="#888888 "><i>  300   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="301"><font color="#888888 "><i>  301   </i></font></a>    <font color="#117755"><i>/*  this function is used to calculate the integral of sin(x^2),which is used */</i></font>
+<a name="302"><font color="#888888 "><i>  302   </i></font></a>    <font color="#117755"><i>/*  to calculate y position */</i></font>
+<a name="303"><font color="#888888 "><i>  303   </i></font></a>    x_outRot = sqrt(2.0 / fabs(c_Delta)) * <a href="DebugMain_data_c.html#var_quadsinu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadsinu2tbl');" target="_self"><font color="#1122aa">quadsinu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)(floor(ulimit /
+<a name="304"><font color="#888888 "><i>  304   </i></font></a>      0.005) + 1.0) - 1] * SignBeta;
+<a name="305"><font color="#888888 "><i>  305   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <font color="#112266"><b>if</b></font> ((Arc &gt; c_Arclength / 2.0) &amp;&amp; (Arc &lt; c_Arclength)) <b>{</b>
+<a name="306"><font color="#888888 "><i>  306   </i></font></a>    ulimit = (c_Arclength - Arc) * sqrt(fabs(c_Delta) / 2.0);
+<a name="307"><font color="#888888 "><i>  307   </i></font></a>
+<a name="308"><font color="#888888 "><i>  308   </i></font></a>    <font color="#117755"><i>/* Theta = 2*Beta*SignBeta - Delta * (Arclength - Arc)^2/2;  */</i></font>
+<a name="309"><font color="#888888 "><i>  309   </i></font></a>    <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="310"><font color="#888888 "><i>  310   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="311"><font color="#888888 "><i>  311   </i></font></a>    <font color="#117755"><i>/*  this function is used to calculate the integral of cos(x^2),which is used */</i></font>
+<a name="312"><font color="#888888 "><i>  312   </i></font></a>    <font color="#117755"><i>/*  to calculate x position */</i></font>
+<a name="313"><font color="#888888 "><i>  313   </i></font></a>    ypositionMirrTemp = ulimit / 0.005;
+<a name="314"><font color="#888888 "><i>  314   </i></font></a>    <font color="#112266"><b>if</b></font> (ypositionMirrTemp &lt; 0.0) <b>{</b>
+<a name="315"><font color="#888888 "><i>  315   </i></font></a>      b_ypositionMirrTemp = ceil(ypositionMirrTemp);
+<a name="316"><font color="#888888 "><i>  316   </i></font></a>    <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="317"><font color="#888888 "><i>  317   </i></font></a>      b_ypositionMirrTemp = floor(ypositionMirrTemp);
+<a name="318"><font color="#888888 "><i>  318   </i></font></a>    <b>}</b>
+<a name="319"><font color="#888888 "><i>  319   </i></font></a>
+<a name="320"><font color="#888888 "><i>  320   </i></font></a>    xpositionMirrTemp = sqrt(2.0 / fabs(c_Delta)) * <a href="DebugMain_data_c.html#var_quadcosu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadcosu2tbl');" target="_self"><font color="#1122aa">quadcosu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)
+<a name="321"><font color="#888888 "><i>  321   </i></font></a>      (b_ypositionMirrTemp + 1.0) - 1];
+<a name="322"><font color="#888888 "><i>  322   </i></font></a>
+<a name="323"><font color="#888888 "><i>  323   </i></font></a>    <font color="#117755"><i>/* UNTITLED4 Summary of this function goes here */</i></font>
+<a name="324"><font color="#888888 "><i>  324   </i></font></a>    <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="325"><font color="#888888 "><i>  325   </i></font></a>    <font color="#117755"><i>/*  this function is used to calculate the integral of sin(x^2),which is used */</i></font>
+<a name="326"><font color="#888888 "><i>  326   </i></font></a>    <font color="#117755"><i>/*  to calculate y position */</i></font>
+<a name="327"><font color="#888888 "><i>  327   </i></font></a>    ypositionMirrTemp = ulimit / 0.005;
+<a name="328"><font color="#888888 "><i>  328   </i></font></a>    <font color="#112266"><b>if</b></font> (ypositionMirrTemp &lt; 0.0) <b>{</b>
+<a name="329"><font color="#888888 "><i>  329   </i></font></a>      c_ypositionMirrTemp = ceil(ypositionMirrTemp);
+<a name="330"><font color="#888888 "><i>  330   </i></font></a>    <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="331"><font color="#888888 "><i>  331   </i></font></a>      c_ypositionMirrTemp = floor(ypositionMirrTemp);
+<a name="332"><font color="#888888 "><i>  332   </i></font></a>    <b>}</b>
+<a name="333"><font color="#888888 "><i>  333   </i></font></a>
+<a name="334"><font color="#888888 "><i>  334   </i></font></a>    ypositionMirrTemp = sqrt(2.0 / fabs(c_Delta)) * <a href="DebugMain_data_c.html#var_quadsinu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadsinu2tbl');" target="_self"><font color="#1122aa">quadsinu2tbl</font></a>[(<font color="#112266"><b>int</b></font>)
+<a name="335"><font color="#888888 "><i>  335   </i></font></a>      (c_ypositionMirrTemp + 1.0) - 1] * SignBeta;
+<a name="336"><font color="#888888 "><i>  336   </i></font></a>
+<a name="337"><font color="#888888 "><i>  337   </i></font></a>    <font color="#117755"><i>/* mirror line Ax+By+C=0 */</i></font>
+<a name="338"><font color="#888888 "><i>  338   </i></font></a>    ulimit = tan(1.5707963267948966 + atan(y_outRot / x_outRot));
+<a name="339"><font color="#888888 "><i>  339   </i></font></a>    x_outRot = y_outRot / 2.0 - ulimit * (x_outRot / 2.0);
+<a name="340"><font color="#888888 "><i>  340   </i></font></a>
+<a name="341"><font color="#888888 "><i>  341   </i></font></a>    <font color="#117755"><i>/* two points are symmetrical to the Ax+By+C we just defined */</i></font>
+<a name="342"><font color="#888888 "><i>  342   </i></font></a>    y_outRot = xpositionMirrTemp - 2.0 * ulimit * ((ulimit * xpositionMirrTemp +
+<a name="343"><font color="#888888 "><i>  343   </i></font></a>      -ypositionMirrTemp) + x_outRot) / (ulimit * ulimit + 1.0);
+<a name="344"><font color="#888888 "><i>  344   </i></font></a>    x_outRot = ypositionMirrTemp - -2.0 * ((ulimit * xpositionMirrTemp +
+<a name="345"><font color="#888888 "><i>  345   </i></font></a>      -ypositionMirrTemp) + x_outRot) / (ulimit * ulimit + 1.0);
+<a name="346"><font color="#888888 "><i>  346   </i></font></a>    ypositionMirrTemp = c_Arclength - Arc;
+<a name="347"><font color="#888888 "><i>  347   </i></font></a>    *Theta = 2.0 * fabs(Beta) * SignBeta - c_Delta * (ypositionMirrTemp *
+<a name="348"><font color="#888888 "><i>  348   </i></font></a>      ypositionMirrTemp) / 2.0;
+<a name="349"><font color="#888888 "><i>  349   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="350"><font color="#888888 "><i>  350   </i></font></a>    y_outRot = Arc * cos(c_angle_out) + c_x_out;
+<a name="351"><font color="#888888 "><i>  351   </i></font></a>    x_outRot = Arc * sin(c_angle_out) + c_y_out;
+<a name="352"><font color="#888888 "><i>  352   </i></font></a>    *Theta = c_angle_out;
+<a name="353"><font color="#888888 "><i>  353   </i></font></a>  <b>}</b>
+<a name="354"><font color="#888888 "><i>  354   </i></font></a>
+<a name="355"><font color="#888888 "><i>  355   </i></font></a>  *xposition = (y_outRot * cos(-c_angle_in) + x_outRot * sin(-c_angle_in)) +
+<a name="356"><font color="#888888 "><i>  356   </i></font></a>    c_x_in;
+<a name="357"><font color="#888888 "><i>  357   </i></font></a>  *yposition = (x_outRot * cos(-c_angle_in) - y_outRot * sin(-c_angle_in)) +
+<a name="358"><font color="#888888 "><i>  358   </i></font></a>    c_y_in;
+<a name="359"><font color="#888888 "><i>  359   </i></font></a>  *Theta += c_angle_in;
+<a name="360"><font color="#888888 "><i>  360   </i></font></a><b>}</b>
+<a name="361"><font color="#888888 "><i>  361   </i></font></a>
+<a name="362"><font color="#888888 "><i>  362   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="363"><font color="#888888 "><i>  363   </i></font></a><font color="#117755"><I> * Arguments    : double Xin</i></font>
+<a name="364"><font color="#888888 "><i>  364   </i></font></a><font color="#117755"><I> *                double UB</i></font>
+<a name="365"><font color="#888888 "><i>  365   </i></font></a><font color="#117755"><I> *                double *Pval</i></font>
+<a name="366"><font color="#888888 "><i>  366   </i></font></a><font color="#117755"><I> *                double *hminx</i></font>
+<a name="367"><font color="#888888 "><i>  367   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="368"><font color="#888888 "><i>  368   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="369"><font color="#888888 "><i>  369   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a name="fcn_Pfunc">Pfunc</a>(<font color="#112266"><b>double</b></font> Xin, <font color="#112266"><b>double</b></font> UB, <font color="#112266"><b>double</b></font> *Pval, <font color="#112266"><b>double</b></font> *hminx)
+<a name="370"><font color="#888888 "><i>  370   </i></font></a><b>{</b>
+<a name="371"><font color="#888888 "><i>  371   </i></font></a>  <font color="#112266"><b>double</b></font> C[6];
+<a name="372"><font color="#888888 "><i>  372   </i></font></a>  <font color="#112266"><b>int</b></font> ixstart;
+<a name="373"><font color="#888888 "><i>  373   </i></font></a>  <font color="#112266"><b>double</b></font> a_me;
+<a name="374"><font color="#888888 "><i>  374   </i></font></a>  <font color="#112266"><b>double</b></font> T_Cross;
+<a name="375"><font color="#888888 "><i>  375   </i></font></a>  <font color="#112266"><b>double</b></font> dv5[4];
+<a name="376"><font color="#888888 "><i>  376   </i></font></a>  <font color="#112266"><b>double</b></font> varargin_1[6];
+<a name="377"><font color="#888888 "><i>  377   </i></font></a>  <font color="#112266"><b>int</b></font> ix;
+<a name="378"><font color="#888888 "><i>  378   </i></font></a>  <a href="rtwtypes_h.html#type_boolean_T" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'type_boolean_T');" target="_self"><font color="#1122aa">boolean_T</font></a> exitg1;
+<a name="379"><font color="#888888 "><i>  379   </i></font></a>
+<a name="380"><font color="#888888 "><i>  380   </i></font></a>  <font color="#117755"><i>/*  function  Pval = Pfunc2(Xin,LB,UB) */</i></font>
+<a name="381"><font color="#888888 "><i>  381   </i></font></a>  <font color="#117755"><i>/*      global ratio  */</i></font>
+<a name="382"><font color="#888888 "><i>  382   </i></font></a>  <font color="#117755"><i>/*      C = ConFunc(Xin,LB,UB) */</i></font>
+<a name="383"><font color="#888888 "><i>  383   </i></font></a>  <font color="#117755"><i>/*      hminx= min([0,min(-C)]); */</i></font>
+<a name="384"><font color="#888888 "><i>  384   </i></font></a>  <font color="#117755"><i>/*      Pval = InterSectionCostFunc(Xin) + ratio* norm(hminx,1); */</i></font>
+<a name="385"><font color="#888888 "><i>  385   </i></font></a>  <font color="#117755"><i>/*  end */</i></font>
+<a name="386"><font color="#888888 "><i>  386   </i></font></a>  <font color="#112266"><b>for</b></font> (ixstart = 0; ixstart &lt; 6; ixstart++) <b>{</b>
+<a name="387"><font color="#888888 "><i>  387   </i></font></a>    C[ixstart] = 0.0;
+<a name="388"><font color="#888888 "><i>  388   </i></font></a>  <b>}</b>
+<a name="389"><font color="#888888 "><i>  389   </i></font></a>
+<a name="390"><font color="#888888 "><i>  390   </i></font></a>  <font color="#117755"><i>/* UNTITLED Summary of this function goes here */</i></font>
+<a name="391"><font color="#888888 "><i>  391   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="392"><font color="#888888 "><i>  392   </i></font></a>  <font color="#117755"><i>/*    Non linear constraints of intersection */</i></font>
+<a name="393"><font color="#888888 "><i>  393   </i></font></a>  a_me = (Xin * Xin - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>) / 2.0 / <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="394"><font color="#888888 "><i>  394   </i></font></a>
+<a name="395"><font color="#888888 "><i>  395   </i></font></a>  <font color="#117755"><i>/*      V_CrossRr = sqrt(V_me^2 + 2*a_me*ArcCrossRl); */</i></font>
+<a name="396"><font color="#888888 "><i>  396   </i></font></a>  <font color="#112266"><b>if</b></font> (fabs(a_me) &gt; 1.0E-5) <b>{</b>
+<a name="397"><font color="#888888 "><i>  397   </i></font></a>    <font color="#117755"><i>/*          T_CrossRr = (V_CrossRr-V_me)/a_me; */</i></font>
+<a name="398"><font color="#888888 "><i>  398   </i></font></a>    T_Cross = (Xin - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>) / a_me;
+<a name="399"><font color="#888888 "><i>  399   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="400"><font color="#888888 "><i>  400   </i></font></a>    <font color="#117755"><i>/*          T_CrossRr = ArcCrossRl/V_me; */</i></font>
+<a name="401"><font color="#888888 "><i>  401   </i></font></a>    T_Cross = <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a> / <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>;
+<a name="402"><font color="#888888 "><i>  402   </i></font></a>  <b>}</b>
+<a name="403"><font color="#888888 "><i>  403   </i></font></a>
+<a name="404"><font color="#888888 "><i>  404   </i></font></a>  <font color="#117755"><i>/*      V_CrossFr = sqrt(V_me^2 + 2*a_me*ArcCrossFr); */</i></font>
+<a name="405"><font color="#888888 "><i>  405   </i></font></a>  <font color="#117755"><i>/*      if abs(a_me) &gt;1e-5 */</i></font>
+<a name="406"><font color="#888888 "><i>  406   </i></font></a>  <font color="#117755"><i>/*          T_CrossFr = (V_CrossFr-V_me)/a_me; */</i></font>
+<a name="407"><font color="#888888 "><i>  407   </i></font></a>  <font color="#117755"><i>/*      else */</i></font>
+<a name="408"><font color="#888888 "><i>  408   </i></font></a>  <font color="#117755"><i>/*          T_CrossFr = Y_CrossFr/V_Ld; */</i></font>
+<a name="409"><font color="#888888 "><i>  409   </i></font></a>  <font color="#117755"><i>/*      end */</i></font>
+<a name="410"><font color="#888888 "><i>  410   </i></font></a>  <font color="#117755"><i>/*      Tc(1) = T_CrossFr; */</i></font>
+<a name="411"><font color="#888888 "><i>  411   </i></font></a>  <font color="#117755"><i>/*      Tc(2) = T_CrossRr;     */</i></font>
+<a name="412"><font color="#888888 "><i>  412   </i></font></a>  <font color="#117755"><i>/*      T_long = T_lat; */</i></font>
+<a name="413"><font color="#888888 "><i>  413   </i></font></a>  <font color="#117755"><i>/*      T_adj = 0; */</i></font>
+<a name="414"><font color="#888888 "><i>  414   </i></font></a>  <font color="#117755"><i>/*       */</i></font>
+<a name="415"><font color="#888888 "><i>  415   </i></font></a>  <font color="#117755"><i>/*      MSS(1) = MSSFdJudgment( V_tar,V_me,V_Fd,T_lat,Tc(1),T_lat,T_adj ); */</i></font>
+<a name="416"><font color="#888888 "><i>  416   </i></font></a>  <font color="#117755"><i>/*      MSS(2) = MSSLdJudgment( V_tar,V_me,V_Ld,T_lat,Tc(2),T_lat,T_adj );     */</i></font>
+<a name="417"><font color="#888888 "><i>  417   </i></font></a>  <font color="#117755"><i>/*      Y_meTemp = - Arclength + Y_tar;     */</i></font>
+<a name="418"><font color="#888888 "><i>  418   </i></font></a>  <font color="#117755"><i>/*      MSSFdlimitC = Y_Fd - Y_meTemp + L_Fd + MSS(1); */</i></font>
+<a name="419"><font color="#888888 "><i>  419   </i></font></a>  <font color="#117755"><i>/*      MSSLdlimitC = MSS(2) + Y_meTemp + L_me - Y_Ld; */</i></font>
+<a name="420"><font color="#888888 "><i>  420   </i></font></a>  <font color="#117755"><i>/*          Xin; */</i></font>
+<a name="421"><font color="#888888 "><i>  421   </i></font></a>  <font color="#117755"><i>/*          MSS; */</i></font>
+<a name="422"><font color="#888888 "><i>  422   </i></font></a>  <font color="#117755"><i>/*      C(1) = MSSFdlimitC; */</i></font>
+<a name="423"><font color="#888888 "><i>  423   </i></font></a>  <font color="#117755"><i>/*      C(2) = MSSLdlimitC; */</i></font>
+<a name="424"><font color="#888888 "><i>  424   </i></font></a>  dv5[0] = T_Cross - <a href="DebugMain_data_c.html#var_GTimeLimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_GTimeLimit');" target="_self"><font color="#1122aa">GTimeLimit</font></a>;
+<a name="425"><font color="#888888 "><i>  425   </i></font></a>  dv5[1] = T_Cross - <a href="DebugMain_data_c.html#var_GTimeLimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_GTimeLimit');" target="_self"><font color="#1122aa">GTimeLimit</font></a>;
+<a name="426"><font color="#888888 "><i>  426   </i></font></a>
+<a name="427"><font color="#888888 "><i>  427   </i></font></a>  <font color="#117755"><i>/*  local vehicle position is calculated approximately, using Y = Ax + B, by */</i></font>
+<a name="428"><font color="#888888 "><i>  428   </i></font></a>  <font color="#117755"><i>/*  solving the local position - Fd/Ld position, we can judge whether the two */</i></font>
+<a name="429"><font color="#888888 "><i>  429   </i></font></a>  <font color="#117755"><i>/*  vehicle will collide in the process  */</i></font>
+<a name="430"><font color="#888888 "><i>  430   </i></font></a>  <font color="#117755"><i>/* TnearFr = fzero(@(t) (Y_Ld + V_Ld * T_CrossFr - L_Ld + V_Ld * t) - (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCossFr) * (V_CrossFr*t + a_me * t^2 /2) - Y_CrossFr,0); */</i></font>
+<a name="431"><font color="#888888 "><i>  431   </i></font></a>  <font color="#117755"><i>/*      CRootFrLd(3) = Y_Ld + V_Ld * T_CrossFr - L_Ld - Y_CrossFr; */</i></font>
+<a name="432"><font color="#888888 "><i>  432   </i></font></a>  <font color="#117755"><i>/*      CRootFrLd(2) = V_Ld - (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCrossFr) * V_CrossFr; */</i></font>
+<a name="433"><font color="#888888 "><i>  433   </i></font></a>  <font color="#117755"><i>/*      CRootFrLd(1) = (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCrossFr) * (a_me / 2 ); */</i></font>
+<a name="434"><font color="#888888 "><i>  434   </i></font></a>  <font color="#117755"><i>/*      %TnearRr = fzero(@(t) (Y_Fd + V_Fd * T_CrossRr + V_Fd * t) - (CorLength - Y_CrossRl) / (Arclength - ArcCossRr) * (V_CrossRr*t + a_me * t^2 /2) - Y_CrossRl,0); */</i></font>
+<a name="435"><font color="#888888 "><i>  435   </i></font></a>  <font color="#117755"><i>/*      CRootRrFd(3) = Y_Fd + V_Fd * T_CrossRr - Y_CrossRl; */</i></font>
+<a name="436"><font color="#888888 "><i>  436   </i></font></a>  <font color="#117755"><i>/*      CRootRrFd(2) = V_Fd - (CorLength - Y_CrossRl) / (Arclength - ArcCrossRl) * V_CrossRr; */</i></font>
+<a name="437"><font color="#888888 "><i>  437   </i></font></a>  <font color="#117755"><i>/*      CRootRrFd(1) = (CorLength - Y_CrossRl) / (Arclength - ArcCrossRl) * (a_me /2); */</i></font>
+<a name="438"><font color="#888888 "><i>  438   </i></font></a>  <font color="#117755"><i>/*      % Judge whether the time to collide lies within T_cross, if not, the path */</i></font>
+<a name="439"><font color="#888888 "><i>  439   </i></font></a>  <font color="#117755"><i>/*      % will be considered as a safe path */</i></font>
+<a name="440"><font color="#888888 "><i>  440   </i></font></a>  <font color="#117755"><i>/*      if (CRootFrLd(2)^2-4*CRootFrLd(3)*CRootFrLd(1)) &gt;= 0 */</i></font>
+<a name="441"><font color="#888888 "><i>  441   </i></font></a>  <font color="#117755"><i>/*          RootFrLdtemp = roots(CRootFrLd); */</i></font>
+<a name="442"><font color="#888888 "><i>  442   </i></font></a>  <font color="#117755"><i>/*          RootFrLd = real(RootFrLdtemp); */</i></font>
+<a name="443"><font color="#888888 "><i>  443   </i></font></a>  <font color="#117755"><i>/*          if CRootFrLd(1) ==0 */</i></font>
+<a name="444"><font color="#888888 "><i>  444   </i></font></a>  <font color="#117755"><i>/*              RootFrLd(2) = RootFrLd(1); */</i></font>
+<a name="445"><font color="#888888 "><i>  445   </i></font></a>  <font color="#117755"><i>/*          end */</i></font>
+<a name="446"><font color="#888888 "><i>  446   </i></font></a>  <font color="#117755"><i>/*          if(RootFrLd(2)&gt;= 0) */</i></font>
+<a name="447"><font color="#888888 "><i>  447   </i></font></a>  <font color="#117755"><i>/*              C(1) = -(RootFrLd(2) + T_CrossFr) + T_Cross; */</i></font>
+<a name="448"><font color="#888888 "><i>  448   </i></font></a>  <font color="#117755"><i>/*          elseif(RootFrLd(1) &gt;= 0) */</i></font>
+<a name="449"><font color="#888888 "><i>  449   </i></font></a>  <font color="#117755"><i>/*              C(1) = -(RootFrLd(1) + T_CrossFr) + T_Cross;         */</i></font>
+<a name="450"><font color="#888888 "><i>  450   </i></font></a>  <font color="#117755"><i>/*          else */</i></font>
+<a name="451"><font color="#888888 "><i>  451   </i></font></a>  <font color="#117755"><i>/*              C(1) = -1; */</i></font>
+<a name="452"><font color="#888888 "><i>  452   </i></font></a>  <font color="#117755"><i>/*          end */</i></font>
+<a name="453"><font color="#888888 "><i>  453   </i></font></a>  <font color="#117755"><i>/*      else */</i></font>
+<a name="454"><font color="#888888 "><i>  454   </i></font></a>  <font color="#117755"><i>/*          C(1) = -1;     */</i></font>
+<a name="455"><font color="#888888 "><i>  455   </i></font></a>  <font color="#117755"><i>/*      end */</i></font>
+<a name="456"><font color="#888888 "><i>  456   </i></font></a>  <font color="#117755"><i>/*      if (CRootRrFd(2)^2-4*CRootRrFd(3)*CRootRrFd(1)) &gt;= 0 */</i></font>
+<a name="457"><font color="#888888 "><i>  457   </i></font></a>  <font color="#117755"><i>/*          RootRrFdtemp = roots(CRootRrFd); */</i></font>
+<a name="458"><font color="#888888 "><i>  458   </i></font></a>  <font color="#117755"><i>/*          RootRrFd = real(RootRrFdtemp); */</i></font>
+<a name="459"><font color="#888888 "><i>  459   </i></font></a>  <font color="#117755"><i>/*          if CRootRrFd(1) ==0 */</i></font>
+<a name="460"><font color="#888888 "><i>  460   </i></font></a>  <font color="#117755"><i>/*              RootRrFd(2) = RootRrFd(1); */</i></font>
+<a name="461"><font color="#888888 "><i>  461   </i></font></a>  <font color="#117755"><i>/*          end */</i></font>
+<a name="462"><font color="#888888 "><i>  462   </i></font></a>  <font color="#117755"><i>/*          if(RootRrFd(2)&gt;= 0) */</i></font>
+<a name="463"><font color="#888888 "><i>  463   </i></font></a>  <font color="#117755"><i>/*              C(2) = -(RootRrFd(2) + T_CrossRr) + T_Cross; */</i></font>
+<a name="464"><font color="#888888 "><i>  464   </i></font></a>  <font color="#117755"><i>/*          elseif(RootRrFd(1) &gt;= 0) */</i></font>
+<a name="465"><font color="#888888 "><i>  465   </i></font></a>  <font color="#117755"><i>/*              C(2) = -(RootRrFd(1) + T_CrossRr) + T_Cross;         */</i></font>
+<a name="466"><font color="#888888 "><i>  466   </i></font></a>  <font color="#117755"><i>/*          else */</i></font>
+<a name="467"><font color="#888888 "><i>  467   </i></font></a>  <font color="#117755"><i>/*              C(2) = -1; */</i></font>
+<a name="468"><font color="#888888 "><i>  468   </i></font></a>  <font color="#117755"><i>/*          end */</i></font>
+<a name="469"><font color="#888888 "><i>  469   </i></font></a>  <font color="#117755"><i>/*      else */</i></font>
+<a name="470"><font color="#888888 "><i>  470   </i></font></a>  <font color="#117755"><i>/*          C(2) = -1;  */</i></font>
+<a name="471"><font color="#888888 "><i>  471   </i></font></a>  <font color="#117755"><i>/*      end */</i></font>
+<a name="472"><font color="#888888 "><i>  472   </i></font></a>  <font color="#117755"><i>/*  ay is calculated approximately using the half Arclength position, where */</i></font>
+<a name="473"><font color="#888888 "><i>  473   </i></font></a>  <font color="#117755"><i>/*  the corning radius is the smallest */</i></font>
+<a name="474"><font color="#888888 "><i>  474   </i></font></a>  <font color="#117755"><i>/*      C(3) = V_CrossFr^2 * Delta * Arclength/2 - aylimit; */</i></font>
+<a name="475"><font color="#888888 "><i>  475   </i></font></a>  dv5[2] = (Xin * Xin + <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>) / 2.0 * <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a> * <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a> / 2.0 - <a href="DebugMain_data_c.html#var_aylimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_aylimit');" target="_self"><font color="#1122aa">aylimit</font></a>;
+<a name="476"><font color="#888888 "><i>  476   </i></font></a>  dv5[3] = fabs(a_me) - <a href="DebugMain_data_c.html#var_axlimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_axlimit');" target="_self"><font color="#1122aa">axlimit</font></a>;
+<a name="477"><font color="#888888 "><i>  477   </i></font></a>  <font color="#112266"><b>for</b></font> (ixstart = 0; ixstart &lt; 4; ixstart++) <b>{</b>
+<a name="478"><font color="#888888 "><i>  478   </i></font></a>    C[ixstart] = dv5[ixstart];
+<a name="479"><font color="#888888 "><i>  479   </i></font></a>  <b>}</b>
+<a name="480"><font color="#888888 "><i>  480   </i></font></a>
+<a name="481"><font color="#888888 "><i>  481   </i></font></a>  C[4] = Xin - UB;
+<a name="482"><font color="#888888 "><i>  482   </i></font></a>  C[5] = 0.0 - Xin;
+<a name="483"><font color="#888888 "><i>  483   </i></font></a>
+<a name="484"><font color="#888888 "><i>  484   </i></font></a>  <font color="#117755"><i>/*      C=-C; */</i></font>
+<a name="485"><font color="#888888 "><i>  485   </i></font></a>  <font color="#112266"><b>for</b></font> (ixstart = 0; ixstart &lt; 6; ixstart++) <b>{</b>
+<a name="486"><font color="#888888 "><i>  486   </i></font></a>    varargin_1[ixstart] = -C[ixstart];
+<a name="487"><font color="#888888 "><i>  487   </i></font></a>  <b>}</b>
+<a name="488"><font color="#888888 "><i>  488   </i></font></a>
+<a name="489"><font color="#888888 "><i>  489   </i></font></a>  ixstart = 1;
+<a name="490"><font color="#888888 "><i>  490   </i></font></a>  a_me = varargin_1[0];
+<a name="491"><font color="#888888 "><i>  491   </i></font></a>  <font color="#112266"><b>if</b></font> (<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(varargin_1[0])) <b>{</b>
+<a name="492"><font color="#888888 "><i>  492   </i></font></a>    ix = 2;
+<a name="493"><font color="#888888 "><i>  493   </i></font></a>    exitg1 = false;
+<a name="494"><font color="#888888 "><i>  494   </i></font></a>    <font color="#112266"><b>while</b></font> ((!exitg1) &amp;&amp; (ix &lt; 7)) <b>{</b>
+<a name="495"><font color="#888888 "><i>  495   </i></font></a>      ixstart = ix;
+<a name="496"><font color="#888888 "><i>  496   </i></font></a>      <font color="#112266"><b>if</b></font> (!<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(varargin_1[ix - 1])) <b>{</b>
+<a name="497"><font color="#888888 "><i>  497   </i></font></a>        a_me = varargin_1[ix - 1];
+<a name="498"><font color="#888888 "><i>  498   </i></font></a>        exitg1 = true;
+<a name="499"><font color="#888888 "><i>  499   </i></font></a>      <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="500"><font color="#888888 "><i>  500   </i></font></a>        ix++;
+<a name="501"><font color="#888888 "><i>  501   </i></font></a>      <b>}</b>
+<a name="502"><font color="#888888 "><i>  502   </i></font></a>    <b>}</b>
+<a name="503"><font color="#888888 "><i>  503   </i></font></a>  <b>}</b>
+<a name="504"><font color="#888888 "><i>  504   </i></font></a>
+<a name="505"><font color="#888888 "><i>  505   </i></font></a>  <font color="#112266"><b>if</b></font> (ixstart &lt; 6) <b>{</b>
+<a name="506"><font color="#888888 "><i>  506   </i></font></a>    <font color="#112266"><b>while</b></font> (ixstart + 1 &lt; 7) <b>{</b>
+<a name="507"><font color="#888888 "><i>  507   </i></font></a>      <font color="#112266"><b>if</b></font> (varargin_1[ixstart] &lt; a_me) <b>{</b>
+<a name="508"><font color="#888888 "><i>  508   </i></font></a>        a_me = varargin_1[ixstart];
+<a name="509"><font color="#888888 "><i>  509   </i></font></a>      <b>}</b>
+<a name="510"><font color="#888888 "><i>  510   </i></font></a>
+<a name="511"><font color="#888888 "><i>  511   </i></font></a>      ixstart++;
+<a name="512"><font color="#888888 "><i>  512   </i></font></a>    <b>}</b>
+<a name="513"><font color="#888888 "><i>  513   </i></font></a>  <b>}</b>
+<a name="514"><font color="#888888 "><i>  514   </i></font></a>
+<a name="515"><font color="#888888 "><i>  515   </i></font></a>  *hminx = 0.0;
+<a name="516"><font color="#888888 "><i>  516   </i></font></a>  <font color="#112266"><b>if</b></font> (a_me &lt; 0.0) <b>{</b>
+<a name="517"><font color="#888888 "><i>  517   </i></font></a>    *hminx = a_me;
+<a name="518"><font color="#888888 "><i>  518   </i></font></a>  <b>}</b>
+<a name="519"><font color="#888888 "><i>  519   </i></font></a>
+<a name="520"><font color="#888888 "><i>  520   </i></font></a>  <font color="#117755"><i>/* UNTITLED2 Summary of this function goes here */</i></font>
+<a name="521"><font color="#888888 "><i>  521   </i></font></a>  <font color="#117755"><i>/*    Detailed explanation goes here */</i></font>
+<a name="522"><font color="#888888 "><i>  522   </i></font></a>  *Pval = -Xin + <a href="DebugMain_data_c.html#var_ratio" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ratio');" target="_self"><font color="#1122aa">ratio</font></a> * fabs(*hminx);
+<a name="523"><font color="#888888 "><i>  523   </i></font></a><b>}</b>
+<a name="524"><font color="#888888 "><i>  524   </i></font></a>
+<a name="525"><font color="#888888 "><i>  525   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="526"><font color="#888888 "><i>  526   </i></font></a><font color="#117755"><I> * Arguments    : const double Info_Ld[6]</i></font>
+<a name="527"><font color="#888888 "><i>  527   </i></font></a><font color="#117755"><I> *                const double Info_Fd[6]</i></font>
+<a name="528"><font color="#888888 "><i>  528   </i></font></a><font color="#117755"><I> *                const double Info_Me[6]</i></font>
+<a name="529"><font color="#888888 "><i>  529   </i></font></a><font color="#117755"><I> *                double c_x_out</i></font>
+<a name="530"><font color="#888888 "><i>  530   </i></font></a><font color="#117755"><I> *                double c_y_out</i></font>
+<a name="531"><font color="#888888 "><i>  531   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="532"><font color="#888888 "><i>  532   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="533"><font color="#888888 "><i>  533   </i></font></a><font color="#112266"><b>static</b></font> <font color="#112266"><b>void</b></font> <a name="fcn_PreGlbVal">PreGlbVal</a>(<font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Ld[6], <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Fd[6], <font color="#112266"><b>const</b></font>
+<a name="534"><font color="#888888 "><i>  534   </i></font></a>                      <font color="#112266"><b>double</b></font> Info_Me[6], <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out)
+<a name="535"><font color="#888888 "><i>  535   </i></font></a><b>{</b>
+<a name="536"><font color="#888888 "><i>  536   </i></font></a>  <font color="#112266"><b>static</b></font> <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> dv3[356] = <b>{</b> 0.0, 0.0, 0.0, 0.0, 0.0, 1.0E-5, 1.0E-5,
+<a name="537"><font color="#888888 "><i>  537   </i></font></a>    1.0E-5, 2.0E-5, 3.0E-5, 4.0E-5, 6.0E-5, 7.0E-5, 9.0E-5, 0.00011, 0.00014,
+<a name="538"><font color="#888888 "><i>  538   </i></font></a>    0.00017, 0.0002, 0.00024, 0.00029, 0.00033, 0.00039, 0.00044, 0.00051,
+<a name="539"><font color="#888888 "><i>  539   </i></font></a>    0.00058, 0.00065, 0.00073, 0.00082, 0.00091, 0.00102, 0.00112, 0.00124,
+<a name="540"><font color="#888888 "><i>  540   </i></font></a>    0.00137, 0.0015, 0.00164, 0.00179, 0.00194, 0.00211, 0.00229, 0.00247,
+<a name="541"><font color="#888888 "><i>  541   </i></font></a>    0.00267, 0.00287, 0.00309, 0.00331, 0.00355, 0.0038, 0.00405, 0.00433,
+<a name="542"><font color="#888888 "><i>  542   </i></font></a>    0.00461, 0.0049, 0.00521, 0.00553, 0.00586, 0.0062, 0.00656, 0.00693,
+<a name="543"><font color="#888888 "><i>  543   </i></font></a>    0.00731, 0.00771, 0.00813, 0.00855, 0.00899, 0.00945, 0.00992, 0.01041,
+<a name="544"><font color="#888888 "><i>  544   </i></font></a>    0.01091, 0.01143, 0.01197, 0.01252, 0.01309, 0.01367, 0.01428, 0.0149,
+<a name="545"><font color="#888888 "><i>  545   </i></font></a>    0.01553, 0.01619, 0.01686, 0.01755, 0.01826, 0.01899, 0.01974, 0.02051,
+<a name="546"><font color="#888888 "><i>  546   </i></font></a>    0.02129, 0.0221, 0.02293, 0.02377, 0.02464, 0.02553, 0.02644, 0.02737,
+<a name="547"><font color="#888888 "><i>  547   </i></font></a>    0.02832, 0.02929, 0.03029, 0.0313, 0.03234, 0.0334, 0.03449, 0.03559,
+<a name="548"><font color="#888888 "><i>  548   </i></font></a>    0.03672, 0.03788, 0.03906, 0.04026, 0.04148, 0.04273, 0.044, 0.0453, 0.04663,
+<a name="549"><font color="#888888 "><i>  549   </i></font></a>    0.04797, 0.04935, 0.05075, 0.05217, 0.05362, 0.0551, 0.0566, 0.05813,
+<a name="550"><font color="#888888 "><i>  550   </i></font></a>    0.05968, 0.06127, 0.06288, 0.06451, 0.06618, 0.06787, 0.06959, 0.07134,
+<a name="551"><font color="#888888 "><i>  551   </i></font></a>    0.07311, 0.07492, 0.07675, 0.07861, 0.0805, 0.08242, 0.08436, 0.08634,
+<a name="552"><font color="#888888 "><i>  552   </i></font></a>    0.08835, 0.09038, 0.09245, 0.09454, 0.09667, 0.09882, 0.10101, 0.10322,
+<a name="553"><font color="#888888 "><i>  553   </i></font></a>    0.10547, 0.10774, 0.11005, 0.11239, 0.11476, 0.11716, 0.11959, 0.12205,
+<a name="554"><font color="#888888 "><i>  554   </i></font></a>    0.12454, 0.12707, 0.12962, 0.13221, 0.13483, 0.13748, 0.14016, 0.14288,
+<a name="555"><font color="#888888 "><i>  555   </i></font></a>    0.14562, 0.1484, 0.15121, 0.15405, 0.15692, 0.15983, 0.16277, 0.16574,
+<a name="556"><font color="#888888 "><i>  556   </i></font></a>    0.16874, 0.17177, 0.17484, 0.17794, 0.18107, 0.18423, 0.18743, 0.19065,
+<a name="557"><font color="#888888 "><i>  557   </i></font></a>    0.19391, 0.1972, 0.20052, 0.20388, 0.20726, 0.21068, 0.21413, 0.21761,
+<a name="558"><font color="#888888 "><i>  558   </i></font></a>    0.22112, 0.22467, 0.22824, 0.23185, 0.23548, 0.23915, 0.24285, 0.24658,
+<a name="559"><font color="#888888 "><i>  559   </i></font></a>    0.25034, 0.25413, 0.25795, 0.2618, 0.26568, 0.26959, 0.27353, 0.2775,
+<a name="560"><font color="#888888 "><i>  560   </i></font></a>    0.28149, 0.28552, 0.28957, 0.29366, 0.29777, 0.30191, 0.30607, 0.31027,
+<a name="561"><font color="#888888 "><i>  561   </i></font></a>    0.31449, 0.31874, 0.32301, 0.32731, 0.33164, 0.33599, 0.34036, 0.34477,
+<a name="562"><font color="#888888 "><i>  562   </i></font></a>    0.34919, 0.35364, 0.35811, 0.36261, 0.36713, 0.37167, 0.37624, 0.38082,
+<a name="563"><font color="#888888 "><i>  563   </i></font></a>    0.38543, 0.39006, 0.0, 0.39471, 0.39938, 0.40406, 0.40877, 0.4135, 0.41824,
+<a name="564"><font color="#888888 "><i>  564   </i></font></a>    0.423, 0.42778, 0.43257, 0.43738, 0.4422, 0.44704, 0.4519, 0.45676, 0.46164,
+<a name="565"><font color="#888888 "><i>  565   </i></font></a>    0.46654, 0.47144, 0.47636, 0.48128, 0.48622, 0.49116, 0.49612, 0.50108,
+<a name="566"><font color="#888888 "><i>  566   </i></font></a>    0.50605, 0.51102, 0.516, 0.52099, 0.52598, 0.53097, 0.53596, 0.54096,
+<a name="567"><font color="#888888 "><i>  567   </i></font></a>    0.54596, 0.55096, 0.55596, 0.56096, 0.56596, 0.57095, 0.57594, 0.58093,
+<a name="568"><font color="#888888 "><i>  568   </i></font></a>    0.58591, 0.59088, 0.59585, 0.60081, 0.60577, 0.61071, 0.61564, 0.62056,
+<a name="569"><font color="#888888 "><i>  569   </i></font></a>    0.62547, 0.63036, 0.63525, 0.64011, 0.64496, 0.6498, 0.65461, 0.65941,
+<a name="570"><font color="#888888 "><i>  570   </i></font></a>    0.66419, 0.66895, 0.67368, 0.67839, 0.68308, 0.68775, 0.69239, 0.697,
+<a name="571"><font color="#888888 "><i>  571   </i></font></a>    0.70158, 0.70614, 0.71067, 0.71516, 0.71963, 0.72406, 0.72846, 0.73282,
+<a name="572"><font color="#888888 "><i>  572   </i></font></a>    0.73715, 0.74144, 0.7457, 0.74991, 0.75408, 0.75822, 0.76231, 0.76636,
+<a name="573"><font color="#888888 "><i>  573   </i></font></a>    0.77036, 0.77432, 0.77824, 0.7821, 0.78592, 0.78969, 0.79341, 0.79708,
+<a name="574"><font color="#888888 "><i>  574   </i></font></a>    0.80069, 0.80426, 0.80777, 0.81122, 0.81461, 0.81795, 0.82124, 0.82446,
+<a name="575"><font color="#888888 "><i>  575   </i></font></a>    0.82762, 0.83072, 0.83376, 0.83673, 0.83964, 0.84249, 0.84527, 0.84798,
+<a name="576"><font color="#888888 "><i>  576   </i></font></a>    0.85063, 0.8532, 0.85571, 0.85815, 0.86051, 0.86281, 0.86503, 0.86717,
+<a name="577"><font color="#888888 "><i>  577   </i></font></a>    0.86925, 0.87124, 0.87316, 0.87501, 0.87677, 0.87846, 0.88007, 0.8816,
+<a name="578"><font color="#888888 "><i>  578   </i></font></a>    0.88305, 0.88442, 0.8857, 0.88691, 0.88803, 0.88906, 0.89002, 0.89088,
+<a name="579"><font color="#888888 "><i>  579   </i></font></a>    0.89167, 0.89237, 0.89298, 0.8935, 0.89394, 0.89429, 0.89456, 0.89473,
+<a name="580"><font color="#888888 "><i>  580   </i></font></a>    0.89482 <b>}</b>;
+<a name="581"><font color="#888888 "><i>  581   </i></font></a>
+<a name="582"><font color="#888888 "><i>  582   </i></font></a>  <font color="#112266"><b>static</b></font> <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> dv4[356] = <b>{</b> 0.0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03,
+<a name="583"><font color="#888888 "><i>  583   </i></font></a>    0.035, 0.04, 0.045, 0.05, 0.055, 0.06, 0.065, 0.07, 0.075, 0.08, 0.085, 0.09,
+<a name="584"><font color="#888888 "><i>  584   </i></font></a>    0.095, 0.1, 0.105, 0.11, 0.115, 0.12, 0.125, 0.13, 0.135, 0.13999, 0.14499,
+<a name="585"><font color="#888888 "><i>  585   </i></font></a>    0.14999, 0.15499, 0.15999, 0.16499, 0.16999, 0.17498, 0.17998, 0.18498,
+<a name="586"><font color="#888888 "><i>  586   </i></font></a>    0.18998, 0.19497, 0.19997, 0.20496, 0.20996, 0.21495, 0.21995, 0.22494,
+<a name="587"><font color="#888888 "><i>  587   </i></font></a>    0.22994, 0.23493, 0.23992, 0.24491, 0.2499, 0.25489, 0.25988, 0.26487,
+<a name="588"><font color="#888888 "><i>  588   </i></font></a>    0.26986, 0.27484, 0.27983, 0.28481, 0.28979, 0.29478, 0.29976, 0.30474,
+<a name="589"><font color="#888888 "><i>  589   </i></font></a>    0.30971, 0.31469, 0.31966, 0.32464, 0.32961, 0.33458, 0.33955, 0.34451,
+<a name="590"><font color="#888888 "><i>  590   </i></font></a>    0.34948, 0.35444, 0.3594, 0.36435, 0.36931, 0.37426, 0.37921, 0.38415,
+<a name="591"><font color="#888888 "><i>  591   </i></font></a>    0.3891, 0.39404, 0.39898, 0.40391, 0.40884, 0.41377, 0.41869, 0.42362,
+<a name="592"><font color="#888888 "><i>  592   </i></font></a>    0.42853, 0.43345, 0.43835, 0.44326, 0.44816, 0.45305, 0.45794, 0.46283,
+<a name="593"><font color="#888888 "><i>  593   </i></font></a>    0.46771, 0.47259, 0.47746, 0.48232, 0.48718, 0.49204, 0.49688, 0.50173,
+<a name="594"><font color="#888888 "><i>  594   </i></font></a>    0.50656, 0.51139, 0.51621, 0.52103, 0.52583, 0.53063, 0.53543, 0.54021,
+<a name="595"><font color="#888888 "><i>  595   </i></font></a>    0.54499, 0.54976, 0.55452, 0.55927, 0.56401, 0.56875, 0.57347, 0.57819,
+<a name="596"><font color="#888888 "><i>  596   </i></font></a>    0.58289, 0.58759, 0.59227, 0.59694, 0.60161, 0.60626, 0.6109, 0.61553,
+<a name="597"><font color="#888888 "><i>  597   </i></font></a>    0.62015, 0.62475, 0.62935, 0.63393, 0.63849, 0.64305, 0.64759, 0.65211,
+<a name="598"><font color="#888888 "><i>  598   </i></font></a>    0.65662, 0.66112, 0.6656, 0.67007, 0.67452, 0.67896, 0.68338, 0.68778,
+<a name="599"><font color="#888888 "><i>  599   </i></font></a>    0.69217, 0.69654, 0.70089, 0.70522, 0.70954, 0.71384, 0.71812, 0.72238,
+<a name="600"><font color="#888888 "><i>  600   </i></font></a>    0.72661, 0.73083, 0.73503, 0.73921, 0.74337, 0.7475, 0.75162, 0.75571,
+<a name="601"><font color="#888888 "><i>  601   </i></font></a>    0.75978, 0.76383, 0.76785, 0.77185, 0.77582, 0.77977, 0.78369, 0.78759,
+<a name="602"><font color="#888888 "><i>  602   </i></font></a>    0.79147, 0.79531, 0.79913, 0.80292, 0.80669, 0.81043, 0.81413, 0.81781,
+<a name="603"><font color="#888888 "><i>  603   </i></font></a>    0.82146, 0.82508, 0.82867, 0.83223, 0.83576, 0.83925, 0.84272, 0.84615,
+<a name="604"><font color="#888888 "><i>  604   </i></font></a>    0.84955, 0.85291, 0.85624, 0.85954, 0.8628, 0.86603, 0.86922, 0.87237,
+<a name="605"><font color="#888888 "><i>  605   </i></font></a>    0.87549, 0.87857, 0.88161, 0.88461, 0.88758, 0.8905, 0.89339, 0.89623,
+<a name="606"><font color="#888888 "><i>  606   </i></font></a>    0.89904, 0.9018, 0.90452, 0.9072, 0.90984, 0.91244, 0.91499, 0.9175, 0.91996,
+<a name="607"><font color="#888888 "><i>  607   </i></font></a>    0.92238, 0.92475, 0.92708, 0.92936, 0.93159, 0.93378, 0.93591, 0.938,
+<a name="608"><font color="#888888 "><i>  608   </i></font></a>    0.94004, 0.94204, 0.94398, 0.94587, 0.94771, 0.9495, 0.95124, 0.95293,
+<a name="609"><font color="#888888 "><i>  609   </i></font></a>    0.95457, 0.95615, 0.95768, 0.0, 0.95915, 0.96057, 0.96194, 0.96325, 0.96451,
+<a name="610"><font color="#888888 "><i>  610   </i></font></a>    0.96571, 0.96685, 0.96794, 0.96897, 0.96995, 0.97086, 0.97172, 0.97252,
+<a name="611"><font color="#888888 "><i>  611   </i></font></a>    0.97326, 0.97394, 0.97457, 0.97513, 0.97563, 0.97607, 0.97645, 0.97677,
+<a name="612"><font color="#888888 "><i>  612   </i></font></a>    0.97703, 0.97723, 0.97737, 0.97744, 0.97745, 0.9774, 0.97728, 0.9771,
+<a name="613"><font color="#888888 "><i>  613   </i></font></a>    0.97686, 0.97656, 0.97619, 0.97575, 0.97525, 0.97469, 0.97406, 0.97337,
+<a name="614"><font color="#888888 "><i>  614   </i></font></a>    0.97261, 0.97179, 0.97091, 0.96996, 0.96894, 0.96786, 0.96671, 0.9655,
+<a name="615"><font color="#888888 "><i>  615   </i></font></a>    0.96422, 0.96288, 0.96147, 0.95999, 0.95845, 0.95685, 0.95518, 0.95344,
+<a name="616"><font color="#888888 "><i>  616   </i></font></a>    0.95164, 0.94978, 0.94785, 0.94586, 0.9438, 0.94167, 0.93949, 0.93724,
+<a name="617"><font color="#888888 "><i>  617   </i></font></a>    0.93492, 0.93254, 0.9301, 0.9276, 0.92503, 0.9224, 0.91971, 0.91696, 0.91415,
+<a name="618"><font color="#888888 "><i>  618   </i></font></a>    0.91128, 0.90834, 0.90535, 0.9023, 0.89918, 0.89601, 0.89279, 0.8895,
+<a name="619"><font color="#888888 "><i>  619   </i></font></a>    0.88616, 0.88276, 0.87931, 0.8758, 0.87224, 0.86862, 0.86495, 0.86123,
+<a name="620"><font color="#888888 "><i>  620   </i></font></a>    0.85746, 0.85363, 0.84976, 0.84584, 0.84187, 0.83785, 0.83378, 0.82967,
+<a name="621"><font color="#888888 "><i>  621   </i></font></a>    0.82552, 0.82132, 0.81707, 0.81279, 0.80846, 0.8041, 0.79969, 0.79525,
+<a name="622"><font color="#888888 "><i>  622   </i></font></a>    0.79077, 0.78625, 0.7817, 0.77712, 0.7725, 0.76786, 0.76318, 0.75847,
+<a name="623"><font color="#888888 "><i>  623   </i></font></a>    0.75374, 0.74898, 0.74419, 0.73938, 0.73455, 0.7297, 0.72483, 0.71993,
+<a name="624"><font color="#888888 "><i>  624   </i></font></a>    0.71503, 0.7101, 0.70516, 0.70021, 0.69525, 0.69028, 0.6853, 0.68031,
+<a name="625"><font color="#888888 "><i>  625   </i></font></a>    0.67532, 0.67032, 0.66532 <b>}</b>;
+<a name="626"><font color="#888888 "><i>  626   </i></font></a>
+<a name="627"><font color="#888888 "><i>  627   </i></font></a>  <font color="#117755"><i>/* Config doublecheck of the safe judgement when driving through intersection */</i></font>
+<a name="628"><font color="#888888 "><i>  628   </i></font></a>  <font color="#117755"><i>/* Config plot the process or not */</i></font>
+<a name="629"><font color="#888888 "><i>  629   </i></font></a>  <font color="#117755"><i>/* Config check the accuracy of y postion estimate */</i></font>
+<a name="630"><font color="#888888 "><i>  630   </i></font></a>  <font color="#117755"><i>/* cor start point at intersection which is also the Radius of the intersection */</i></font>
+<a name="631"><font color="#888888 "><i>  631   </i></font></a>  <a href="DebugMain_data_c.html#var_CorLength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_CorLength');" target="_self"><font color="#1122aa">CorLength</font></a> = 20.0;
+<a name="632"><font color="#888888 "><i>  632   </i></font></a>  <a href="DebugMain_data_c.html#var_ratio" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ratio');" target="_self"><font color="#1122aa">ratio</font></a> = 1000.0;
+<a name="633"><font color="#888888 "><i>  633   </i></font></a>
+<a name="634"><font color="#888888 "><i>  634   </i></font></a>  <font color="#117755"><i>/* the 1/2 direction changed in the intersection    */</i></font>
+<a name="635"><font color="#888888 "><i>  635   </i></font></a>  <font color="#117755"><i>/*      x_out,y_out,angle_out; */</i></font>
+<a name="636"><font color="#888888 "><i>  636   </i></font></a>  <font color="#112266"><b>if</b></font> (fabs(Info_Ld[2]) &gt; 100.0) <b>{</b>
+<a name="637"><font color="#888888 "><i>  637   </i></font></a>    <font color="#117755"><i>/* Invalid Leading vehicle */</i></font>
+<a name="638"><font color="#888888 "><i>  638   </i></font></a>    <a href="DebugMain_data_c.html#var_X_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Ld');" target="_self"><font color="#1122aa">X_Ld</font></a> = c_x_out;
+<a name="639"><font color="#888888 "><i>  639   </i></font></a>    <a href="DebugMain_data_c.html#var_Y_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_Ld');" target="_self"><font color="#1122aa">Y_Ld</font></a> = c_y_out + 100.0;
+<a name="640"><font color="#888888 "><i>  640   </i></font></a>    <a href="DebugMain_data_c.html#var_V_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_Ld');" target="_self"><font color="#1122aa">V_Ld</font></a> = 30.0;
+<a name="641"><font color="#888888 "><i>  641   </i></font></a>    <a href="DebugMain_data_c.html#var_L_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_Ld');" target="_self"><font color="#1122aa">L_Ld</font></a> = 2.5;
+<a name="642"><font color="#888888 "><i>  642   </i></font></a>    <a href="DebugMain_data_c.html#var_W_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_Ld');" target="_self"><font color="#1122aa">W_Ld</font></a> = 1.5;
+<a name="643"><font color="#888888 "><i>  643   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="644"><font color="#888888 "><i>  644   </i></font></a>    <a href="DebugMain_data_c.html#var_X_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Ld');" target="_self"><font color="#1122aa">X_Ld</font></a> = Info_Ld[0];
+<a name="645"><font color="#888888 "><i>  645   </i></font></a>    <a href="DebugMain_data_c.html#var_Y_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_Ld');" target="_self"><font color="#1122aa">Y_Ld</font></a> = Info_Ld[1];
+<a name="646"><font color="#888888 "><i>  646   </i></font></a>    <a href="DebugMain_data_c.html#var_V_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_Ld');" target="_self"><font color="#1122aa">V_Ld</font></a> = Info_Ld[2];
+<a name="647"><font color="#888888 "><i>  647   </i></font></a>    <a href="DebugMain_data_c.html#var_L_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_Ld');" target="_self"><font color="#1122aa">L_Ld</font></a> = Info_Ld[3];
+<a name="648"><font color="#888888 "><i>  648   </i></font></a>    <a href="DebugMain_data_c.html#var_W_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_Ld');" target="_self"><font color="#1122aa">W_Ld</font></a> = Info_Ld[4];
+<a name="649"><font color="#888888 "><i>  649   </i></font></a>  <b>}</b>
+<a name="650"><font color="#888888 "><i>  650   </i></font></a>
+<a name="651"><font color="#888888 "><i>  651   </i></font></a>  <font color="#112266"><b>if</b></font> (fabs(Info_Fd[2]) &gt; 100.0) <b>{</b>
+<a name="652"><font color="#888888 "><i>  652   </i></font></a>    <font color="#117755"><i>/* Invalid Leading vehicle */</i></font>
+<a name="653"><font color="#888888 "><i>  653   </i></font></a>    <a href="DebugMain_data_c.html#var_X_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Fd');" target="_self"><font color="#1122aa">X_Fd</font></a> = c_x_out;
+<a name="654"><font color="#888888 "><i>  654   </i></font></a>    <a href="DebugMain_data_c.html#var_Y_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_Fd');" target="_self"><font color="#1122aa">Y_Fd</font></a> = c_y_out - 100.0;
+<a name="655"><font color="#888888 "><i>  655   </i></font></a>    <a href="DebugMain_data_c.html#var_V_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_Fd');" target="_self"><font color="#1122aa">V_Fd</font></a> = 0.0;
+<a name="656"><font color="#888888 "><i>  656   </i></font></a>    <a href="DebugMain_data_c.html#var_L_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_Fd');" target="_self"><font color="#1122aa">L_Fd</font></a> = 2.5;
+<a name="657"><font color="#888888 "><i>  657   </i></font></a>    <a href="DebugMain_data_c.html#var_W_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_Fd');" target="_self"><font color="#1122aa">W_Fd</font></a> = 1.5;
+<a name="658"><font color="#888888 "><i>  658   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="659"><font color="#888888 "><i>  659   </i></font></a>    <a href="DebugMain_data_c.html#var_X_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Fd');" target="_self"><font color="#1122aa">X_Fd</font></a> = Info_Fd[0];
+<a name="660"><font color="#888888 "><i>  660   </i></font></a>    <a href="DebugMain_data_c.html#var_Y_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_Fd');" target="_self"><font color="#1122aa">Y_Fd</font></a> = Info_Fd[1];
+<a name="661"><font color="#888888 "><i>  661   </i></font></a>    <a href="DebugMain_data_c.html#var_V_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_Fd');" target="_self"><font color="#1122aa">V_Fd</font></a> = Info_Fd[2];
+<a name="662"><font color="#888888 "><i>  662   </i></font></a>    <a href="DebugMain_data_c.html#var_L_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_Fd');" target="_self"><font color="#1122aa">L_Fd</font></a> = Info_Fd[3];
+<a name="663"><font color="#888888 "><i>  663   </i></font></a>    <a href="DebugMain_data_c.html#var_W_Fd" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_Fd');" target="_self"><font color="#1122aa">W_Fd</font></a> = Info_Fd[4];
+<a name="664"><font color="#888888 "><i>  664   </i></font></a>  <b>}</b>
+<a name="665"><font color="#888888 "><i>  665   </i></font></a>
+<a name="666"><font color="#888888 "><i>  666   </i></font></a>  <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> = Info_Me[2];
+<a name="667"><font color="#888888 "><i>  667   </i></font></a>  <a href="DebugMain_data_c.html#var_L_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_L_me');" target="_self"><font color="#1122aa">L_me</font></a> = Info_Me[3];
+<a name="668"><font color="#888888 "><i>  668   </i></font></a>  <a href="DebugMain_data_c.html#var_W_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_W_me');" target="_self"><font color="#1122aa">W_me</font></a> = Info_Me[4];
+<a name="669"><font color="#888888 "><i>  669   </i></font></a>  <a href="DebugMain_data_c.html#var_Y_tar" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_tar');" target="_self"><font color="#1122aa">Y_tar</font></a> = 20.0;
+<a name="670"><font color="#888888 "><i>  670   </i></font></a>  <a href="DebugMain_data_c.html#var_aylimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_aylimit');" target="_self"><font color="#1122aa">aylimit</font></a> = 1.5;
+<a name="671"><font color="#888888 "><i>  671   </i></font></a>  <a href="DebugMain_data_c.html#var_axlimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_axlimit');" target="_self"><font color="#1122aa">axlimit</font></a> = 1.0;
+<a name="672"><font color="#888888 "><i>  672   </i></font></a>  <a href="DebugMain_data_c.html#var_ArcCrossFr" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ArcCrossFr');" target="_self"><font color="#1122aa">ArcCrossFr</font></a> = 0.0;
+<a name="673"><font color="#888888 "><i>  673   </i></font></a>  <a href="DebugMain_data_c.html#var_ArcCrossRl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ArcCrossRl');" target="_self"><font color="#1122aa">ArcCrossRl</font></a> = 0.0;
+<a name="674"><font color="#888888 "><i>  674   </i></font></a>  <a href="DebugMain_data_c.html#var_Y_CrossFr" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_CrossFr');" target="_self"><font color="#1122aa">Y_CrossFr</font></a> = 0.0;
+<a name="675"><font color="#888888 "><i>  675   </i></font></a>  <a href="DebugMain_data_c.html#var_Y_CrossRl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_CrossRl');" target="_self"><font color="#1122aa">Y_CrossRl</font></a> = 0.0;
+<a name="676"><font color="#888888 "><i>  676   </i></font></a>  <font color="#112266"><b>if</b></font> (<a href="#var_InitFlg" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_InitFlg');" target="_self"><font color="#1122aa">InitFlg</font></a> &lt; 0.1) <b>{</b>
+<a name="677"><font color="#888888 "><i>  677   </i></font></a>    memcpy(&amp;<a href="DebugMain_data_c.html#var_quadsinu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadsinu2tbl');" target="_self"><font color="#1122aa">quadsinu2tbl</font></a>[0], &amp;dv3[0], 356U * <font color="#112266"><b>sizeof</b></font>(<font color="#112266"><b>double</b></font>));
+<a name="678"><font color="#888888 "><i>  678   </i></font></a>    memcpy(&amp;<a href="DebugMain_data_c.html#var_quadcosu2tbl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_quadcosu2tbl');" target="_self"><font color="#1122aa">quadcosu2tbl</font></a>[0], &amp;dv4[0], 356U * <font color="#112266"><b>sizeof</b></font>(<font color="#112266"><b>double</b></font>));
+<a name="679"><font color="#888888 "><i>  679   </i></font></a>    <a href="#var_InitFlg" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_InitFlg');" target="_self"><font color="#1122aa">InitFlg</font></a> = 1.0;
+<a name="680"><font color="#888888 "><i>  680   </i></font></a>  <b>}</b>
+<a name="681"><font color="#888888 "><i>  681   </i></font></a><b>}</b>
+<a name="682"><font color="#888888 "><i>  682   </i></font></a>
+<a name="683"><font color="#888888 "><i>  683   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="684"><font color="#888888 "><i>  684   </i></font></a><font color="#117755"><I> * Arguments    : const double Info_Ld[6]</i></font>
+<a name="685"><font color="#888888 "><i>  685   </i></font></a><font color="#117755"><I> *                const double Info_Fd[6]</i></font>
+<a name="686"><font color="#888888 "><i>  686   </i></font></a><font color="#117755"><I> *                const double Info_Me[6]</i></font>
+<a name="687"><font color="#888888 "><i>  687   </i></font></a><font color="#117755"><I> *                double c_x_in</i></font>
+<a name="688"><font color="#888888 "><i>  688   </i></font></a><font color="#117755"><I> *                double c_y_in</i></font>
+<a name="689"><font color="#888888 "><i>  689   </i></font></a><font color="#117755"><I> *                double c_angle_in</i></font>
+<a name="690"><font color="#888888 "><i>  690   </i></font></a><font color="#117755"><I> *                double c_x_out</i></font>
+<a name="691"><font color="#888888 "><i>  691   </i></font></a><font color="#117755"><I> *                double c_y_out</i></font>
+<a name="692"><font color="#888888 "><i>  692   </i></font></a><font color="#117755"><I> *                double c_angle_out</i></font>
+<a name="693"><font color="#888888 "><i>  693   </i></font></a><font color="#117755"><I> *                double TrigFlg</i></font>
+<a name="694"><font color="#888888 "><i>  694   </i></font></a><font color="#117755"><I> *                double CurOP</i></font>
+<a name="695"><font color="#888888 "><i>  695   </i></font></a><font color="#117755"><I> *                double SpeedLimitIn</i></font>
+<a name="696"><font color="#888888 "><i>  696   </i></font></a><font color="#117755"><I> *                double PathFinishFlg</i></font>
+<a name="697"><font color="#888888 "><i>  697   </i></font></a><font color="#117755"><I> *                double TimeLimit</i></font>
+<a name="698"><font color="#888888 "><i>  698   </i></font></a><font color="#117755"><I> *                double *xoptres</i></font>
+<a name="699"><font color="#888888 "><i>  699   </i></font></a><font color="#117755"><I> *                double *Deltaout</i></font>
+<a name="700"><font color="#888888 "><i>  700   </i></font></a><font color="#117755"><I> *                double *Arclengthout</i></font>
+<a name="701"><font color="#888888 "><i>  701   </i></font></a><font color="#117755"><I> *                double *T_long</i></font>
+<a name="702"><font color="#888888 "><i>  702   </i></font></a><font color="#117755"><I> *                double *c_T_lat</i></font>
+<a name="703"><font color="#888888 "><i>  703   </i></font></a><font color="#117755"><I> *                double *PlanRes</i></font>
+<a name="704"><font color="#888888 "><i>  704   </i></font></a><font color="#117755"><I> *                double *KurMax</i></font>
+<a name="705"><font color="#888888 "><i>  705   </i></font></a><font color="#117755"><I> *                double *IterGoldenStep</i></font>
+<a name="706"><font color="#888888 "><i>  706   </i></font></a><font color="#117755"><I> *                double *PathPlanRetryFlg</i></font>
+<a name="707"><font color="#888888 "><i>  707   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="708"><font color="#888888 "><i>  708   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="709"><font color="#888888 "><i>  709   </i></font></a><font color="#112266"><b>void</b></font> <a name="fcn_PathCreatorInterSection">PathCreatorInterSection</a>(<font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Ld[6], <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Fd[6],
+<a name="710"><font color="#888888 "><i>  710   </i></font></a>  <font color="#112266"><b>const</b></font> <font color="#112266"><b>double</b></font> Info_Me[6], <font color="#112266"><b>double</b></font> c_x_in, <font color="#112266"><b>double</b></font> c_y_in, <font color="#112266"><b>double</b></font> c_angle_in,
+<a name="711"><font color="#888888 "><i>  711   </i></font></a>  <font color="#112266"><b>double</b></font> c_x_out, <font color="#112266"><b>double</b></font> c_y_out, <font color="#112266"><b>double</b></font> c_angle_out, <font color="#112266"><b>double</b></font> TrigFlg, <font color="#112266"><b>double</b></font>
+<a name="712"><font color="#888888 "><i>  712   </i></font></a>  CurOP, <font color="#112266"><b>double</b></font> SpeedLimitIn, <font color="#112266"><b>double</b></font> PathFinishFlg, <font color="#112266"><b>double</b></font> TimeLimit, <font color="#112266"><b>double</b></font>
+<a name="713"><font color="#888888 "><i>  713   </i></font></a>  *xoptres, <font color="#112266"><b>double</b></font> *Deltaout, <font color="#112266"><b>double</b></font> *Arclengthout, <font color="#112266"><b>double</b></font> *T_long, <font color="#112266"><b>double</b></font>
+<a name="714"><font color="#888888 "><i>  714   </i></font></a>  *c_T_lat, <font color="#112266"><b>double</b></font> *PlanRes, <font color="#112266"><b>double</b></font> *KurMax, <font color="#112266"><b>double</b></font> *IterGoldenStep, <font color="#112266"><b>double</b></font>
+<a name="715"><font color="#888888 "><i>  715   </i></font></a>  *PathPlanRetryFlg)
+<a name="716"><font color="#888888 "><i>  716   </i></font></a><b>{</b>
+<a name="717"><font color="#888888 "><i>  717   </i></font></a>  <font color="#112266"><b>int</b></font> ixstart;
+<a name="718"><font color="#888888 "><i>  718   </i></font></a>  <font color="#112266"><b>double</b></font> mtmp;
+<a name="719"><font color="#888888 "><i>  719   </i></font></a>  <font color="#112266"><b>int</b></font> ix;
+<a name="720"><font color="#888888 "><i>  720   </i></font></a>  <a href="rtwtypes_h.html#type_boolean_T" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'type_boolean_T');" target="_self"><font color="#1122aa">boolean_T</font></a> exitg2;
+<a name="721"><font color="#888888 "><i>  721   </i></font></a>  <font color="#112266"><b>double</b></font> a_me;
+<a name="722"><font color="#888888 "><i>  722   </i></font></a>  <font color="#112266"><b>double</b></font> varargin_1[3];
+<a name="723"><font color="#888888 "><i>  723   </i></font></a>  <font color="#112266"><b>double</b></font> alpha;
+<a name="724"><font color="#888888 "><i>  724   </i></font></a>  <a href="rtwtypes_h.html#type_boolean_T" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'type_boolean_T');" target="_self"><font color="#1122aa">boolean_T</font></a> exitg1;
+<a name="725"><font color="#888888 "><i>  725   </i></font></a>  <font color="#112266"><b>double</b></font> a;
+<a name="726"><font color="#888888 "><i>  726   </i></font></a>  <font color="#112266"><b>double</b></font> beta;
+<a name="727"><font color="#888888 "><i>  727   </i></font></a>  <font color="#112266"><b>double</b></font> f_alpha;
+<a name="728"><font color="#888888 "><i>  728   </i></font></a>  <font color="#112266"><b>double</b></font> f_beta;
+<a name="729"><font color="#888888 "><i>  729   </i></font></a>  <font color="#112266"><b>if</b></font> ((!<a href="#var_Pxoptres_not_empty" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres_not_empty');" target="_self"><font color="#1122aa">Pxoptres_not_empty</font></a>) || (PathFinishFlg == 1.0) || ((fabs(CurOP - 2.0) &gt;
+<a name="730"><font color="#888888 "><i>  730   </i></font></a>        0.1) &amp;&amp; (fabs(CurOP - 1.0) &gt; 0.1))) <b>{</b>
+<a name="731"><font color="#888888 "><i>  731   </i></font></a>    <a href="#var_Pxoptres" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres');" target="_self"><font color="#1122aa">Pxoptres</font></a> = 0.0;
+<a name="732"><font color="#888888 "><i>  732   </i></font></a>    <a href="#var_Pxoptres_not_empty" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres_not_empty');" target="_self"><font color="#1122aa">Pxoptres_not_empty</font></a> = true;
+<a name="733"><font color="#888888 "><i>  733   </i></font></a>    <a href="#var_PDeltaout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PDeltaout');" target="_self"><font color="#1122aa">PDeltaout</font></a> = 0.0;
+<a name="734"><font color="#888888 "><i>  734   </i></font></a>    <a href="#var_PArclengthout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PArclengthout');" target="_self"><font color="#1122aa">PArclengthout</font></a> = 0.0;
+<a name="735"><font color="#888888 "><i>  735   </i></font></a>    <a href="#var_PT_long" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_long');" target="_self"><font color="#1122aa">PT_long</font></a> = 0.0;
+<a name="736"><font color="#888888 "><i>  736   </i></font></a>    <a href="#var_PT_lat" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_lat');" target="_self"><font color="#1122aa">PT_lat</font></a> = 0.0;
+<a name="737"><font color="#888888 "><i>  737   </i></font></a>    <a href="#var_PPlanRes" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PPlanRes');" target="_self"><font color="#1122aa">PPlanRes</font></a> = 0.0;
+<a name="738"><font color="#888888 "><i>  738   </i></font></a>    <a href="#var_PKurMax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PKurMax');" target="_self"><font color="#1122aa">PKurMax</font></a> = 0.0;
+<a name="739"><font color="#888888 "><i>  739   </i></font></a>  <b>}</b>
+<a name="740"><font color="#888888 "><i>  740   </i></font></a>
+<a name="741"><font color="#888888 "><i>  741   </i></font></a>  *PathPlanRetryFlg = 0.0;
+<a name="742"><font color="#888888 "><i>  742   </i></font></a>  *IterGoldenStep = 0.0;
+<a name="743"><font color="#888888 "><i>  743   </i></font></a>  <font color="#112266"><b>if</b></font> (TrigFlg &gt; 0.1) <b>{</b>
+<a name="744"><font color="#888888 "><i>  744   </i></font></a>    <a href="#var_Pxoptres" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres');" target="_self"><font color="#1122aa">Pxoptres</font></a> = 0.0;
+<a name="745"><font color="#888888 "><i>  745   </i></font></a>    <a href="#var_PDeltaout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PDeltaout');" target="_self"><font color="#1122aa">PDeltaout</font></a> = 0.0;
+<a name="746"><font color="#888888 "><i>  746   </i></font></a>    <a href="#var_PArclengthout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PArclengthout');" target="_self"><font color="#1122aa">PArclengthout</font></a> = 0.0;
+<a name="747"><font color="#888888 "><i>  747   </i></font></a>    <a href="#var_PT_long" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_long');" target="_self"><font color="#1122aa">PT_long</font></a> = 0.0;
+<a name="748"><font color="#888888 "><i>  748   </i></font></a>    <a href="#var_PT_lat" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_lat');" target="_self"><font color="#1122aa">PT_lat</font></a> = 0.0;
+<a name="749"><font color="#888888 "><i>  749   </i></font></a>    <a href="#var_PPlanRes" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PPlanRes');" target="_self"><font color="#1122aa">PPlanRes</font></a> = 0.0;
+<a name="750"><font color="#888888 "><i>  750   </i></font></a>    <a href="#var_PKurMax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PKurMax');" target="_self"><font color="#1122aa">PKurMax</font></a> = 0.0;
+<a name="751"><font color="#888888 "><i>  751   </i></font></a>    <a href="DebugMain_data_c.html#var_GTimeLimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_GTimeLimit');" target="_self"><font color="#1122aa">GTimeLimit</font></a> = TimeLimit;
+<a name="752"><font color="#888888 "><i>  752   </i></font></a>    <a href="#fcn_PreGlbVal" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_PreGlbVal');" target="_self"><font color="#1122aa">PreGlbVal</font></a>(Info_Ld, Info_Fd, Info_Me, c_x_out, c_y_out);
+<a name="753"><font color="#888888 "><i>  753   </i></font></a>    <a href="#fcn_ElementaryPathPlot" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ElementaryPathPlot');" target="_self"><font color="#1122aa">ElementaryPathPlot</font></a>(c_x_in, c_y_in, c_angle_in, c_x_out, c_y_out, c_angle_out,
+<a name="754"><font color="#888888 "><i>  754   </i></font></a>                       &amp;<a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>, &amp;<a href="DebugMain_data_c.html#var_k_localmax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_k_localmax');" target="_self"><font color="#1122aa">k_localmax</font></a>, &amp;<a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>);
+<a name="755"><font color="#888888 "><i>  755   </i></font></a>    <a href="#fcn_ArcPosCalInterSection" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_ArcPosCalInterSection');" target="_self"><font color="#1122aa">ArcPosCalInterSection</font></a>(c_angle_out, c_angle_in, c_x_in, c_y_in, c_x_out,
+<a name="756"><font color="#888888 "><i>  756   </i></font></a>                          c_y_out, 0.3 * <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, 0.9 * <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>, <a href="DebugMain_data_c.html#var_X_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Ld');" target="_self"><font color="#1122aa">X_Ld</font></a> - 1.0,
+<a name="757"><font color="#888888 "><i>  757   </i></font></a>                          <a href="DebugMain_data_c.html#var_X_Ld" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_X_Ld');" target="_self"><font color="#1122aa">X_Ld</font></a> - 1.0, &amp;<a href="DebugMain_data_c.html#var_ArcCrossFr" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ArcCrossFr');" target="_self"><font color="#1122aa">ArcCrossFr</font></a>, &amp;<a href="DebugMain_data_c.html#var_ArcCrossRl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_ArcCrossRl');" target="_self"><font color="#1122aa">ArcCrossRl</font></a>, &amp;<a href="DebugMain_data_c.html#var_Y_CrossFr" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_CrossFr');" target="_self"><font color="#1122aa">Y_CrossFr</font></a>,
+<a name="758"><font color="#888888 "><i>  758   </i></font></a>                          &amp;<a href="DebugMain_data_c.html#var_Y_CrossRl" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Y_CrossRl');" target="_self"><font color="#1122aa">Y_CrossRl</font></a>);
+<a name="759"><font color="#888888 "><i>  759   </i></font></a>    ixstart = 1;
+<a name="760"><font color="#888888 "><i>  760   </i></font></a>    mtmp = SpeedLimitIn;
+<a name="761"><font color="#888888 "><i>  761   </i></font></a>    <font color="#112266"><b>if</b></font> (<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(SpeedLimitIn)) <b>{</b>
+<a name="762"><font color="#888888 "><i>  762   </i></font></a>      ix = 2;
+<a name="763"><font color="#888888 "><i>  763   </i></font></a>      exitg2 = false;
+<a name="764"><font color="#888888 "><i>  764   </i></font></a>      <font color="#112266"><b>while</b></font> ((!exitg2) &amp;&amp; (ix &lt; 3)) <b>{</b>
+<a name="765"><font color="#888888 "><i>  765   </i></font></a>        ixstart = 2;
+<a name="766"><font color="#888888 "><i>  766   </i></font></a>        <font color="#112266"><b>if</b></font> (!<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(<a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> + 3.0)) <b>{</b>
+<a name="767"><font color="#888888 "><i>  767   </i></font></a>          mtmp = <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> + 3.0;
+<a name="768"><font color="#888888 "><i>  768   </i></font></a>          exitg2 = true;
+<a name="769"><font color="#888888 "><i>  769   </i></font></a>        <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="770"><font color="#888888 "><i>  770   </i></font></a>          ix = 3;
+<a name="771"><font color="#888888 "><i>  771   </i></font></a>        <b>}</b>
+<a name="772"><font color="#888888 "><i>  772   </i></font></a>      <b>}</b>
+<a name="773"><font color="#888888 "><i>  773   </i></font></a>    <b>}</b>
+<a name="774"><font color="#888888 "><i>  774   </i></font></a>
+<a name="775"><font color="#888888 "><i>  775   </i></font></a>    <font color="#112266"><b>if</b></font> ((ixstart &lt; 2) &amp;&amp; (<a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> + 3.0 &lt; mtmp)) <b>{</b>
+<a name="776"><font color="#888888 "><i>  776   </i></font></a>      mtmp = <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> + 3.0;
+<a name="777"><font color="#888888 "><i>  777   </i></font></a>    <b>}</b>
+<a name="778"><font color="#888888 "><i>  778   </i></font></a>
+<a name="779"><font color="#888888 "><i>  779   </i></font></a>    <font color="#117755"><i>/* x0 = [V_Ld]; */</i></font>
+<a name="780"><font color="#888888 "><i>  780   </i></font></a>    <font color="#117755"><i>/* xoptres = SQPCal(x0',LB',UB'); */</i></font>
+<a name="781"><font color="#888888 "><i>  781   </i></font></a>    <font color="#117755"><i>/*          upbound = min([(V_me^2 + 2*axlimit*Arclength),(4*aylimit/Arclength/abs(Delta) - V_me^2),UB]); */</i></font>
+<a name="782"><font color="#888888 "><i>  782   </i></font></a>    <font color="#117755"><i>/*          lobound = max([0,(V_me^2 - 2*axlimit*Arclength),(-4*aylimit/Arclength/abs(Delta) - V_me^2),LB]); */</i></font>
+<a name="783"><font color="#888888 "><i>  783   </i></font></a>    a_me = 4.0 * <a href="DebugMain_data_c.html#var_aylimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_aylimit');" target="_self"><font color="#1122aa">aylimit</font></a> / <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a> / fabs(<a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>) - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>;
+<a name="784"><font color="#888888 "><i>  784   </i></font></a>    ixstart = 1;
+<a name="785"><font color="#888888 "><i>  785   </i></font></a>    <font color="#112266"><b>if</b></font> (<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(a_me)) <b>{</b>
+<a name="786"><font color="#888888 "><i>  786   </i></font></a>      ixstart = 2;
+<a name="787"><font color="#888888 "><i>  787   </i></font></a>      a_me = 0.0;
+<a name="788"><font color="#888888 "><i>  788   </i></font></a>    <b>}</b>
+<a name="789"><font color="#888888 "><i>  789   </i></font></a>
+<a name="790"><font color="#888888 "><i>  790   </i></font></a>    <font color="#112266"><b>if</b></font> ((ixstart &lt; 2) &amp;&amp; (0.0 &gt; a_me)) <b>{</b>
+<a name="791"><font color="#888888 "><i>  791   </i></font></a>      a_me = 0.0;
+<a name="792"><font color="#888888 "><i>  792   </i></font></a>    <b>}</b>
+<a name="793"><font color="#888888 "><i>  793   </i></font></a>
+<a name="794"><font color="#888888 "><i>  794   </i></font></a>    varargin_1[0] = <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> + 2.0 * <a href="DebugMain_data_c.html#var_axlimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_axlimit');" target="_self"><font color="#1122aa">axlimit</font></a> * <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="795"><font color="#888888 "><i>  795   </i></font></a>    varargin_1[1] = a_me;
+<a name="796"><font color="#888888 "><i>  796   </i></font></a>    varargin_1[2] = SpeedLimitIn * SpeedLimitIn;
+<a name="797"><font color="#888888 "><i>  797   </i></font></a>    ixstart = 1;
+<a name="798"><font color="#888888 "><i>  798   </i></font></a>    alpha = varargin_1[0];
+<a name="799"><font color="#888888 "><i>  799   </i></font></a>    <font color="#112266"><b>if</b></font> (<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(varargin_1[0])) <b>{</b>
+<a name="800"><font color="#888888 "><i>  800   </i></font></a>      ix = 2;
+<a name="801"><font color="#888888 "><i>  801   </i></font></a>      exitg1 = false;
+<a name="802"><font color="#888888 "><i>  802   </i></font></a>      <font color="#112266"><b>while</b></font> ((!exitg1) &amp;&amp; (ix &lt; 4)) <b>{</b>
+<a name="803"><font color="#888888 "><i>  803   </i></font></a>        ixstart = ix;
+<a name="804"><font color="#888888 "><i>  804   </i></font></a>        <font color="#112266"><b>if</b></font> (!<a href="rt_nonfinite_c.html#fcn_rtIsNaN" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_rtIsNaN');" target="_self"><font color="#1122aa">rtIsNaN</font></a>(varargin_1[ix - 1])) <b>{</b>
+<a name="805"><font color="#888888 "><i>  805   </i></font></a>          alpha = varargin_1[ix - 1];
+<a name="806"><font color="#888888 "><i>  806   </i></font></a>          exitg1 = true;
+<a name="807"><font color="#888888 "><i>  807   </i></font></a>        <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="808"><font color="#888888 "><i>  808   </i></font></a>          ix++;
+<a name="809"><font color="#888888 "><i>  809   </i></font></a>        <b>}</b>
+<a name="810"><font color="#888888 "><i>  810   </i></font></a>      <b>}</b>
+<a name="811"><font color="#888888 "><i>  811   </i></font></a>    <b>}</b>
+<a name="812"><font color="#888888 "><i>  812   </i></font></a>
+<a name="813"><font color="#888888 "><i>  813   </i></font></a>    <font color="#112266"><b>if</b></font> (ixstart &lt; 3) <b>{</b>
+<a name="814"><font color="#888888 "><i>  814   </i></font></a>      <font color="#112266"><b>while</b></font> (ixstart + 1 &lt; 4) <b>{</b>
+<a name="815"><font color="#888888 "><i>  815   </i></font></a>        <font color="#112266"><b>if</b></font> (varargin_1[ixstart] &lt; alpha) <b>{</b>
+<a name="816"><font color="#888888 "><i>  816   </i></font></a>          alpha = varargin_1[ixstart];
+<a name="817"><font color="#888888 "><i>  817   </i></font></a>        <b>}</b>
+<a name="818"><font color="#888888 "><i>  818   </i></font></a>
+<a name="819"><font color="#888888 "><i>  819   </i></font></a>        ixstart++;
+<a name="820"><font color="#888888 "><i>  820   </i></font></a>      <b>}</b>
+<a name="821"><font color="#888888 "><i>  821   </i></font></a>    <b>}</b>
+<a name="822"><font color="#888888 "><i>  822   </i></font></a>
+<a name="823"><font color="#888888 "><i>  823   </i></font></a>    varargin_1[0] = 0.0;
+<a name="824"><font color="#888888 "><i>  824   </i></font></a>    varargin_1[1] = <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> - 2.0 * <a href="DebugMain_data_c.html#var_axlimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_axlimit');" target="_self"><font color="#1122aa">axlimit</font></a> * <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="825"><font color="#888888 "><i>  825   </i></font></a>    varargin_1[2] = -4.0 * <a href="DebugMain_data_c.html#var_aylimit" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_aylimit');" target="_self"><font color="#1122aa">aylimit</font></a> / <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a> / fabs(<a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>) - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>;
+<a name="826"><font color="#888888 "><i>  826   </i></font></a>    a_me = 0.0;
+<a name="827"><font color="#888888 "><i>  827   </i></font></a>    <font color="#112266"><b>for</b></font> (ix = 0; ix &lt; 2; ix++) <b>{</b>
+<a name="828"><font color="#888888 "><i>  828   </i></font></a>      <font color="#112266"><b>if</b></font> (varargin_1[ix + 1] &gt; a_me) <b>{</b>
+<a name="829"><font color="#888888 "><i>  829   </i></font></a>        a_me = varargin_1[ix + 1];
+<a name="830"><font color="#888888 "><i>  830   </i></font></a>      <b>}</b>
+<a name="831"><font color="#888888 "><i>  831   </i></font></a>    <b>}</b>
+<a name="832"><font color="#888888 "><i>  832   </i></font></a>
+<a name="833"><font color="#888888 "><i>  833   </i></font></a>    <font color="#112266"><b>if</b></font> (a_me &lt; alpha) <b>{</b>
+<a name="834"><font color="#888888 "><i>  834   </i></font></a>      a = sqrt(a_me);
+<a name="835"><font color="#888888 "><i>  835   </i></font></a>      *xoptres = sqrt(alpha);
+<a name="836"><font color="#888888 "><i>  836   </i></font></a>      *IterGoldenStep = 0.0;
+<a name="837"><font color="#888888 "><i>  837   </i></font></a>      alpha = a + 0.38196602 * (*xoptres - a);
+<a name="838"><font color="#888888 "><i>  838   </i></font></a>      beta = a + 0.61803398 * (*xoptres - a);
+<a name="839"><font color="#888888 "><i>  839   </i></font></a>      <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(alpha, mtmp, &amp;f_alpha, &amp;a_me);
+<a name="840"><font color="#888888 "><i>  840   </i></font></a>      <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(beta, mtmp, &amp;f_beta, &amp;a_me);
+<a name="841"><font color="#888888 "><i>  841   </i></font></a>      <font color="#112266"><b>while</b></font> (fabs(*xoptres - a) &gt; 0.1) <b>{</b>
+<a name="842"><font color="#888888 "><i>  842   </i></font></a>        (*IterGoldenStep)++;
+<a name="843"><font color="#888888 "><i>  843   </i></font></a>
+<a name="844"><font color="#888888 "><i>  844   </i></font></a>        <font color="#117755"><i>/*      a1=a;  b1=b; */</i></font>
+<a name="845"><font color="#888888 "><i>  845   </i></font></a>        <font color="#112266"><b>if</b></font> (alpha &gt; beta) <b>{</b>
+<a name="846"><font color="#888888 "><i>  846   </i></font></a>          <font color="#117755"><i>/*          a=a1;b=b1; */</i></font>
+<a name="847"><font color="#888888 "><i>  847   </i></font></a>          alpha = a + 0.38196602 * (*xoptres - a);
+<a name="848"><font color="#888888 "><i>  848   </i></font></a>          beta = a + 0.61803398 * (*xoptres - a);
+<a name="849"><font color="#888888 "><i>  849   </i></font></a>          <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(alpha, mtmp, &amp;f_alpha, &amp;a_me);
+<a name="850"><font color="#888888 "><i>  850   </i></font></a>          <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(beta, mtmp, &amp;f_beta, &amp;a_me);
+<a name="851"><font color="#888888 "><i>  851   </i></font></a>        <b>}</b>
+<a name="852"><font color="#888888 "><i>  852   </i></font></a>
+<a name="853"><font color="#888888 "><i>  853   </i></font></a>        <font color="#112266"><b>if</b></font> (f_alpha &lt;= f_beta) <b>{</b>
+<a name="854"><font color="#888888 "><i>  854   </i></font></a>          *xoptres = beta;
+<a name="855"><font color="#888888 "><i>  855   </i></font></a>          beta = alpha;
+<a name="856"><font color="#888888 "><i>  856   </i></font></a>          f_beta = f_alpha;
+<a name="857"><font color="#888888 "><i>  857   </i></font></a>          alpha = a + (*xoptres - alpha);
+<a name="858"><font color="#888888 "><i>  858   </i></font></a>          <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(alpha, mtmp, &amp;f_alpha, &amp;a_me);
+<a name="859"><font color="#888888 "><i>  859   </i></font></a>
+<a name="860"><font color="#888888 "><i>  860   </i></font></a>          <font color="#117755"><i>/*          a1=a;  b1=b; */</i></font>
+<a name="861"><font color="#888888 "><i>  861   </i></font></a>        <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="862"><font color="#888888 "><i>  862   </i></font></a>          a = alpha;
+<a name="863"><font color="#888888 "><i>  863   </i></font></a>          alpha = beta;
+<a name="864"><font color="#888888 "><i>  864   </i></font></a>          f_alpha = f_beta;
+<a name="865"><font color="#888888 "><i>  865   </i></font></a>          beta = *xoptres - (beta - a);
+<a name="866"><font color="#888888 "><i>  866   </i></font></a>          <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(beta, mtmp, &amp;f_beta, &amp;a_me);
+<a name="867"><font color="#888888 "><i>  867   </i></font></a>
+<a name="868"><font color="#888888 "><i>  868   </i></font></a>          <font color="#117755"><i>/*          a1=a;  b1=b; */</i></font>
+<a name="869"><font color="#888888 "><i>  869   </i></font></a>        <b>}</b>
+<a name="870"><font color="#888888 "><i>  870   </i></font></a>      <b>}</b>
+<a name="871"><font color="#888888 "><i>  871   </i></font></a>
+<a name="872"><font color="#888888 "><i>  872   </i></font></a>      <font color="#117755"><i>/*      bestStep = (a + b)/2; */</i></font>
+<a name="873"><font color="#888888 "><i>  873   </i></font></a>      <font color="#117755"><i>/*      hminx = (hminx_beta + hminx_alpha)/2; */</i></font>
+<a name="874"><font color="#888888 "><i>  874   </i></font></a>      <font color="#117755"><i>/*       */</i></font>
+<a name="875"><font color="#888888 "><i>  875   </i></font></a>      <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(a, mtmp, &amp;a_me, &amp;alpha);
+<a name="876"><font color="#888888 "><i>  876   </i></font></a>      <a href="#fcn_Pfunc" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'fcn_Pfunc');" target="_self"><font color="#1122aa">Pfunc</font></a>(*xoptres, mtmp, &amp;beta, &amp;f_alpha);
+<a name="877"><font color="#888888 "><i>  877   </i></font></a>      <font color="#112266"><b>if</b></font> (a_me &lt; beta) <b>{</b>
+<a name="878"><font color="#888888 "><i>  878   </i></font></a>        *xoptres = a;
+<a name="879"><font color="#888888 "><i>  879   </i></font></a>        f_alpha = alpha;
+<a name="880"><font color="#888888 "><i>  880   </i></font></a>      <b>}</b>
+<a name="881"><font color="#888888 "><i>  881   </i></font></a>
+<a name="882"><font color="#888888 "><i>  882   </i></font></a>      <font color="#117755"><i>/*      if Pfunc(a,LB,UB)&lt;Pfunc(b,LB,UB) */</i></font>
+<a name="883"><font color="#888888 "><i>  883   </i></font></a>      <font color="#117755"><i>/*          bestStep=a; */</i></font>
+<a name="884"><font color="#888888 "><i>  884   </i></font></a>      <font color="#117755"><i>/*      else */</i></font>
+<a name="885"><font color="#888888 "><i>  885   </i></font></a>      <font color="#117755"><i>/*          bestStep=b; */</i></font>
+<a name="886"><font color="#888888 "><i>  886   </i></font></a>      <font color="#117755"><i>/*      end */</i></font>
+<a name="887"><font color="#888888 "><i>  887   </i></font></a>      <font color="#112266"><b>if</b></font> (f_alpha &gt;= -0.01) <b>{</b>
+<a name="888"><font color="#888888 "><i>  888   </i></font></a>        a_me = (*xoptres * *xoptres - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a> * <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>) / 2.0 / <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="889"><font color="#888888 "><i>  889   </i></font></a>        <font color="#112266"><b>if</b></font> (fabs(a_me) &gt; 1.0E-5) <b>{</b>
+<a name="890"><font color="#888888 "><i>  890   </i></font></a>          *T_long = (*xoptres - <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>) / a_me;
+<a name="891"><font color="#888888 "><i>  891   </i></font></a>        <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="892"><font color="#888888 "><i>  892   </i></font></a>          *T_long = <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a> / <a href="DebugMain_data_c.html#var_V_me" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_V_me');" target="_self"><font color="#1122aa">V_me</font></a>;
+<a name="893"><font color="#888888 "><i>  893   </i></font></a>        <b>}</b>
+<a name="894"><font color="#888888 "><i>  894   </i></font></a>
+<a name="895"><font color="#888888 "><i>  895   </i></font></a>        *c_T_lat = *T_long;
+<a name="896"><font color="#888888 "><i>  896   </i></font></a>        *Deltaout = <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>;
+<a name="897"><font color="#888888 "><i>  897   </i></font></a>        *Arclengthout = <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="898"><font color="#888888 "><i>  898   </i></font></a>        *PlanRes = 1.0;
+<a name="899"><font color="#888888 "><i>  899   </i></font></a>        *KurMax = <a href="DebugMain_data_c.html#var_k_localmax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_k_localmax');" target="_self"><font color="#1122aa">k_localmax</font></a>;
+<a name="900"><font color="#888888 "><i>  900   </i></font></a>        <a href="#var_Pxoptres" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres');" target="_self"><font color="#1122aa">Pxoptres</font></a> = *xoptres;
+<a name="901"><font color="#888888 "><i>  901   </i></font></a>        <a href="#var_PDeltaout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PDeltaout');" target="_self"><font color="#1122aa">PDeltaout</font></a> = <a href="DebugMain_data_c.html#var_Delta" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Delta');" target="_self"><font color="#1122aa">Delta</font></a>;
+<a name="902"><font color="#888888 "><i>  902   </i></font></a>        <a href="#var_PArclengthout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PArclengthout');" target="_self"><font color="#1122aa">PArclengthout</font></a> = <a href="DebugMain_data_c.html#var_Arclength" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Arclength');" target="_self"><font color="#1122aa">Arclength</font></a>;
+<a name="903"><font color="#888888 "><i>  903   </i></font></a>        <a href="#var_PT_long" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_long');" target="_self"><font color="#1122aa">PT_long</font></a> = *T_long;
+<a name="904"><font color="#888888 "><i>  904   </i></font></a>        <a href="#var_PT_lat" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_lat');" target="_self"><font color="#1122aa">PT_lat</font></a> = *T_long;
+<a name="905"><font color="#888888 "><i>  905   </i></font></a>        <a href="#var_PPlanRes" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PPlanRes');" target="_self"><font color="#1122aa">PPlanRes</font></a> = 1.0;
+<a name="906"><font color="#888888 "><i>  906   </i></font></a>        <a href="#var_PKurMax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PKurMax');" target="_self"><font color="#1122aa">PKurMax</font></a> = <a href="DebugMain_data_c.html#var_k_localmax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_k_localmax');" target="_self"><font color="#1122aa">k_localmax</font></a>;
+<a name="907"><font color="#888888 "><i>  907   </i></font></a>      <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="908"><font color="#888888 "><i>  908   </i></font></a>        *PathPlanRetryFlg = 1.0;
+<a name="909"><font color="#888888 "><i>  909   </i></font></a>        *xoptres = 0.0;
+<a name="910"><font color="#888888 "><i>  910   </i></font></a>        *Deltaout = 0.0;
+<a name="911"><font color="#888888 "><i>  911   </i></font></a>        *Arclengthout = 0.0;
+<a name="912"><font color="#888888 "><i>  912   </i></font></a>        *T_long = 0.0;
+<a name="913"><font color="#888888 "><i>  913   </i></font></a>        *c_T_lat = 0.0;
+<a name="914"><font color="#888888 "><i>  914   </i></font></a>        *PlanRes = 0.0;
+<a name="915"><font color="#888888 "><i>  915   </i></font></a>        *KurMax = 0.0;
+<a name="916"><font color="#888888 "><i>  916   </i></font></a>      <b>}</b>
+<a name="917"><font color="#888888 "><i>  917   </i></font></a>    <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="918"><font color="#888888 "><i>  918   </i></font></a>      *PathPlanRetryFlg = 1.0;
+<a name="919"><font color="#888888 "><i>  919   </i></font></a>      *xoptres = 0.0;
+<a name="920"><font color="#888888 "><i>  920   </i></font></a>      *Deltaout = 0.0;
+<a name="921"><font color="#888888 "><i>  921   </i></font></a>      *Arclengthout = 0.0;
+<a name="922"><font color="#888888 "><i>  922   </i></font></a>      *T_long = 0.0;
+<a name="923"><font color="#888888 "><i>  923   </i></font></a>      *c_T_lat = 0.0;
+<a name="924"><font color="#888888 "><i>  924   </i></font></a>      *PlanRes = 0.0;
+<a name="925"><font color="#888888 "><i>  925   </i></font></a>      *KurMax = 0.0;
+<a name="926"><font color="#888888 "><i>  926   </i></font></a>    <b>}</b>
+<a name="927"><font color="#888888 "><i>  927   </i></font></a>  <b>}</b> <font color="#112266"><b>else</b></font> <b>{</b>
+<a name="928"><font color="#888888 "><i>  928   </i></font></a>    *xoptres = <a href="#var_Pxoptres" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres');" target="_self"><font color="#1122aa">Pxoptres</font></a>;
+<a name="929"><font color="#888888 "><i>  929   </i></font></a>    *Deltaout = <a href="#var_PDeltaout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PDeltaout');" target="_self"><font color="#1122aa">PDeltaout</font></a>;
+<a name="930"><font color="#888888 "><i>  930   </i></font></a>    *Arclengthout = <a href="#var_PArclengthout" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PArclengthout');" target="_self"><font color="#1122aa">PArclengthout</font></a>;
+<a name="931"><font color="#888888 "><i>  931   </i></font></a>    *T_long = <a href="#var_PT_long" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_long');" target="_self"><font color="#1122aa">PT_long</font></a>;
+<a name="932"><font color="#888888 "><i>  932   </i></font></a>    *c_T_lat = <a href="#var_PT_lat" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PT_lat');" target="_self"><font color="#1122aa">PT_lat</font></a>;
+<a name="933"><font color="#888888 "><i>  933   </i></font></a>    *PlanRes = <a href="#var_PPlanRes" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PPlanRes');" target="_self"><font color="#1122aa">PPlanRes</font></a>;
+<a name="934"><font color="#888888 "><i>  934   </i></font></a>    *KurMax = <a href="#var_PKurMax" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_PKurMax');" target="_self"><font color="#1122aa">PKurMax</font></a>;
+<a name="935"><font color="#888888 "><i>  935   </i></font></a>  <b>}</b>
+<a name="936"><font color="#888888 "><i>  936   </i></font></a><b>}</b>
+<a name="937"><font color="#888888 "><i>  937   </i></font></a>
+<a name="938"><font color="#888888 "><i>  938   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="939"><font color="#888888 "><i>  939   </i></font></a><font color="#117755"><I> * Arguments    : void</i></font>
+<a name="940"><font color="#888888 "><i>  940   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="941"><font color="#888888 "><i>  941   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="942"><font color="#888888 "><i>  942   </i></font></a><font color="#112266"><b>void</b></font> <a name="fcn_PreGlbVal_init">PreGlbVal_init</a>(<font color="#112266"><b>void</b></font>)
+<a name="943"><font color="#888888 "><i>  943   </i></font></a><b>{</b>
+<a name="944"><font color="#888888 "><i>  944   </i></font></a>  <a href="#var_InitFlg" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_InitFlg');" target="_self"><font color="#1122aa">InitFlg</font></a> = 0.0;
+<a name="945"><font color="#888888 "><i>  945   </i></font></a><b>}</b>
+<a name="946"><font color="#888888 "><i>  946   </i></font></a>
+<a name="947"><font color="#888888 "><i>  947   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="948"><font color="#888888 "><i>  948   </i></font></a><font color="#117755"><I> * Arguments    : void</i></font>
+<a name="949"><font color="#888888 "><i>  949   </i></font></a><font color="#117755"><I> * Return Type  : void</i></font>
+<a name="950"><font color="#888888 "><i>  950   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="951"><font color="#888888 "><i>  951   </i></font></a><font color="#112266"><b>void</b></font> <a name="fcn_Pxoptres_not_empty_init">Pxoptres_not_empty_init</a>(<font color="#112266"><b>void</b></font>)
+<a name="952"><font color="#888888 "><i>  952   </i></font></a><b>{</b>
+<a name="953"><font color="#888888 "><i>  953   </i></font></a>  <a href="#var_Pxoptres_not_empty" onclick="if (top) if (top.docHiliteMe) top.docHiliteMe(window, 'var_Pxoptres_not_empty');" target="_self"><font color="#1122aa">Pxoptres_not_empty</font></a> = false;
+<a name="954"><font color="#888888 "><i>  954   </i></font></a><b>}</b>
+<a name="955"><font color="#888888 "><i>  955   </i></font></a>
+<a name="956"><font color="#888888 "><i>  956   </i></font></a><font color="#117755"><i>/*</i></font>
+<a name="957"><font color="#888888 "><i>  957   </i></font></a><font color="#117755"><I> * File trailer for PathCreatorInterSection.c</i></font>
+<a name="958"><font color="#888888 "><i>  958   </i></font></a><font color="#117755"><I> *</i></font>
+<a name="959"><font color="#888888 "><i>  959   </i></font></a><font color="#117755"><I> * [EOF]</i></font>
+<a name="960"><font color="#888888 "><i>  960   </i></font></a><font color="#117755"><I> */</i></font>
+<a name="961"><font color="#888888 "><i>  961   </i></font></a></pre>
+</td></tr></table>
+</p>
+</body>
+</html>

@@ -1,0 +1,993 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="70,1" id="srcline1">  1</a></span><span class="line">function [xoptres,Deltaout,Arclengthout,T_long,T_lat,PlanRes,...</span></span>
+<span class="srcline"><span class="lineno"><a href="70,2" id="srcline2">  2</a></span><span class="line">          KurMax,IterGoldenStep,PathPlanRetryFlg] = PathCreatorInterSection(Info_Ld,Info_Fd,Info_Me,x_in,y_in,angle_in,...</span></span>
+<span class="srcline"><span class="lineno"><a href="70,3" id="srcline3">  3</a></span><span class="line">                                                                            x_out,y_out,angle_out,TrigFlg,CurOP,SpeedLimitIn,...</span></span>
+<span class="srcline"><span class="lineno"><a href="70,4" id="srcline4">  4</a></span><span class="line">                                                                            aylimitIn,axlimitIn,PathFinishFlg,TimeLimit,SpeedInCr)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,5" id="srcline5">  5</a></span><span class="line"><span class="comment">%#codegen</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,6" id="srcline6">  6</a></span><span class="line">    global Delta Arclength V_me X_Ld Y_CrossRl ArcCrossRl ArcCrossFr Y_CrossFr aylimit axlimit GTimeLimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,7" id="srcline7">  7</a></span><span class="line">    global k_localmax</span></span>
+<span class="srcline"><span class="lineno"><a href="70,8" id="srcline8">  8</a></span><span class="line">    persistent Pxoptres PDeltaout PArclengthout PT_long PT_lat PPlanRes PKurMax</span></span>
+<span class="srcline"><span class="lineno"><a href="70,9" id="srcline9">  9</a></span><span class="line">    V_tar = 10;xoptres = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,10" id="srcline10"> 10</a></span><span class="line">    if isempty(Pxoptres)||(PathFinishFlg == 1)||((abs(CurOP-2)&gt;1e-1)&amp;&amp;(abs(CurOP-1)&gt;1e-1))</span></span>
+<span class="srcline"><span class="lineno"><a href="70,11" id="srcline11"> 11</a></span><span class="line">        Pxoptres=0;PDeltaout=0;PArclengthout=0;PT_long=0;PT_lat=0;PPlanRes=0;PKurMax=0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,12" id="srcline12"> 12</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,13" id="srcline13"> 13</a></span><span class="line">    PathPlanRetryFlg = 0;IterGoldenStep = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,14" id="srcline14"> 14</a></span><span class="line">    if TrigFlg &gt; 1e-1 </span></span>
+<span class="srcline"><span class="lineno"><a href="70,15" id="srcline15"> 15</a></span><span class="line">        Pxoptres=0;PDeltaout=0;PArclengthout=0;PT_long=0;PT_lat=0;PPlanRes=0;PKurMax=0;GTimeLimit = TimeLimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,16" id="srcline16"> 16</a></span><span class="line">        PreGlbVal(Info_Ld,Info_Fd,Info_Me,x_out,y_out,angle_out,aylimitIn,axlimitIn); </span></span>
+<span class="srcline"><span class="lineno"><a href="70,17" id="srcline17"> 17</a></span><span class="line">        [Delta,k_localmax,Arclength] = ElementaryPathPlot( x_in,y_in,angle_in,x_out,y_out,angle_out );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,18" id="srcline18"> 18</a></span><span class="line">        xtarFr = X_Ld -1; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,19" id="srcline19"> 19</a></span><span class="line">        xtarRl = X_Ld -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,20" id="srcline20"> 20</a></span><span class="line">        [ ArcCrossFr,ArcCrossRl,Y_CrossFr,Y_CrossRl ] = ArcPosCalInterSection( angle_out,angle_in,x_in,y_in,x_out,y_out,0.3*Arclength,0.9*Arclength ,xtarFr,xtarRl);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,21" id="srcline21"> 21</a></span><span class="line">        LB = [0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,22" id="srcline22"> 22</a></span><span class="line">        UB = [min([SpeedLimitIn,V_me + SpeedInCr])];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,23" id="srcline23"> 23</a></span><span class="line">        <span class="comment">%x0 = [V_Ld];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,24" id="srcline24"> 24</a></span><span class="line">        <span class="comment">%xoptres = SQPCal(x0',LB',UB');</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,25" id="srcline25"> 25</a></span><span class="line">        if (4*aylimit/Arclength/Delta - V_me^2) &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="70,26" id="srcline26"> 26</a></span><span class="line">            upbound = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,27" id="srcline27"> 27</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,28" id="srcline28"> 28</a></span><span class="line">            upbound = min(sqrt(4*aylimit/Arclength/abs(Delta) - V_me^2),SpeedLimitIn);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,29" id="srcline29"> 29</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="70,30" id="srcline30"> 30</a></span><span class="line"><span class="comment">%         upbound = min([(V_me^2 + 2*axlimit*Arclength),(4*aylimit/Arclength/abs(Delta) - V_me^2),UB]);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,31" id="srcline31"> 31</a></span><span class="line"><span class="comment">%         lobound = max([0,(V_me^2 - 2*axlimit*Arclength),(-4*aylimit/Arclength/abs(Delta) - V_me^2),LB]);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,32" id="srcline32"> 32</a></span><span class="line">        upbound = min([(V_me^2 + 2*axlimit*Arclength),max([(4*aylimit/Arclength/abs(Delta) - V_me^2),0]),SpeedLimitIn^2]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,33" id="srcline33"> 33</a></span><span class="line">        lobound = max([0,(V_me^2 - 2*axlimit*Arclength),(-4*aylimit/Arclength/abs(Delta) - V_me^2)]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,34" id="srcline34"> 34</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,35" id="srcline35"> 35</a></span><span class="line">        if lobound &lt; upbound</span></span>
+<span class="srcline"><span class="lineno"><a href="70,36" id="srcline36"> 36</a></span><span class="line">            [xoptres,hminx,IterGoldenStep] = goldenSearchDirVtar(sqrt(lobound),sqrt(upbound),LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,37" id="srcline37"> 37</a></span><span class="line">            if hminx &gt;= -1e-2</span></span>
+<span class="srcline"><span class="lineno"><a href="70,38" id="srcline38"> 38</a></span><span class="line">                V_tar = xoptres;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,39" id="srcline39"> 39</a></span><span class="line">                a_me = (V_tar^2 - V_me^2) /2/Arclength;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,40" id="srcline40"> 40</a></span><span class="line">                if abs(a_me) &gt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,41" id="srcline41"> 41</a></span><span class="line">                    T_Cross = (V_tar - V_me)/a_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,42" id="srcline42"> 42</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,43" id="srcline43"> 43</a></span><span class="line">                    T_Cross = Arclength/V_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,44" id="srcline44"> 44</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,45" id="srcline45"> 45</a></span><span class="line">                T_long = T_Cross ;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,46" id="srcline46"> 46</a></span><span class="line">                T_lat =  T_Cross ;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,47" id="srcline47"> 47</a></span><span class="line">                Deltaout = Delta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,48" id="srcline48"> 48</a></span><span class="line">                Arclengthout = Arclength;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,49" id="srcline49"> 49</a></span><span class="line">                PlanRes = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,50" id="srcline50"> 50</a></span><span class="line">                KurMax = k_localmax;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,51" id="srcline51"> 51</a></span><span class="line">                Pxoptres=xoptres;PDeltaout=Deltaout;PArclengthout=Arclengthout;PT_long=T_long;PT_lat=T_lat;PPlanRes=PlanRes;PKurMax=KurMax;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,52" id="srcline52"> 52</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,53" id="srcline53"> 53</a></span><span class="line">                PathPlanRetryFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,54" id="srcline54"> 54</a></span><span class="line">                xoptres = Pxoptres;Deltaout=PDeltaout;Arclengthout=PArclengthout;T_long=PT_long;T_lat=PT_lat;PlanRes=PPlanRes;KurMax=PKurMax;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,55" id="srcline55"> 55</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,56" id="srcline56"> 56</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,57" id="srcline57"> 57</a></span><span class="line">            PathPlanRetryFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,58" id="srcline58"> 58</a></span><span class="line">            xoptres = Pxoptres;Deltaout=PDeltaout;Arclengthout=PArclengthout;T_long=PT_long;T_lat=PT_lat;PlanRes=PPlanRes;KurMax=PKurMax;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,59" id="srcline59"> 59</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,60" id="srcline60"> 60</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,61" id="srcline61"> 61</a></span><span class="line">        xoptres = Pxoptres;Deltaout=PDeltaout;Arclengthout=PArclengthout;T_long=PT_long;T_lat=PT_lat;PlanRes=PPlanRes;KurMax=PKurMax;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,62" id="srcline62"> 62</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,63" id="srcline63"> 63</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,64" id="srcline64"> 64</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,65" id="srcline65"> 65</a></span><span class="line">function [bestStep,hminx,goldenn]=goldenSearchDirVtar(lo,hi,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,66" id="srcline66"> 66</a></span><span class="line">    a=lo;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,67" id="srcline67"> 67</a></span><span class="line">    b=hi;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,68" id="srcline68"> 68</a></span><span class="line">    error= 1e-1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,69" id="srcline69"> 69</a></span><span class="line">    golden=0.61803398;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,70" id="srcline70"> 70</a></span><span class="line">    goldenn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,71" id="srcline71"> 71</a></span><span class="line">    alpha=a + (1-golden) * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,72" id="srcline72"> 72</a></span><span class="line">    beta=a + golden * (b-a);    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,73" id="srcline73"> 73</a></span><span class="line">    [f_alpha,hminx_alpha]=Pfunc( alpha,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,74" id="srcline74"> 74</a></span><span class="line">    [f_beta,hminx_beta]=Pfunc( beta,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,75" id="srcline75"> 75</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,76" id="srcline76"> 76</a></span><span class="line">    while(abs(b-a)&gt;error)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,77" id="srcline77"> 77</a></span><span class="line">        goldenn = goldenn + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,78" id="srcline78"> 78</a></span><span class="line">    <span class="comment">%     a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,79" id="srcline79"> 79</a></span><span class="line">        if alpha&gt;beta</span></span>
+<span class="srcline"><span class="lineno"><a href="70,80" id="srcline80"> 80</a></span><span class="line">    <span class="comment">%         a=a1;b=b1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,81" id="srcline81"> 81</a></span><span class="line">            alpha=a + (1-golden) * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,82" id="srcline82"> 82</a></span><span class="line">            beta=a + golden * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,83" id="srcline83"> 83</a></span><span class="line">            [f_alpha,hminx_alpha]=Pfunc( alpha,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,84" id="srcline84"> 84</a></span><span class="line">            [f_beta,hminx_beta]=Pfunc( beta,LB,UB);       </span></span>
+<span class="srcline"><span class="lineno"><a href="70,85" id="srcline85"> 85</a></span><span class="line">        end  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,86" id="srcline86"> 86</a></span><span class="line">        if f_alpha&lt;=f_beta</span></span>
+<span class="srcline"><span class="lineno"><a href="70,87" id="srcline87"> 87</a></span><span class="line">            b=beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,88" id="srcline88"> 88</a></span><span class="line">            beta=alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,89" id="srcline89"> 89</a></span><span class="line">            f_beta=f_alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,90" id="srcline90"> 90</a></span><span class="line">            alpha=a + (b-beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,91" id="srcline91"> 91</a></span><span class="line">            [f_alpha,hminx_alpha]=Pfunc( alpha,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,92" id="srcline92"> 92</a></span><span class="line">    <span class="comment">%         a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,93" id="srcline93"> 93</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,94" id="srcline94"> 94</a></span><span class="line">            a = alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,95" id="srcline95"> 95</a></span><span class="line">            alpha = beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,96" id="srcline96"> 96</a></span><span class="line">            f_alpha = f_beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,97" id="srcline97"> 97</a></span><span class="line">            beta = b - (alpha-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,98" id="srcline98"> 98</a></span><span class="line">            [f_beta,hminx_beta] = Pfunc( beta,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,99" id="srcline99"> 99</a></span><span class="line">    <span class="comment">%         a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,100" id="srcline100">100</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,101" id="srcline101">101</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,102" id="srcline102">102</a></span><span class="line">    goldenn ;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,103" id="srcline103">103</a></span><span class="line"><span class="comment">%     bestStep = (a + b)/2;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,104" id="srcline104">104</a></span><span class="line"><span class="comment">%     hminx = (hminx_beta + hminx_alpha)/2;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,105" id="srcline105">105</a></span><span class="line"><span class="comment">%     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,106" id="srcline106">106</a></span><span class="line">    [f_a,hminx_a] = Pfunc(a,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,107" id="srcline107">107</a></span><span class="line">    [f_b,hminx_b] = Pfunc(b,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,108" id="srcline108">108</a></span><span class="line">    if f_a&lt;f_b</span></span>
+<span class="srcline"><span class="lineno"><a href="70,109" id="srcline109">109</a></span><span class="line">        bestStep=a;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,110" id="srcline110">110</a></span><span class="line">        hminx = hminx_a;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,111" id="srcline111">111</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,112" id="srcline112">112</a></span><span class="line">        bestStep=b;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,113" id="srcline113">113</a></span><span class="line">        hminx = hminx_b;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,114" id="srcline114">114</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,115" id="srcline115">115</a></span><span class="line"><span class="comment">%     if Pfunc(a,LB,UB)&lt;Pfunc(b,LB,UB)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,116" id="srcline116">116</a></span><span class="line"><span class="comment">%         bestStep=a;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,117" id="srcline117">117</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,118" id="srcline118">118</a></span><span class="line"><span class="comment">%         bestStep=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,119" id="srcline119">119</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,120" id="srcline120">120</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,121" id="srcline121">121</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,122" id="srcline122">122</a></span><span class="line">function xoptim = SQPCal(x0,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,123" id="srcline123">123</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,124" id="srcline124">124</a></span><span class="line">    global ratio</span></span>
+<span class="srcline"><span class="lineno"><a href="70,125" id="srcline125">125</a></span><span class="line">    ratio = 1e3;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,126" id="srcline126">126</a></span><span class="line">    ic = 0</span></span>
+<span class="srcline"><span class="lineno"><a href="70,127" id="srcline127">127</a></span><span class="line">    N1flg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,128" id="srcline128">128</a></span><span class="line">    limit1 = 0;    limit2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,129" id="srcline129">129</a></span><span class="line">    lolimit = 0;      hilimit = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,130" id="srcline130">130</a></span><span class="line">    dk = [1]'; Lamda = ones(6,1);  x1 = x0;Bk=eye(1);xoptim = x0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,131" id="srcline131">131</a></span><span class="line">    while (1)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,132" id="srcline132">132</a></span><span class="line">        if N1flg == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="70,133" id="srcline133">133</a></span><span class="line">            [CostG,ConG,Costx,Hx]=GradientCal(x0,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,134" id="srcline134">134</a></span><span class="line">            N1flg =1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,135" id="srcline135">135</a></span><span class="line">            Alpha = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,136" id="srcline136">136</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,137" id="srcline137">137</a></span><span class="line">            for i = 1:1</span></span>
+<span class="srcline"><span class="lineno"><a href="70,138" id="srcline138">138</a></span><span class="line">                if abs(dk(i)) &lt; 1e-4</span></span>
+<span class="srcline"><span class="lineno"><a href="70,139" id="srcline139">139</a></span><span class="line">                    limit1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,140" id="srcline140">140</a></span><span class="line">                    limit2 = 1e4;                </span></span>
+<span class="srcline"><span class="lineno"><a href="70,141" id="srcline141">141</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,142" id="srcline142">142</a></span><span class="line">                    limit1 = ((LB(i) - x1(i))./dk(i));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,143" id="srcline143">143</a></span><span class="line">                    limit2 = ((UB(i) - x1(i))./dk(i));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,144" id="srcline144">144</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,145" id="srcline145">145</a></span><span class="line">                lolimit = min([limit1(i),limit2(i)]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,146" id="srcline146">146</a></span><span class="line">                hilimit = max([limit1(i),limit2(i)]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,147" id="srcline147">147</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,148" id="srcline148">148</a></span><span class="line">            Lo = max([lolimit,0]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,149" id="srcline149">149</a></span><span class="line">            Hi = min(hilimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,150" id="srcline150">150</a></span><span class="line">            if (Hi &lt;0)||(Hi &lt; Lo)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,151" id="srcline151">151</a></span><span class="line">                break;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,152" id="srcline152">152</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,153" id="srcline153">153</a></span><span class="line">            Alpha=goldenSearch(x1,dk,Lo,Hi,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,154" id="srcline154">154</a></span><span class="line">            if Alpha == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="70,155" id="srcline155">155</a></span><span class="line">                break;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,156" id="srcline156">156</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,157" id="srcline157">157</a></span><span class="line">            x1temp = x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,158" id="srcline158">158</a></span><span class="line">            x1 = x1 + Alpha * dk;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,159" id="srcline159">159</a></span><span class="line">            sk=x1-x1temp; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,160" id="srcline160">160</a></span><span class="line">            initial_CostG = LxGradientCal(x1temp,Lamda,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,161" id="srcline161">161</a></span><span class="line">            CostG = LxGradientCal(x1,Lamda,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,162" id="srcline162">162</a></span><span class="line">            yk = CostG-initial_CostG; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,163" id="srcline163">163</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,164" id="srcline164">164</a></span><span class="line">            if  yk'*sk&gt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="70,165" id="srcline165">165</a></span><span class="line">                Bk=Bk+(sk*sk')/(yk'*sk)-(Bk*yk*yk'*Bk)/(yk'*Bk*yk);  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,166" id="srcline166">166</a></span><span class="line">            else </span></span>
+<span class="srcline"><span class="lineno"><a href="70,167" id="srcline167">167</a></span><span class="line">                <span class="comment">%Bk=Bk;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,168" id="srcline168">168</a></span><span class="line">            end   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,169" id="srcline169">169</a></span><span class="line">            [CostG,ConG,Costx,Hx] = GradientCal(x1,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,170" id="srcline170">170</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,171" id="srcline171">171</a></span><span class="line">        y1 = ones(6,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,172" id="srcline172">172</a></span><span class="line">        w1 = ones(6,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,173" id="srcline173">173</a></span><span class="line">        dx1 = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,174" id="srcline174">174</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,175" id="srcline175">175</a></span><span class="line">        [dk,Lamda] = qpfunc( Bk,CostG,ConG',-Hx,dx1,y1,w1 );  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,176" id="srcline176">176</a></span><span class="line">        if (norm(dk,2)&lt;1e-3)||(Alpha &lt; 1e-4)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,177" id="srcline177">177</a></span><span class="line">            xoptim = x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,178" id="srcline178">178</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,179" id="srcline179">179</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,180" id="srcline180">180</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,181" id="srcline181">181</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,182" id="srcline182">182</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,183" id="srcline183">183</a></span><span class="line">function [CostG,ConG,Costx,Hx]= GradientCal(Xin,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,184" id="srcline184">184</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,185" id="srcline185">185</a></span><span class="line">    value1Cost=0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,186" id="srcline186">186</a></span><span class="line">    value2Cost=0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,187" id="srcline187">187</a></span><span class="line">    value1Con=[0 0 0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,188" id="srcline188">188</a></span><span class="line">    value2Con=[0 0 0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,189" id="srcline189">189</a></span><span class="line">    dx=1e-1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,190" id="srcline190">190</a></span><span class="line">    Xin_x=Xin+ dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,191" id="srcline191">191</a></span><span class="line">    value1Cost = (  CostFun(Xin_x) - CostFun(Xin) ) / dx;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,192" id="srcline192">192</a></span><span class="line">    ConFuncXinVal = ConFunc(Xin,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,193" id="srcline193">193</a></span><span class="line">    value1Con(1,:) = (  ConFunc(Xin_x,LB,UB) - ConFuncXinVal ) / dx;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,194" id="srcline194">194</a></span><span class="line">    Xin_x=Xin-dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,195" id="srcline195">195</a></span><span class="line">    value2Cost = (  CostFun(Xin_x) - CostFun(Xin) ) / (-dx);   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,196" id="srcline196">196</a></span><span class="line">    value2Con(1,:) = (  ConFunc(Xin_x,LB,UB) - ConFuncXinVal ) / (-dx);    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,197" id="srcline197">197</a></span><span class="line">    CostG = (value2Cost + value1Cost)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,198" id="srcline198">198</a></span><span class="line">    ConG = (value2Con + value1Con)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,199" id="srcline199">199</a></span><span class="line">    Costx = CostFun(Xin);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,200" id="srcline200">200</a></span><span class="line">    Hx = ConFuncXinVal;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,201" id="srcline201">201</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,202" id="srcline202">202</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,203" id="srcline203">203</a></span><span class="line">function bestStep=goldenSearch(x0,direction,lo,hi,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,204" id="srcline204">204</a></span><span class="line">    a=lo;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,205" id="srcline205">205</a></span><span class="line">    b=hi;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,206" id="srcline206">206</a></span><span class="line">    error=1e-3;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,207" id="srcline207">207</a></span><span class="line">    golden=0.61803398;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,208" id="srcline208">208</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,209" id="srcline209">209</a></span><span class="line">    alpha=a + (1-golden) * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,210" id="srcline210">210</a></span><span class="line">    beta=a + golden * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,211" id="srcline211">211</a></span><span class="line">    [f_alpha,hminx_alpha]=Pfunc( x0 + alpha * direction,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,212" id="srcline212">212</a></span><span class="line">    [f_beta,hminx_beta]=Pfunc( x0 + beta * direction,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,213" id="srcline213">213</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,214" id="srcline214">214</a></span><span class="line">    while(abs(b-a)&gt;error)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,215" id="srcline215">215</a></span><span class="line">    <span class="comment">%     a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,216" id="srcline216">216</a></span><span class="line">        if alpha&gt;beta</span></span>
+<span class="srcline"><span class="lineno"><a href="70,217" id="srcline217">217</a></span><span class="line">    <span class="comment">%         a=a1;b=b1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,218" id="srcline218">218</a></span><span class="line">            alpha=a + (1-golden) * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,219" id="srcline219">219</a></span><span class="line">            beta=a + golden * (b-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,220" id="srcline220">220</a></span><span class="line">            [f_alpha,hminx_alpha]=Pfunc( x0 + alpha * direction,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,221" id="srcline221">221</a></span><span class="line">            [f_beta,hminx_beta]=Pfunc( x0 + beta * direction,LB,UB);       </span></span>
+<span class="srcline"><span class="lineno"><a href="70,222" id="srcline222">222</a></span><span class="line">        end  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,223" id="srcline223">223</a></span><span class="line">        if f_alpha&lt;=f_beta</span></span>
+<span class="srcline"><span class="lineno"><a href="70,224" id="srcline224">224</a></span><span class="line">            b=beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,225" id="srcline225">225</a></span><span class="line">            beta=alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,226" id="srcline226">226</a></span><span class="line">            f_beta=f_alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,227" id="srcline227">227</a></span><span class="line">            alpha=a + (b-beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,228" id="srcline228">228</a></span><span class="line">            [f_alpha,hminx_alpha]=Pfunc( x0 + alpha*direction,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,229" id="srcline229">229</a></span><span class="line">    <span class="comment">%         a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,230" id="srcline230">230</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,231" id="srcline231">231</a></span><span class="line">            a = alpha;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,232" id="srcline232">232</a></span><span class="line">            alpha = beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,233" id="srcline233">233</a></span><span class="line">            f_alpha = f_beta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,234" id="srcline234">234</a></span><span class="line">            beta = b - (alpha-a);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,235" id="srcline235">235</a></span><span class="line">            [f_beta,hminx_beta] = Pfunc( x0 + beta * direction,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,236" id="srcline236">236</a></span><span class="line">    <span class="comment">%         a1=a;  b1=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,237" id="srcline237">237</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,238" id="srcline238">238</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,239" id="srcline239">239</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,240" id="srcline240">240</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,241" id="srcline241">241</a></span><span class="line"><span class="comment">%     if Pfunc(x0 + a * direction,LB,UB)&lt;Pfunc(x0 + b * direction,LB,UB)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,242" id="srcline242">242</a></span><span class="line"><span class="comment">%         bestStep=a;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,243" id="srcline243">243</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,244" id="srcline244">244</a></span><span class="line"><span class="comment">%         bestStep=b;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,245" id="srcline245">245</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,246" id="srcline246">246</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,247" id="srcline247">247</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,248" id="srcline248">248</a></span><span class="line">function [dk,dkLamda] = qpfunc( H,c,A,b,x1,y1,w1 )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,249" id="srcline249">249</a></span><span class="line"><span class="comment">%UNTITLED2 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,250" id="srcline250">250</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,251" id="srcline251">251</a></span><span class="line">Delta = 0.1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,252" id="srcline252">252</a></span><span class="line">P = 0.9;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,253" id="srcline253">253</a></span><span class="line">E = ones(length(y1),1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,254" id="srcline254">254</a></span><span class="line">m = length(b);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,255" id="srcline255">255</a></span><span class="line">k = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,256" id="srcline256">256</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,257" id="srcline257">257</a></span><span class="line">        k = k + 1</span></span>
+<span class="srcline"><span class="lineno"><a href="70,258" id="srcline258">258</a></span><span class="line">        if k == 245</span></span>
+<span class="srcline"><span class="lineno"><a href="70,259" id="srcline259">259</a></span><span class="line">            k = k;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,260" id="srcline260">260</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,261" id="srcline261">261</a></span><span class="line">        Y = diag(y1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,262" id="srcline262">262</a></span><span class="line">        W = diag(w1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,263" id="srcline263">263</a></span><span class="line">        Rho = b - A*x1 + w1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,264" id="srcline264">264</a></span><span class="line">        Sigma = c + H*x1 -A'*y1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,265" id="srcline265">265</a></span><span class="line">        Gamma = y1'*w1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,266" id="srcline266">266</a></span><span class="line">        Mu = Delta * Gamma / m;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,267" id="srcline267">267</a></span><span class="line">        newMatricL = [-H A';A inv(Y)*W];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,268" id="srcline268">268</a></span><span class="line">        newMatricR = [c + H*x1 - A'*y1;b-A*x1 + Mu*inv(Y)*E];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,269" id="srcline269">269</a></span><span class="line">        dxy = inv(newMatricL)*newMatricR;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,270" id="srcline270">270</a></span><span class="line">        dx = dxy(1:length(x1));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,271" id="srcline271">271</a></span><span class="line">        dy = dxy((length(x1)+1):(length(dxy)));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,272" id="srcline272">272</a></span><span class="line">        dw = inv(Y)*(Mu*E - Y*W*E - W*dy);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,273" id="srcline273">273</a></span><span class="line">        LamdaTemp1 = [-dy./y1,-dw./w1];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,274" id="srcline274">274</a></span><span class="line">        Lamda = min([1, P*pinv(max([-dy./y1;-dw./w1]))]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,275" id="srcline275">275</a></span><span class="line">        <span class="comment">%if ((norm(Rho,1)&gt;1e-2)|(norm(Sigma,1)&gt;1e-2))</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,276" id="srcline276">276</a></span><span class="line">        if (norm(Gamma,1)&lt;1e-3)&amp;(norm(Rho,1)&lt;1e-3)&amp;(norm(Sigma,1)&lt;1e-3)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,277" id="srcline277">277</a></span><span class="line">            dk = x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,278" id="srcline278">278</a></span><span class="line">            dkLamda = y1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,279" id="srcline279">279</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,280" id="srcline280">280</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,281" id="srcline281">281</a></span><span class="line">            if Lamda &lt; 1e-4</span></span>
+<span class="srcline"><span class="lineno"><a href="70,282" id="srcline282">282</a></span><span class="line">                dk = x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,283" id="srcline283">283</a></span><span class="line">                dkLamda = y1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,284" id="srcline284">284</a></span><span class="line">                break;                </span></span>
+<span class="srcline"><span class="lineno"><a href="70,285" id="srcline285">285</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,286" id="srcline286">286</a></span><span class="line">                x1 = x1 + Lamda*dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,287" id="srcline287">287</a></span><span class="line">                y1 = y1 + Lamda*dy;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,288" id="srcline288">288</a></span><span class="line">                w1 = w1 + Lamda*dw;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,289" id="srcline289">289</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,290" id="srcline290">290</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,291" id="srcline291">291</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,292" id="srcline292">292</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,293" id="srcline293">293</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,294" id="srcline294">294</a></span><span class="line">function dLxVal= LxGradientCal(Xin,Lamda,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,295" id="srcline295">295</a></span><span class="line">    value1LxVal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,296" id="srcline296">296</a></span><span class="line">    value2LxVal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,297" id="srcline297">297</a></span><span class="line">    dx=1e-1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,298" id="srcline298">298</a></span><span class="line">    Xin_x=Xin+ dx;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,299" id="srcline299">299</a></span><span class="line">    ConFuncValue = ConFunc(Xin_x,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,300" id="srcline300">300</a></span><span class="line">    value1LxVal = (CostFun(Xin_x) - CostFun(Xin)- Lamda' *  ConFunc(Xin_x,LB,UB) + Lamda' *  ConFuncValue)/dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,301" id="srcline301">301</a></span><span class="line">    Xin_x=Xin-dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,302" id="srcline302">302</a></span><span class="line">    value2LxVal = -(CostFun(Xin_x) - CostFun(Xin)- Lamda' *  ConFunc(Xin_x,LB,UB) + Lamda' *  ConFuncValue)/dx;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,303" id="srcline303">303</a></span><span class="line">    dLxVal = (value1LxVal + value2LxVal)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,304" id="srcline304">304</a></span><span class="line">    dLxVal = dLxVal';    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,305" id="srcline305">305</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,306" id="srcline306">306</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,307" id="srcline307">307</a></span><span class="line"><span class="comment">% function  Pval = Pfunc2(Xin,LB,UB)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,308" id="srcline308">308</a></span><span class="line"><span class="comment">%     global ratio </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,309" id="srcline309">309</a></span><span class="line"><span class="comment">%     C = ConFunc(Xin,LB,UB)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,310" id="srcline310">310</a></span><span class="line"><span class="comment">%     hminx= min([0,min(-C)]);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,311" id="srcline311">311</a></span><span class="line"><span class="comment">%     Pval = InterSectionCostFunc(Xin) + ratio* norm(hminx,1);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,312" id="srcline312">312</a></span><span class="line"><span class="comment">% end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,313" id="srcline313">313</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,314" id="srcline314">314</a></span><span class="line">function  [Pval,hminx] = Pfunc(Xin,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,315" id="srcline315">315</a></span><span class="line">    global ratio </span></span>
+<span class="srcline"><span class="lineno"><a href="70,316" id="srcline316">316</a></span><span class="line">    C = ConFunc(Xin,LB,UB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,317" id="srcline317">317</a></span><span class="line">    hminx= min([0,min(-C)]);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,318" id="srcline318">318</a></span><span class="line">    Pval = InterSectionCostFunc(Xin) + ratio* norm(hminx,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,319" id="srcline319">319</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,320" id="srcline320">320</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,321" id="srcline321">321</a></span><span class="line">function Fcost= CostFun(Xin)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,322" id="srcline322">322</a></span><span class="line">    Fcost = InterSectionCostFunc(Xin);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,323" id="srcline323">323</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,324" id="srcline324">324</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,325" id="srcline325">325</a></span><span class="line">function ConVal= ConFunc(Xin,LB,UB)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,326" id="srcline326">326</a></span><span class="line">    C = [0 0 0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,327" id="srcline327">327</a></span><span class="line">    [C(1:4),Ceq] = InterSectionNon( Xin);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,328" id="srcline328">328</a></span><span class="line">    LengthC = 4;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,329" id="srcline329">329</a></span><span class="line">    LengthLB = length(LB);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,330" id="srcline330">330</a></span><span class="line">    C((LengthC+1):(LengthC+LengthLB))= Xin - UB;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,331" id="srcline331">331</a></span><span class="line">    C((LengthC+LengthLB+1):(LengthC+LengthLB+LengthLB))= LB - Xin;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,332" id="srcline332">332</a></span><span class="line"><span class="comment">%     C=-C;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,333" id="srcline333">333</a></span><span class="line">    ConVal = C';</span></span>
+<span class="srcline"><span class="lineno"><a href="70,334" id="srcline334">334</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,335" id="srcline335">335</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,336" id="srcline336">336</a></span><span class="line">function [ ArcFr,ArcRl,ypositionFr,ypositionRl ] = ArcPosCalInterSection( angle_out,angle_in,x_in,y_in,x_out,y_out,x0,x1 ,xtarFr,xtarRl)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,337" id="srcline337">337</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,338" id="srcline338">338</a></span><span class="line">    xpositionFr = 0;ypositionFr = 0;xpositionRl = 0;ypositionRl = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,339" id="srcline339">339</a></span><span class="line">    xpositionFrtemp = 0;ypositionFrtemp = 0;xpositionRltemp = 0;ypositionRltemp = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,340" id="srcline340">340</a></span><span class="line">    temp1 = x0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,341" id="srcline341">341</a></span><span class="line">    temp2 = x1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,342" id="srcline342">342</a></span><span class="line">    [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x0,angle_out,angle_in,x_in,y_in,x_out,y_out,1 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,343" id="srcline343">343</a></span><span class="line">    funx0 = xpositionFrtemp - xtarFr;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,344" id="srcline344">344</a></span><span class="line">    [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x1,angle_out,angle_in,x_in,y_in,x_out,y_out,1 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,345" id="srcline345">345</a></span><span class="line">    funx1 = xpositionFrtemp - xtarFr;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,346" id="srcline346">346</a></span><span class="line">    x2 = x1-funx1*(x1-x0)/(funx1-funx0);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,347" id="srcline347">347</a></span><span class="line">    Sectn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,348" id="srcline348">348</a></span><span class="line">    while (abs(x1-x0)&gt;=1.0e-1) &amp;&amp; (Sectn&lt;=20) </span></span>
+<span class="srcline"><span class="lineno"><a href="70,349" id="srcline349">349</a></span><span class="line">        x0=x1;                                       </span></span>
+<span class="srcline"><span class="lineno"><a href="70,350" id="srcline350">350</a></span><span class="line">        x1=x2; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,351" id="srcline351">351</a></span><span class="line">        [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x0,angle_out,angle_in,x_in,y_in,x_out,y_out,2 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,352" id="srcline352">352</a></span><span class="line">        funx0 = xpositionFrtemp - xtarFr;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,353" id="srcline353">353</a></span><span class="line">        [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x1,angle_out,angle_in,x_in,y_in,x_out,y_out,2 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,354" id="srcline354">354</a></span><span class="line">        funx1 = xpositionFrtemp - xtarFr;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,355" id="srcline355">355</a></span><span class="line">        x2 = x1-funx1*(x1-x0)/(funx1-funx0);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,356" id="srcline356">356</a></span><span class="line">        Sectn=Sectn+1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,357" id="srcline357">357</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,358" id="srcline358">358</a></span><span class="line">    Sectn ;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,359" id="srcline359">359</a></span><span class="line">    ArcFr = x2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,360" id="srcline360">360</a></span><span class="line">    ypositionFr = ypositionFrtemp;   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,361" id="srcline361">361</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,362" id="srcline362">362</a></span><span class="line"><span class="comment">%     x0 = temp1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,363" id="srcline363">363</a></span><span class="line">    x0 = x2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,364" id="srcline364">364</a></span><span class="line">    x1 = temp2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,365" id="srcline365">365</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,366" id="srcline366">366</a></span><span class="line">    [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x0,angle_out,angle_in,x_in,y_in,x_out,y_out,3 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,367" id="srcline367">367</a></span><span class="line">    funx0 = xpositionRltemp - xtarRl;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,368" id="srcline368">368</a></span><span class="line">    [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x1,angle_out,angle_in,x_in,y_in,x_out,y_out,3 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,369" id="srcline369">369</a></span><span class="line">    funx1 = xpositionRltemp - xtarRl;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,370" id="srcline370">370</a></span><span class="line">    x2 = x1-funx1*(x1-x0)/(funx1-funx0);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,371" id="srcline371">371</a></span><span class="line">    Sectn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,372" id="srcline372">372</a></span><span class="line">    while (abs(x1-x0)&gt;=1.0e-1) &amp;&amp; (Sectn&lt;=20)      </span></span>
+<span class="srcline"><span class="lineno"><a href="70,373" id="srcline373">373</a></span><span class="line">        x0=x1;                                      </span></span>
+<span class="srcline"><span class="lineno"><a href="70,374" id="srcline374">374</a></span><span class="line">        x1=x2;                                       </span></span>
+<span class="srcline"><span class="lineno"><a href="70,375" id="srcline375">375</a></span><span class="line">        <span class="comment">%x2=x1-fun(x1)*(x1-x0)/(fun(x1)-fun(x0));            </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,376" id="srcline376">376</a></span><span class="line">        [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x0,angle_out,angle_in,x_in,y_in,x_out,y_out,3 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,377" id="srcline377">377</a></span><span class="line">        funx0 = xpositionRltemp - xtarRl;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,378" id="srcline378">378</a></span><span class="line">        [xpositionFrtemp,ypositionFrtemp,xpositionRltemp,ypositionRltemp] = InterSectionPosCal( x1,angle_out,angle_in,x_in,y_in,x_out,y_out,3 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,379" id="srcline379">379</a></span><span class="line">        funx1 = xpositionRltemp - xtarRl;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,380" id="srcline380">380</a></span><span class="line">        x2 = x1-funx1*(x1-x0)/(funx1-funx0);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,381" id="srcline381">381</a></span><span class="line">        Sectn=Sectn+1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,382" id="srcline382">382</a></span><span class="line">    end </span></span>
+<span class="srcline"><span class="lineno"><a href="70,383" id="srcline383">383</a></span><span class="line">    Sectn;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,384" id="srcline384">384</a></span><span class="line">    ArcRl = x2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,385" id="srcline385">385</a></span><span class="line">    ypositionRl = ypositionRltemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,386" id="srcline386">386</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,387" id="srcline387">387</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,388" id="srcline388">388</a></span><span class="line">function [xpositionFr,ypositionFr,xpositionRl,ypositionRl] = InterSectionPosCal( Arc,angle_out,angle_in,x_in,y_in,x_out,y_out,Num )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,389" id="srcline389">389</a></span><span class="line"><span class="comment">%UNTITLED3 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,390" id="srcline390">390</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,391" id="srcline391">391</a></span><span class="line"><span class="comment">%   Num == 1 Calculate All</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,392" id="srcline392">392</a></span><span class="line"><span class="comment">%   Num == 0 Calculate None</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,393" id="srcline393">393</a></span><span class="line"><span class="comment">%   Num == 2 Calculate Fr only</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,394" id="srcline394">394</a></span><span class="line"><span class="comment">%   Num == 3 Calculate Rl only</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,395" id="srcline395">395</a></span><span class="line">    global Delta Arclength</span></span>
+<span class="srcline"><span class="lineno"><a href="70,396" id="srcline396">396</a></span><span class="line">    global L_me W_me</span></span>
+<span class="srcline"><span class="lineno"><a href="70,397" id="srcline397">397</a></span><span class="line">    xpositionFr = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,398" id="srcline398">398</a></span><span class="line">    ypositionFr = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,399" id="srcline399">399</a></span><span class="line">    xpositionRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,400" id="srcline400">400</a></span><span class="line">    ypositionRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,401" id="srcline401">401</a></span><span class="line">    switch Num</span></span>
+<span class="srcline"><span class="lineno"><a href="70,402" id="srcline402">402</a></span><span class="line">        case 0,</span></span>
+<span class="srcline"><span class="lineno"><a href="70,403" id="srcline403">403</a></span><span class="line">            FrCal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,404" id="srcline404">404</a></span><span class="line">            RlCal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,405" id="srcline405">405</a></span><span class="line">        case 1,</span></span>
+<span class="srcline"><span class="lineno"><a href="70,406" id="srcline406">406</a></span><span class="line">            FrCal = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,407" id="srcline407">407</a></span><span class="line">            RlCal = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,408" id="srcline408">408</a></span><span class="line">        case 2,</span></span>
+<span class="srcline"><span class="lineno"><a href="70,409" id="srcline409">409</a></span><span class="line">            FrCal = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,410" id="srcline410">410</a></span><span class="line">            RlCal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,411" id="srcline411">411</a></span><span class="line">        case 3,</span></span>
+<span class="srcline"><span class="lineno"><a href="70,412" id="srcline412">412</a></span><span class="line">            FrCal = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,413" id="srcline413">413</a></span><span class="line">            RlCal = 1;  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,414" id="srcline414">414</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,415" id="srcline415">415</a></span><span class="line">    if FrCal || RlCal   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,416" id="srcline416">416</a></span><span class="line">         [xposition,yposition,Theta] = ElementaryPosCal( Arc,Delta,Arclength,angle_out,angle_in,x_in,y_in,x_out,y_out );     </span></span>
+<span class="srcline"><span class="lineno"><a href="70,417" id="srcline417">417</a></span><span class="line">        if FrCal</span></span>
+<span class="srcline"><span class="lineno"><a href="70,418" id="srcline418">418</a></span><span class="line">            xpositionFr = xposition + L_me * cos(Theta) + W_me * sin(Theta) / 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,419" id="srcline419">419</a></span><span class="line">            ypositionFr = yposition + L_me * sin(Theta) - W_me * cos(Theta) / 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,420" id="srcline420">420</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,421" id="srcline421">421</a></span><span class="line">            xpositionFr = 0;ypositionFr = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,422" id="srcline422">422</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="70,423" id="srcline423">423</a></span><span class="line">        if RlCal</span></span>
+<span class="srcline"><span class="lineno"><a href="70,424" id="srcline424">424</a></span><span class="line">            xpositionRl = xposition - W_me * sin(Theta) / 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,425" id="srcline425">425</a></span><span class="line">            ypositionRl = yposition + W_me * cos(Theta) / 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,426" id="srcline426">426</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,427" id="srcline427">427</a></span><span class="line">            xpositionRl = 0;ypositionRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,428" id="srcline428">428</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,429" id="srcline429">429</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,430" id="srcline430">430</a></span><span class="line">        xpositionFr = 0;ypositionFr = 0;xpositionRl = 0;ypositionRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,431" id="srcline431">431</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,432" id="srcline432">432</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,433" id="srcline433">433</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,434" id="srcline434">434</a></span><span class="line">function [Delta,k_localmax,Arclength] = ElementaryPathPlot( x_in,y_in,angle_in,x_out,y_out,angle_out )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,435" id="srcline435">435</a></span><span class="line">    Beta = (angle_out - angle_in)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,436" id="srcline436">436</a></span><span class="line">    r = sqrt((x_in-x_out)^2+(y_in-y_out)^2);   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,437" id="srcline437">437</a></span><span class="line">    SignBeta = sign(Beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,438" id="srcline438">438</a></span><span class="line">    Beta = abs(Beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,439" id="srcline439">439</a></span><span class="line">    ulimit = sqrt(Beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,440" id="srcline440">440</a></span><span class="line">    D_BetaVal = sin(Beta)*quadsinu2(ulimit)+cos(Beta)*quadcosu2(ulimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,441" id="srcline441">441</a></span><span class="line">    <span class="comment">%Droot = fzero(@(x) sin(x)*quadsinu2(x)+cos(x)*quadcosu2(x), pi);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,442" id="srcline442">442</a></span><span class="line">    Delta = 8*SignBeta*D_BetaVal^2/r^2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,443" id="srcline443">443</a></span><span class="line">    <span class="comment">%longth of the trajectary     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,444" id="srcline444">444</a></span><span class="line">    Arclength = 2*sqrt(2*abs(Beta/Delta*SignBeta));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,445" id="srcline445">445</a></span><span class="line">    k_localmax = Delta * Arclength/2;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,446" id="srcline446">446</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,447" id="srcline447">447</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,448" id="srcline448">448</a></span><span class="line">function [xposition,yposition,Theta] = ElementaryPosCal( Arc,Delta,Arclength,angle_out,angle_in,x_in,y_in,x_out,y_out )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,449" id="srcline449">449</a></span><span class="line"><span class="comment">%UNTITLED Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,450" id="srcline450">450</a></span><span class="line"><span class="comment">%   Detailed explanation goes here   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,451" id="srcline451">451</a></span><span class="line">    Beta = (angle_out - angle_in)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,452" id="srcline452">452</a></span><span class="line">    theta_rot = angle_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,453" id="srcline453">453</a></span><span class="line">    x_outRot = (x_out - x_in)*cos(theta_rot) + (y_out - y_in)*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,454" id="srcline454">454</a></span><span class="line">    y_outRot = (y_out - y_in)*cos(theta_rot) - (x_out - x_in)*sin(theta_rot);    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,455" id="srcline455">455</a></span><span class="line">    if Beta == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="70,456" id="srcline456">456</a></span><span class="line">        SignBeta = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,457" id="srcline457">457</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,458" id="srcline458">458</a></span><span class="line">        SignBeta = sign(Beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,459" id="srcline459">459</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,460" id="srcline460">460</a></span><span class="line">    if (Arc &lt; 0)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,461" id="srcline461">461</a></span><span class="line">        xpositionTemp = Arc * cos(angle_in) + x_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,462" id="srcline462">462</a></span><span class="line">        ypositionTemp = Arc * sin(angle_in) + y_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,463" id="srcline463">463</a></span><span class="line">        Theta = angle_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,464" id="srcline464">464</a></span><span class="line">    elseif (Arc &lt;= Arclength/2)&amp;&amp;(Arc &gt;=0)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,465" id="srcline465">465</a></span><span class="line">        ulimit = Arc * sqrt(abs(Delta)/2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,466" id="srcline466">466</a></span><span class="line">        Theta = Delta * (Arc)^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,467" id="srcline467">467</a></span><span class="line">        xpositionTemp = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,468" id="srcline468">468</a></span><span class="line">        ypositionTemp = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,469" id="srcline469">469</a></span><span class="line">    elseif (Arc &gt; Arclength/2)&amp;&amp;(Arc &lt; Arclength)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,470" id="srcline470">470</a></span><span class="line">        ulimit = (Arclength - Arc) * sqrt(abs(Delta)/2); </span></span>
+<span class="srcline"><span class="lineno"><a href="70,471" id="srcline471">471</a></span><span class="line">        <span class="comment">%Theta = 2*Beta*SignBeta - Delta * (Arclength - Arc)^2/2; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,472" id="srcline472">472</a></span><span class="line">        xpositionMirrTemp = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,473" id="srcline473">473</a></span><span class="line">        ypositionMirrTemp = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,474" id="srcline474">474</a></span><span class="line">        <span class="comment">%mirror line Ax+By+C=0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,475" id="srcline475">475</a></span><span class="line">        x_mirr = (x_outRot)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,476" id="srcline476">476</a></span><span class="line">        y_mirr = (y_outRot)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,477" id="srcline477">477</a></span><span class="line">        angle_mirr = pi/2 + atan((y_outRot)/(x_outRot));</span></span>
+<span class="srcline"><span class="lineno"><a href="70,478" id="srcline478">478</a></span><span class="line">        A = tan(angle_mirr);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,479" id="srcline479">479</a></span><span class="line">        B = -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,480" id="srcline480">480</a></span><span class="line">        C = y_mirr - A * x_mirr;      </span></span>
+<span class="srcline"><span class="lineno"><a href="70,481" id="srcline481">481</a></span><span class="line">        <span class="comment">%two points are symmetrical to the Ax+By+C we just defined</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,482" id="srcline482">482</a></span><span class="line">        xpositionTemp = xpositionMirrTemp - 2*A*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,483" id="srcline483">483</a></span><span class="line">        ypositionTemp = ypositionMirrTemp - 2*B*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,484" id="srcline484">484</a></span><span class="line">        Theta = 2*abs(Beta)*SignBeta - Delta * (Arclength - Arc)^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,485" id="srcline485">485</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,486" id="srcline486">486</a></span><span class="line">        xpositionTemp = Arc * cos(angle_out) + x_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,487" id="srcline487">487</a></span><span class="line">        ypositionTemp = Arc * sin(angle_out) + y_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,488" id="srcline488">488</a></span><span class="line">        Theta = angle_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,489" id="srcline489">489</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,490" id="srcline490">490</a></span><span class="line">    theta_rot = - angle_in;   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,491" id="srcline491">491</a></span><span class="line">    xposition = xpositionTemp*cos(theta_rot) + ypositionTemp*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,492" id="srcline492">492</a></span><span class="line">    yposition = ypositionTemp*cos(theta_rot) - xpositionTemp*sin(theta_rot) ;  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,493" id="srcline493">493</a></span><span class="line">    xposition = xposition + x_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,494" id="srcline494">494</a></span><span class="line">    yposition = yposition + y_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,495" id="srcline495">495</a></span><span class="line">    Theta = Theta + angle_in;    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,496" id="srcline496">496</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="70,497" id="srcline497">497</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,498" id="srcline498">498</a></span><span class="line"><span class="keyword">function</span> <span class="var type1" id="S361T1U3297">quadcosu2val</span> = quadcosu2( <span class="var type1" id="S362T1U3300">ulimit</span> )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,499" id="srcline499">499</a></span><span class="line">    <span class="comment">%UNTITLED4 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,500" id="srcline500">500</a></span><span class="line">    <span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,501" id="srcline501">501</a></span><span class="line">    <span class="comment">% this function is used to calculate the integral of cos(x^2),which is used</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,502" id="srcline502">502</a></span><span class="line">    <span class="comment">% to calculate x position</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,503" id="srcline503">503</a></span><span class="line">    <span class="keyword">global</span> <span class="var type0" id="S363T0U3302">quadcosu2tbl</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,504" id="srcline504">504</a></span><span class="line">    <span class="mxinfo " id="T1:U3"><span class="var type1" id="S364T1U3305">index</span> = <span class="mxinfo " id="T1:U5"><span class="mxinfo " id="T1:U6">fix(<span class="mxinfo " id="T1:U7"><span class="var type1" id="S362T1U3310">ulimit</span>/<span class="mxinfo " id="T1:U9">0.005</span></span>)</span> + <span class="mxinfo " id="T1:U10">1</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,505" id="srcline505">505</a></span><span class="line">    <span class="mxinfo " id="T1:U11"><span class="var type1" id="S361T1U3315">quadcosu2val</span> = <span class="mxinfo " id="T1:U13"><span class="var type1" id="S363T49U3317">quadcosu2tbl</span>(<span class="var type1" id="S364T1U3318">index</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,506" id="srcline506">506</a></span><span class="line"><span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,507" id="srcline507">507</a></span><span class="line"></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="70,508" id="srcline508">508</a></span><span class="line">function quadsinu2val = quadsinu2( ulimit )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,509" id="srcline509">509</a></span><span class="line"><span class="comment">%UNTITLED4 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,510" id="srcline510">510</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,511" id="srcline511">511</a></span><span class="line"><span class="comment">% this function is used to calculate the integral of sin(x^2),which is used</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,512" id="srcline512">512</a></span><span class="line"><span class="comment">% to calculate y position</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,513" id="srcline513">513</a></span><span class="line">    global quadsinu2tbl </span></span>
+<span class="srcline"><span class="lineno"><a href="70,514" id="srcline514">514</a></span><span class="line">    index = fix(ulimit/0.005) + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,515" id="srcline515">515</a></span><span class="line">    quadsinu2val = quadsinu2tbl(index);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,516" id="srcline516">516</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,517" id="srcline517">517</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,518" id="srcline518">518</a></span><span class="line">function cost = InterSectionCostFunc( Xin )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,519" id="srcline519">519</a></span><span class="line">    <span class="comment">%UNTITLED2 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,520" id="srcline520">520</a></span><span class="line">    <span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,521" id="srcline521">521</a></span><span class="line">    cost = - Xin;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,522" id="srcline522">522</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,523" id="srcline523">523</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,524" id="srcline524">524</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,525" id="srcline525">525</a></span><span class="line">function [ C,Ceq ] = InterSectionNon( Xin )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,526" id="srcline526">526</a></span><span class="line">    <span class="comment">%UNTITLED Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,527" id="srcline527">527</a></span><span class="line">    <span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,528" id="srcline528">528</a></span><span class="line">    <span class="comment">%   Non linear constraints of intersection</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,529" id="srcline529">529</a></span><span class="line">    global Delta L_me Arclength CorLength V_me Y_Ld V_Ld Y_Fd L_Fd V_Fd ArcCrossRl ArcCrossFr Y_CrossFr aylimit axlimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,530" id="srcline530">530</a></span><span class="line">    global Y_tar GTimeLimit</span></span>
+<span class="srcline"><span class="lineno"><a href="70,531" id="srcline531">531</a></span><span class="line">    Tc = [0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,532" id="srcline532">532</a></span><span class="line">    C=[0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,533" id="srcline533">533</a></span><span class="line">    MSS = [0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,534" id="srcline534">534</a></span><span class="line">    CRootFrLd = [0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,535" id="srcline535">535</a></span><span class="line">    CRootRrFd = [0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,536" id="srcline536">536</a></span><span class="line">    r = sqrt(2)*CorLength;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,537" id="srcline537">537</a></span><span class="line">    V_tar = Xin;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,538" id="srcline538">538</a></span><span class="line">    a_me = (V_tar^2 - V_me^2) /2/Arclength;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,539" id="srcline539">539</a></span><span class="line"><span class="comment">%     V_CrossRr = sqrt(V_me^2 + 2*a_me*ArcCrossRl);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,540" id="srcline540">540</a></span><span class="line">    if abs(a_me) &gt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,541" id="srcline541">541</a></span><span class="line"><span class="comment">%         T_CrossRr = (V_CrossRr-V_me)/a_me;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,542" id="srcline542">542</a></span><span class="line">        T_Cross = (V_tar - V_me)/a_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,543" id="srcline543">543</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,544" id="srcline544">544</a></span><span class="line"><span class="comment">%         T_CrossRr = ArcCrossRl/V_me;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,545" id="srcline545">545</a></span><span class="line">        T_Cross = Arclength/V_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,546" id="srcline546">546</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,547" id="srcline547">547</a></span><span class="line"><span class="comment">%     V_CrossFr = sqrt(V_me^2 + 2*a_me*ArcCrossFr);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,548" id="srcline548">548</a></span><span class="line"><span class="comment">%     if abs(a_me) &gt;1e-5</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,549" id="srcline549">549</a></span><span class="line"><span class="comment">%         T_CrossFr = (V_CrossFr-V_me)/a_me;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,550" id="srcline550">550</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,551" id="srcline551">551</a></span><span class="line"><span class="comment">%         T_CrossFr = Y_CrossFr/V_Ld;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,552" id="srcline552">552</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,553" id="srcline553">553</a></span><span class="line"><span class="comment">%     Tc(1) = T_CrossFr;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,554" id="srcline554">554</a></span><span class="line"><span class="comment">%     Tc(2) = T_CrossRr;    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,555" id="srcline555">555</a></span><span class="line">    T_lat = T_Cross;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,556" id="srcline556">556</a></span><span class="line"><span class="comment">%     T_long = T_lat;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,557" id="srcline557">557</a></span><span class="line"><span class="comment">%     T_adj = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,558" id="srcline558">558</a></span><span class="line"><span class="comment">%     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,559" id="srcline559">559</a></span><span class="line"><span class="comment">%     MSS(1) = MSSFdJudgment( V_tar,V_me,V_Fd,T_lat,Tc(1),T_lat,T_adj );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,560" id="srcline560">560</a></span><span class="line"><span class="comment">%     MSS(2) = MSSLdJudgment( V_tar,V_me,V_Ld,T_lat,Tc(2),T_lat,T_adj );    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,561" id="srcline561">561</a></span><span class="line"><span class="comment">%     Y_meTemp = - Arclength + Y_tar;    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,562" id="srcline562">562</a></span><span class="line"><span class="comment">%     MSSFdlimitC = Y_Fd - Y_meTemp + L_Fd + MSS(1);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,563" id="srcline563">563</a></span><span class="line"><span class="comment">%     MSSLdlimitC = MSS(2) + Y_meTemp + L_me - Y_Ld;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,564" id="srcline564">564</a></span><span class="line"><span class="comment">%         Xin;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,565" id="srcline565">565</a></span><span class="line"><span class="comment">%         MSS;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,566" id="srcline566">566</a></span><span class="line"><span class="comment">%     C(1) = MSSFdlimitC;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,567" id="srcline567">567</a></span><span class="line"><span class="comment">%     C(2) = MSSLdlimitC;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,568" id="srcline568">568</a></span><span class="line">    C(1) = T_lat - GTimeLimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,569" id="srcline569">569</a></span><span class="line">    C(2) = T_lat - GTimeLimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,570" id="srcline570">570</a></span><span class="line">    <span class="comment">% local vehicle position is calculated approximately, using Y = Ax + B, by</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,571" id="srcline571">571</a></span><span class="line">    <span class="comment">% solving the local position - Fd/Ld position, we can judge whether the two</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,572" id="srcline572">572</a></span><span class="line">    <span class="comment">% vehicle will collide in the process </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,573" id="srcline573">573</a></span><span class="line">    <span class="comment">%TnearFr = fzero(@(t) (Y_Ld + V_Ld * T_CrossFr - L_Ld + V_Ld * t) - (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCossFr) * (V_CrossFr*t + a_me * t^2 /2) - Y_CrossFr,0);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,574" id="srcline574">574</a></span><span class="line"><span class="comment">%     CRootFrLd(3) = Y_Ld + V_Ld * T_CrossFr - L_Ld - Y_CrossFr;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,575" id="srcline575">575</a></span><span class="line"><span class="comment">%     CRootFrLd(2) = V_Ld - (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCrossFr) * V_CrossFr;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,576" id="srcline576">576</a></span><span class="line"><span class="comment">%     CRootFrLd(1) = (CorLength + L_me - Y_CrossFr) / (Arclength - ArcCrossFr) * (a_me / 2 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,577" id="srcline577">577</a></span><span class="line"><span class="comment">%     %TnearRr = fzero(@(t) (Y_Fd + V_Fd * T_CrossRr + V_Fd * t) - (CorLength - Y_CrossRl) / (Arclength - ArcCossRr) * (V_CrossRr*t + a_me * t^2 /2) - Y_CrossRl,0);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,578" id="srcline578">578</a></span><span class="line"><span class="comment">%     CRootRrFd(3) = Y_Fd + V_Fd * T_CrossRr - Y_CrossRl;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,579" id="srcline579">579</a></span><span class="line"><span class="comment">%     CRootRrFd(2) = V_Fd - (CorLength - Y_CrossRl) / (Arclength - ArcCrossRl) * V_CrossRr;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,580" id="srcline580">580</a></span><span class="line"><span class="comment">%     CRootRrFd(1) = (CorLength - Y_CrossRl) / (Arclength - ArcCrossRl) * (a_me /2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,581" id="srcline581">581</a></span><span class="line"><span class="comment">%     % Judge whether the time to collide lies within T_cross, if not, the path</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,582" id="srcline582">582</a></span><span class="line"><span class="comment">%     % will be considered as a safe path</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,583" id="srcline583">583</a></span><span class="line"><span class="comment">%     if (CRootFrLd(2)^2-4*CRootFrLd(3)*CRootFrLd(1)) &gt;= 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,584" id="srcline584">584</a></span><span class="line"><span class="comment">%         RootFrLdtemp = roots(CRootFrLd);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,585" id="srcline585">585</a></span><span class="line"><span class="comment">%         RootFrLd = real(RootFrLdtemp);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,586" id="srcline586">586</a></span><span class="line"><span class="comment">%         if CRootFrLd(1) ==0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,587" id="srcline587">587</a></span><span class="line"><span class="comment">%             RootFrLd(2) = RootFrLd(1);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,588" id="srcline588">588</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,589" id="srcline589">589</a></span><span class="line"><span class="comment">%         if(RootFrLd(2)&gt;= 0)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,590" id="srcline590">590</a></span><span class="line"><span class="comment">%             C(1) = -(RootFrLd(2) + T_CrossFr) + T_Cross;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,591" id="srcline591">591</a></span><span class="line"><span class="comment">%         elseif(RootFrLd(1) &gt;= 0)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,592" id="srcline592">592</a></span><span class="line"><span class="comment">%             C(1) = -(RootFrLd(1) + T_CrossFr) + T_Cross;        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,593" id="srcline593">593</a></span><span class="line"><span class="comment">%         else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,594" id="srcline594">594</a></span><span class="line"><span class="comment">%             C(1) = -1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,595" id="srcline595">595</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,596" id="srcline596">596</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,597" id="srcline597">597</a></span><span class="line"><span class="comment">%         C(1) = -1;    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,598" id="srcline598">598</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,599" id="srcline599">599</a></span><span class="line"><span class="comment">%     if (CRootRrFd(2)^2-4*CRootRrFd(3)*CRootRrFd(1)) &gt;= 0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,600" id="srcline600">600</a></span><span class="line"><span class="comment">%         RootRrFdtemp = roots(CRootRrFd);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,601" id="srcline601">601</a></span><span class="line"><span class="comment">%         RootRrFd = real(RootRrFdtemp);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,602" id="srcline602">602</a></span><span class="line"><span class="comment">%         if CRootRrFd(1) ==0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,603" id="srcline603">603</a></span><span class="line"><span class="comment">%             RootRrFd(2) = RootRrFd(1);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,604" id="srcline604">604</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,605" id="srcline605">605</a></span><span class="line"><span class="comment">%         if(RootRrFd(2)&gt;= 0)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,606" id="srcline606">606</a></span><span class="line"><span class="comment">%             C(2) = -(RootRrFd(2) + T_CrossRr) + T_Cross;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,607" id="srcline607">607</a></span><span class="line"><span class="comment">%         elseif(RootRrFd(1) &gt;= 0)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,608" id="srcline608">608</a></span><span class="line"><span class="comment">%             C(2) = -(RootRrFd(1) + T_CrossRr) + T_Cross;        </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,609" id="srcline609">609</a></span><span class="line"><span class="comment">%         else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,610" id="srcline610">610</a></span><span class="line"><span class="comment">%             C(2) = -1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,611" id="srcline611">611</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,612" id="srcline612">612</a></span><span class="line"><span class="comment">%     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,613" id="srcline613">613</a></span><span class="line"><span class="comment">%         C(2) = -1; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,614" id="srcline614">614</a></span><span class="line"><span class="comment">%     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,615" id="srcline615">615</a></span><span class="line">    <span class="comment">% ay is calculated approximately using the half Arclength position, where</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,616" id="srcline616">616</a></span><span class="line">    <span class="comment">% the corning radius is the smallest</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,617" id="srcline617">617</a></span><span class="line"><span class="comment">%     C(3) = V_CrossFr^2 * Delta * Arclength/2 - aylimit;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,618" id="srcline618">618</a></span><span class="line">    C(3) = (V_tar^2 + V_me^2)/2 * Delta * Arclength/2 - aylimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,619" id="srcline619">619</a></span><span class="line">    C(4) = abs(a_me) - axlimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,620" id="srcline620">620</a></span><span class="line">    Ceq = [];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,621" id="srcline621">621</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,622" id="srcline622">622</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,623" id="srcline623">623</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,624" id="srcline624">624</a></span><span class="line">function MSS = MSSFdJudgment( V_tar,V_me,V_obj,T_long,Tc,T_lat,T_adj )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,625" id="srcline625">625</a></span><span class="line"><span class="comment">%UNTITLED5 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,626" id="srcline626">626</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,627" id="srcline627">627</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,628" id="srcline628">628</a></span><span class="line">    if abs(V_me-V_tar)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,629" id="srcline629">629</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,630" id="srcline630">630</a></span><span class="line">        if V_me&gt;V_obj</span></span>
+<span class="srcline"><span class="lineno"><a href="70,631" id="srcline631">631</a></span><span class="line">            MSS = (-V_me+V_obj)*(Tc+T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,632" id="srcline632">632</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,633" id="srcline633">633</a></span><span class="line">            MSS = (-V_me+V_obj)*(T_adj+T_lat);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,634" id="srcline634">634</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,635" id="srcline635">635</a></span><span class="line">        </span></span>
+<span class="srcline"><span class="lineno"><a href="70,636" id="srcline636">636</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,637" id="srcline637">637</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,638" id="srcline638">638</a></span><span class="line">        T_max = (V_obj - V_me)/(V_tar - V_me)*T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,639" id="srcline639">639</a></span><span class="line">        MSSTemp1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,640" id="srcline640">640</a></span><span class="line">        MSSTemp2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,641" id="srcline641">641</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,642" id="srcline642">642</a></span><span class="line">        if Tc &lt; T_long</span></span>
+<span class="srcline"><span class="lineno"><a href="70,643" id="srcline643">643</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,644" id="srcline644">644</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,645" id="srcline645">645</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,646" id="srcline646">646</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,647" id="srcline647">647</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,648" id="srcline648">648</a></span><span class="line">                if Tc &gt; T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,649" id="srcline649">649</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,650" id="srcline650">650</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,651" id="srcline651">651</a></span><span class="line">                    MSSTemp1 = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,0 ,T_adj);  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,652" id="srcline652">652</a></span><span class="line">                    MSSTemp2 = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,653" id="srcline653">653</a></span><span class="line">                    MSS = max(MSSTemp1,MSSTemp2);           </span></span>
+<span class="srcline"><span class="lineno"><a href="70,654" id="srcline654">654</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,655" id="srcline655">655</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,656" id="srcline656">656</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,657" id="srcline657">657</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,658" id="srcline658">658</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,659" id="srcline659">659</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,660" id="srcline660">660</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,661" id="srcline661">661</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,662" id="srcline662">662</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,663" id="srcline663">663</a></span><span class="line">                if Tc &gt; T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,664" id="srcline664">664</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,665" id="srcline665">665</a></span><span class="line">                else </span></span>
+<span class="srcline"><span class="lineno"><a href="70,666" id="srcline666">666</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,667" id="srcline667">667</a></span><span class="line">                end            </span></span>
+<span class="srcline"><span class="lineno"><a href="70,668" id="srcline668">668</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,669" id="srcline669">669</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,670" id="srcline670">670</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,671" id="srcline671">671</a></span><span class="line">            end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,672" id="srcline672">672</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,673" id="srcline673">673</a></span><span class="line">            <span class="comment">% Tc &gt; T_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,674" id="srcline674">674</a></span><span class="line">            if  V_tar &gt; V_obj</span></span>
+<span class="srcline"><span class="lineno"><a href="70,675" id="srcline675">675</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,676" id="srcline676">676</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,677" id="srcline677">677</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,678" id="srcline678">678</a></span><span class="line">            end  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,679" id="srcline679">679</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,680" id="srcline680">680</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,681" id="srcline681">681</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,682" id="srcline682">682</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,683" id="srcline683">683</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,684" id="srcline684">684</a></span><span class="line">function MSS = MSSFoJudgment( V_tar,V_me,V_obj,T_long,Tc,T_lat,T_adj )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,685" id="srcline685">685</a></span><span class="line"><span class="comment">%UNTITLED5 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,686" id="srcline686">686</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,687" id="srcline687">687</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,688" id="srcline688">688</a></span><span class="line">    if abs(V_me-V_tar)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,689" id="srcline689">689</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,690" id="srcline690">690</a></span><span class="line">        if V_me&gt;V_obj</span></span>
+<span class="srcline"><span class="lineno"><a href="70,691" id="srcline691">691</a></span><span class="line">            MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,692" id="srcline692">692</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,693" id="srcline693">693</a></span><span class="line">            MSS = (-V_me+V_obj)*(T_adj+Tc);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,694" id="srcline694">694</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,695" id="srcline695">695</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,696" id="srcline696">696</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,697" id="srcline697">697</a></span><span class="line">        T_max = (V_obj - V_me)/(V_tar - V_me)*T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,698" id="srcline698">698</a></span><span class="line">        MSSTemp1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,699" id="srcline699">699</a></span><span class="line">        MSSTemp2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,700" id="srcline700">700</a></span><span class="line">        if Tc &lt; T_long</span></span>
+<span class="srcline"><span class="lineno"><a href="70,701" id="srcline701">701</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,702" id="srcline702">702</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,703" id="srcline703">703</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt;V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,704" id="srcline704">704</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,705" id="srcline705">705</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,706" id="srcline706">706</a></span><span class="line">                if Tc &gt; 2*T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,707" id="srcline707">707</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,708" id="srcline708">708</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,709" id="srcline709">709</a></span><span class="line">                    MSS = 0;           </span></span>
+<span class="srcline"><span class="lineno"><a href="70,710" id="srcline710">710</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,711" id="srcline711">711</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,712" id="srcline712">712</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,713" id="srcline713">713</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,0 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,714" id="srcline714">714</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,715" id="srcline715">715</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,716" id="srcline716">716</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,717" id="srcline717">717</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,0 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,718" id="srcline718">718</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,719" id="srcline719">719</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,720" id="srcline720">720</a></span><span class="line">                if Tc &gt; T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,721" id="srcline721">721</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,722" id="srcline722">722</a></span><span class="line">                else </span></span>
+<span class="srcline"><span class="lineno"><a href="70,723" id="srcline723">723</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,724" id="srcline724">724</a></span><span class="line">                end            </span></span>
+<span class="srcline"><span class="lineno"><a href="70,725" id="srcline725">725</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,726" id="srcline726">726</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,727" id="srcline727">727</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,728" id="srcline728">728</a></span><span class="line">            end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,729" id="srcline729">729</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,730" id="srcline730">730</a></span><span class="line">            <span class="comment">% Tc &gt; T_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,731" id="srcline731">731</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,732" id="srcline732">732</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,733" id="srcline733">733</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,734" id="srcline734">734</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt;V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,735" id="srcline735">735</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,736" id="srcline736">736</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,737" id="srcline737">737</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,738" id="srcline738">738</a></span><span class="line">                MSSTemp1 = 0;  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,739" id="srcline739">739</a></span><span class="line">                MSSTemp2 = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,0 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,740" id="srcline740">740</a></span><span class="line">                MSS = max(MSSTemp1,MSSTemp2);  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,741" id="srcline741">741</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,742" id="srcline742">742</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,743" id="srcline743">743</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,744" id="srcline744">744</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,745" id="srcline745">745</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,746" id="srcline746">746</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,747" id="srcline747">747</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,748" id="srcline748">748</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,749" id="srcline749">749</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,0 ,T_adj);           </span></span>
+<span class="srcline"><span class="lineno"><a href="70,750" id="srcline750">750</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,751" id="srcline751">751</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,752" id="srcline752">752</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,753" id="srcline753">753</a></span><span class="line">            end  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,754" id="srcline754">754</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,755" id="srcline755">755</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,756" id="srcline756">756</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,757" id="srcline757">757</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,758" id="srcline758">758</a></span><span class="line">function MSS = MSSLdJudgment( V_tar,V_me,V_obj,T_long,Tc,T_lat,T_adj )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,759" id="srcline759">759</a></span><span class="line"><span class="comment">%UNTITLED5 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,760" id="srcline760">760</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,761" id="srcline761">761</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,762" id="srcline762">762</a></span><span class="line">    if abs(V_me-V_tar)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,763" id="srcline763">763</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,764" id="srcline764">764</a></span><span class="line">        if V_me&gt;V_obj</span></span>
+<span class="srcline"><span class="lineno"><a href="70,765" id="srcline765">765</a></span><span class="line">            MSS = (V_me-V_obj)*(T_lat+T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,766" id="srcline766">766</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,767" id="srcline767">767</a></span><span class="line">            MSS = (V_me-V_obj)*(T_adj+Tc);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,768" id="srcline768">768</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,769" id="srcline769">769</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,770" id="srcline770">770</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,771" id="srcline771">771</a></span><span class="line">        T_max = (V_obj - V_me)/(V_tar - V_me)*T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,772" id="srcline772">772</a></span><span class="line">        MSSTemp1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,773" id="srcline773">773</a></span><span class="line">        MSSTemp2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,774" id="srcline774">774</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,775" id="srcline775">775</a></span><span class="line">        if Tc &lt; T_long</span></span>
+<span class="srcline"><span class="lineno"><a href="70,776" id="srcline776">776</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,777" id="srcline777">777</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,778" id="srcline778">778</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,779" id="srcline779">779</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt;V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,780" id="srcline780">780</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,781" id="srcline781">781</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,782" id="srcline782">782</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,783" id="srcline783">783</a></span><span class="line">                if Tc &gt; T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,784" id="srcline784">784</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,785" id="srcline785">785</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,786" id="srcline786">786</a></span><span class="line">                    <span class="comment">% Tc &lt; T_max</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,787" id="srcline787">787</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,1 ,T_adj);            </span></span>
+<span class="srcline"><span class="lineno"><a href="70,788" id="srcline788">788</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,789" id="srcline789">789</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,790" id="srcline790">790</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,791" id="srcline791">791</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,792" id="srcline792">792</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,793" id="srcline793">793</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,794" id="srcline794">794</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,795" id="srcline795">795</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,796" id="srcline796">796</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,797" id="srcline797">797</a></span><span class="line">                MSSTemp1 = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,1 ,T_adj);  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,798" id="srcline798">798</a></span><span class="line">                MSSTemp2 = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,799" id="srcline799">799</a></span><span class="line">                MSS = max(MSSTemp1,MSSTemp2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,800" id="srcline800">800</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,801" id="srcline801">801</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,802" id="srcline802">802</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,803" id="srcline803">803</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,804" id="srcline804">804</a></span><span class="line">            end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,805" id="srcline805">805</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,806" id="srcline806">806</a></span><span class="line">            <span class="comment">% Tc &gt; T_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,807" id="srcline807">807</a></span><span class="line">            if V_obj &gt; V_tar</span></span>
+<span class="srcline"><span class="lineno"><a href="70,808" id="srcline808">808</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,809" id="srcline809">809</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,810" id="srcline810">810</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,811" id="srcline811">811</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_lat,1 );</span></span>
+<span class="srcline"><span class="lineno"><a href="70,812" id="srcline812">812</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,813" id="srcline813">813</a></span><span class="line">            end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,814" id="srcline814">814</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,815" id="srcline815">815</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,816" id="srcline816">816</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,817" id="srcline817">817</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,818" id="srcline818">818</a></span><span class="line">function MSS = MSSLoJudgment( V_tar,V_me,V_obj,T_long,Tc,T_lat,T_adj )</span></span>
+<span class="srcline"><span class="lineno"><a href="70,819" id="srcline819">819</a></span><span class="line"><span class="comment">%UNTITLED5 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,820" id="srcline820">820</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,821" id="srcline821">821</a></span><span class="line">    if abs(V_me-V_tar)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="70,822" id="srcline822">822</a></span><span class="line">        if V_me&gt;V_obj</span></span>
+<span class="srcline"><span class="lineno"><a href="70,823" id="srcline823">823</a></span><span class="line">            MSS = (V_me-V_obj)*(Tc+T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,824" id="srcline824">824</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,825" id="srcline825">825</a></span><span class="line">            MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,826" id="srcline826">826</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,827" id="srcline827">827</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,828" id="srcline828">828</a></span><span class="line">        T_max = (V_obj - V_me)/(V_tar - V_me)*T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,829" id="srcline829">829</a></span><span class="line">        MSSTemp1 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,830" id="srcline830">830</a></span><span class="line">        MSSTemp2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,831" id="srcline831">831</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,832" id="srcline832">832</a></span><span class="line">        if Tc &lt; T_long</span></span>
+<span class="srcline"><span class="lineno"><a href="70,833" id="srcline833">833</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,834" id="srcline834">834</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,1 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,835" id="srcline835">835</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,836" id="srcline836">836</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt;V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,837" id="srcline837">837</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,1 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,838" id="srcline838">838</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,839" id="srcline839">839</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,840" id="srcline840">840</a></span><span class="line">                if Tc &gt; T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,841" id="srcline841">841</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,842" id="srcline842">842</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,843" id="srcline843">843</a></span><span class="line">                    <span class="comment">% Tc &lt; T_max</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,844" id="srcline844">844</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);            </span></span>
+<span class="srcline"><span class="lineno"><a href="70,845" id="srcline845">845</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,846" id="srcline846">846</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,847" id="srcline847">847</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,848" id="srcline848">848</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,849" id="srcline849">849</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,850" id="srcline850">850</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,851" id="srcline851">851</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,852" id="srcline852">852</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,853" id="srcline853">853</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,854" id="srcline854">854</a></span><span class="line">                if Tc &lt; 2*T_max</span></span>
+<span class="srcline"><span class="lineno"><a href="70,855" id="srcline855">855</a></span><span class="line">                    <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,1 );              </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,856" id="srcline856">856</a></span><span class="line">                    MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,857" id="srcline857">857</a></span><span class="line">                else </span></span>
+<span class="srcline"><span class="lineno"><a href="70,858" id="srcline858">858</a></span><span class="line">                    MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,859" id="srcline859">859</a></span><span class="line">                end            </span></span>
+<span class="srcline"><span class="lineno"><a href="70,860" id="srcline860">860</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,861" id="srcline861">861</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,862" id="srcline862">862</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,863" id="srcline863">863</a></span><span class="line">            end    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,864" id="srcline864">864</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,865" id="srcline865">865</a></span><span class="line">            <span class="comment">% Tc &gt; T_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,866" id="srcline866">866</a></span><span class="line">            if (V_obj &gt;= V_tar)&amp;&amp;(V_tar &gt;V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,867" id="srcline867">867</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,1 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,868" id="srcline868">868</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,869" id="srcline869">869</a></span><span class="line">            elseif (V_obj &gt;= V_me)&amp;&amp;(V_me &gt;V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,870" id="srcline870">870</a></span><span class="line">                <span class="comment">%MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,0,1 );</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,871" id="srcline871">871</a></span><span class="line">                MSS = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,872" id="srcline872">872</a></span><span class="line">            elseif (V_me &gt;= V_obj)&amp;&amp;(V_obj &gt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,873" id="srcline873">873</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,T_max,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,874" id="srcline874">874</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,875" id="srcline875">875</a></span><span class="line">            elseif (V_obj &lt;= V_tar)&amp;&amp;(V_tar &lt; V_me)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,876" id="srcline876">876</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,877" id="srcline877">877</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,878" id="srcline878">878</a></span><span class="line">            elseif (V_obj &lt;= V_me)&amp;&amp;(V_me &lt; V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,879" id="srcline879">879</a></span><span class="line">                MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,880" id="srcline880">880</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,881" id="srcline881">881</a></span><span class="line">            elseif (V_me &lt;= V_obj)&amp;&amp;(V_obj &lt;= V_tar)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,882" id="srcline882">882</a></span><span class="line">                MSSTemp1 = 0;  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,883" id="srcline883">883</a></span><span class="line">                MSSTemp2 = MSSCalculate( V_tar,V_me,V_obj,T_long,Tc,1 ,T_adj);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,884" id="srcline884">884</a></span><span class="line">                MSS = max(MSSTemp1,MSSTemp2);           </span></span>
+<span class="srcline"><span class="lineno"><a href="70,885" id="srcline885">885</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,886" id="srcline886">886</a></span><span class="line">                <span class="comment">%Nothing</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,887" id="srcline887">887</a></span><span class="line">                MSS = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,888" id="srcline888">888</a></span><span class="line">            end  </span></span>
+<span class="srcline"><span class="lineno"><a href="70,889" id="srcline889">889</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,890" id="srcline890">890</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,891" id="srcline891">891</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,892" id="srcline892">892</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,893" id="srcline893">893</a></span><span class="line">function MSS = MSSCalculate( V_tar,V_me,V_obj,T_long,Time2Cal,ObjDirection ,T_adj)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,894" id="srcline894">894</a></span><span class="line"><span class="comment">%UNTITLED3 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,895" id="srcline895">895</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,896" id="srcline896">896</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,897" id="srcline897">897</a></span><span class="line"><span class="comment">%Time2Cal is the time to be calculated</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,898" id="srcline898">898</a></span><span class="line"><span class="comment">%V_tar is the target of mergeing vehicle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,899" id="srcline899">899</a></span><span class="line"><span class="comment">%V_obj is the obstacle object of mergeing vehicle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,900" id="srcline900">900</a></span><span class="line"><span class="comment">%ObjDirection is the direction of object</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,901" id="srcline901">901</a></span><span class="line"><span class="comment">%T_long is the time when longitual vel adjust ends</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,902" id="srcline902">902</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,903" id="srcline903">903</a></span><span class="line">    if Time2Cal &lt; T_long</span></span>
+<span class="srcline"><span class="lineno"><a href="70,904" id="srcline904">904</a></span><span class="line">        MSS = (V_tar-V_me)/2/T_long*Time2Cal^2-(V_obj-V_me)*Time2Cal;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,905" id="srcline905">905</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,906" id="srcline906">906</a></span><span class="line">        MSS = (V_tar-V_me)/2*T_long - (V_obj - V_me)*T_long - (V_obj - V_tar)*Time2Cal;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,907" id="srcline907">907</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,908" id="srcline908">908</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,909" id="srcline909">909</a></span><span class="line">    if ObjDirection == 1</span></span>
+<span class="srcline"><span class="lineno"><a href="70,910" id="srcline910">910</a></span><span class="line">        <span class="comment">%obj is Leading vehicle </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,911" id="srcline911">911</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,912" id="srcline912">912</a></span><span class="line">        <span class="comment">%obj is Following vehicle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,913" id="srcline913">913</a></span><span class="line">        MSS = (-1)*MSS;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,914" id="srcline914">914</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,915" id="srcline915">915</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,916" id="srcline916">916</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,917" id="srcline917">917</a></span><span class="line">function PreGlbVal(Info_Ld,Info_Fd,Info_Me,x_out,y_out,angle_out,aylimitIn,axlimitIn)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,918" id="srcline918">918</a></span><span class="line">    global W_me L_me CorLength V_me Y_Ld X_Ld L_Ld W_Ld V_Ld X_Fd Y_Fd L_Fd W_Fd V_Fd Y_CrossRl ArcCrossRl ArcCrossFr Y_CrossFr aylimit axlimit;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,919" id="srcline919">919</a></span><span class="line">    global quadsinu2tbl quadcosu2tbl Y_tar ratio</span></span>
+<span class="srcline"><span class="lineno"><a href="70,920" id="srcline920">920</a></span><span class="line">    <span class="comment">%Config doublecheck of the safe judgement when driving through intersection</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,921" id="srcline921">921</a></span><span class="line">    <span class="comment">%Config plot the process or not</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,922" id="srcline922">922</a></span><span class="line">    <span class="comment">%Config check the accuracy of y postion estimate</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,923" id="srcline923">923</a></span><span class="line">    <span class="comment">%cor start point at intersection which is also the Radius of the intersection</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,924" id="srcline924">924</a></span><span class="line">    persistent InitFlg</span></span>
+<span class="srcline"><span class="lineno"><a href="70,925" id="srcline925">925</a></span><span class="line">    if isempty(InitFlg)</span></span>
+<span class="srcline"><span class="lineno"><a href="70,926" id="srcline926">926</a></span><span class="line">        InitFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,927" id="srcline927">927</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,928" id="srcline928">928</a></span><span class="line">    CorLength = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,929" id="srcline929">929</a></span><span class="line">    ratio = 1e3;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,930" id="srcline930">930</a></span><span class="line">    <span class="comment">%the 1/2 direction changed in the intersection   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,931" id="srcline931">931</a></span><span class="line"><span class="comment">%     x_out,y_out,angle_out;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,932" id="srcline932">932</a></span><span class="line">    if abs(Info_Ld(3))&gt;100</span></span>
+<span class="srcline"><span class="lineno"><a href="70,933" id="srcline933">933</a></span><span class="line">        <span class="comment">%Invalid Leading vehicle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,934" id="srcline934">934</a></span><span class="line">        X_Ld = x_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,935" id="srcline935">935</a></span><span class="line">        Y_Ld = y_out + 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,936" id="srcline936">936</a></span><span class="line">        V_Ld = 30;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,937" id="srcline937">937</a></span><span class="line">        L_Ld = 2.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,938" id="srcline938">938</a></span><span class="line">        W_Ld = 1.5; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,939" id="srcline939">939</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="70,940" id="srcline940">940</a></span><span class="line">        X_Ld = Info_Ld(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,941" id="srcline941">941</a></span><span class="line">        Y_Ld = Info_Ld(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,942" id="srcline942">942</a></span><span class="line">        V_Ld = Info_Ld(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,943" id="srcline943">943</a></span><span class="line">        L_Ld = Info_Ld(4);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,944" id="srcline944">944</a></span><span class="line">        W_Ld = Info_Ld(5); </span></span>
+<span class="srcline"><span class="lineno"><a href="70,945" id="srcline945">945</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,946" id="srcline946">946</a></span><span class="line">    if abs(Info_Fd(3))&gt;100</span></span>
+<span class="srcline"><span class="lineno"><a href="70,947" id="srcline947">947</a></span><span class="line">        <span class="comment">%Invalid Leading vehicle</span></span></span>
+<span class="srcline"><span class="lineno"><a href="70,948" id="srcline948">948</a></span><span class="line">        X_Fd = x_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,949" id="srcline949">949</a></span><span class="line">        Y_Fd = y_out - 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,950" id="srcline950">950</a></span><span class="line">        V_Fd = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,951" id="srcline951">951</a></span><span class="line">        L_Fd = 2.5;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,952" id="srcline952">952</a></span><span class="line">        W_Fd = 1.5; </span></span>
+<span class="srcline"><span class="lineno"><a href="70,953" id="srcline953">953</a></span><span class="line">    else </span></span>
+<span class="srcline"><span class="lineno"><a href="70,954" id="srcline954">954</a></span><span class="line">        X_Fd = Info_Fd(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,955" id="srcline955">955</a></span><span class="line">        Y_Fd = Info_Fd(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,956" id="srcline956">956</a></span><span class="line">        V_Fd = Info_Fd(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,957" id="srcline957">957</a></span><span class="line">        L_Fd = Info_Fd(4);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,958" id="srcline958">958</a></span><span class="line">        W_Fd = Info_Fd(5); </span></span>
+<span class="srcline"><span class="lineno"><a href="70,959" id="srcline959">959</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,960" id="srcline960">960</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="70,961" id="srcline961">961</a></span><span class="line">    X_me = Info_Me(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,962" id="srcline962">962</a></span><span class="line">    Y_me = Info_Me(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,963" id="srcline963">963</a></span><span class="line">    V_me = Info_Me(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,964" id="srcline964">964</a></span><span class="line">    L_me = Info_Me(4);</span></span>
+<span class="srcline"><span class="lineno"><a href="70,965" id="srcline965">965</a></span><span class="line">    W_me = Info_Me(5);   </span></span>
+<span class="srcline"><span class="lineno"><a href="70,966" id="srcline966">966</a></span><span class="line">    Y_tar = 20;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,967" id="srcline967">967</a></span><span class="line">    aylimit = aylimitIn;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,968" id="srcline968">968</a></span><span class="line">    axlimit = axlimitIn;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,969" id="srcline969">969</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="70,970" id="srcline970">970</a></span><span class="line">    ArcCrossFr = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,971" id="srcline971">971</a></span><span class="line">    ArcCrossRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,972" id="srcline972">972</a></span><span class="line">    Y_CrossFr = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,973" id="srcline973">973</a></span><span class="line">    Y_CrossRl = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="70,974" id="srcline974">974</a></span><span class="line">    if InitFlg &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="70,975" id="srcline975">975</a></span><span class="line">        quadsinu2tbl = [0;0;0;0;0;1.00000000000000e-05;1.00000000000000e-05;1.00000000000000e-05;2.00000000000000e-05;3.00000000000000e-05;4.00000000000000e-05;6.00000000000000e-05;7.00000000000000e-05;9.00000000000000e-05;0.000110000000000000;0.000140000000000000;0.000170000000000000;0.000200000000000000;0.000240000000000000;0.000290000000000000;0.000330000000000000;0.000390000000000000;0.000440000000000000;0.000510000000000000;0.000580000000000000;0.000650000000000000;0.000730000000000000;0.000820000000000000;0.000910000000000000;0.00102000000000000;0.00112000000000000;0.00124000000000000;0.00137000000000000;0.00150000000000000;0.00164000000000000;0.00179000000000000;0.00194000000000000;0.00211000000000000;0.00229000000000000;0.00247000000000000;0.00267000000000000;0.00287000000000000;0.00309000000000000;0.00331000000000000;0.00355000000000000;0.00380000000000000;0.00405000000000000;0.00433000000000000;0.00461000000000000;0.00490000000000000;0.00521000000000000;0.00553000000000000;0.00586000000000000;0.00620000000000000;0.00656000000000000;0.00693000000000000;0.00731000000000000;0.00771000000000000;0.00813000000000000;0.00855000000000000;0.00899000000000000;0.00945000000000000;0.00992000000000000;0.0104100000000000;0.0109100000000000;0.0114300000000000;0.0119700000000000;0.0125200000000000;0.0130900000000000;0.0136700000000000;0.0142800000000000;0.0149000000000000;0.0155300000000000;0.0161900000000000;0.0168600000000000;0.0175500000000000;0.0182600000000000;0.0189900000000000;0.0197400000000000;0.0205100000000000;0.0212900000000000;0.0221000000000000;0.0229300000000000;0.0237700000000000;0.0246400000000000;0.0255300000000000;0.0264400000000000;0.0273700000000000;0.0283200000000000;0.0292900000000000;0.0302900000000000;0.0313000000000000;0.0323400000000000;0.0334000000000000;0.0344900000000000;0.0355900000000000;0.0367200000000000;0.0378800000000000;0.0390600000000000;0.0402600000000000;0.0414800000000000;0.0427300000000000;0.0440000000000000;0.0453000000000000;0.0466300000000000;0.0479700000000000;0.0493500000000000;0.0507500000000000;0.0521700000000000;0.0536200000000000;0.0551000000000000;0.0566000000000000;0.0581300000000000;0.0596800000000000;0.0612700000000000;0.0628800000000000;0.0645100000000000;0.0661800000000000;0.0678700000000000;0.0695900000000000;0.0713400000000000;0.0731100000000000;0.0749200000000000;0.0767500000000000;0.0786100000000000;0.0805000000000000;0.0824200000000000;0.0843600000000000;0.0863400000000000;0.0883500000000000;0.0903800000000000;0.0924500000000000;0.0945400000000000;0.0966700000000000;0.0988200000000000;0.101010000000000;0.103220000000000;0.105470000000000;0.107740000000000;0.110050000000000;0.112390000000000;0.114760000000000;0.117160000000000;0.119590000000000;0.122050000000000;0.124540000000000;0.127070000000000;0.129620000000000;0.132210000000000;0.134830000000000;0.137480000000000;0.140160000000000;0.142880000000000;0.145620000000000;0.148400000000000;0.151210000000000;0.154050000000000;0.156920000000000;0.159830000000000;0.162770000000000;0.165740000000000;0.168740000000000;0.171770000000000;0.174840000000000;0.177940000000000;0.181070000000000;0.184230000000000;0.187430000000000;0.190650000000000;0.193910000000000;0.197200000000000;0.200520000000000;0.203880000000000;0.207260000000000;0.210680000000000;0.214130000000000;0.217610000000000;0.221120000000000;0.224670000000000;0.228240000000000;0.231850000000000;0.235480000000000;0.239150000000000;0.242850000000000;0.246580000000000;0.250340000000000;0.254130000000000;0.257950000000000;0.261800000000000;0.265680000000000;0.269590000000000;0.273530000000000;0.277500000000000;0.281490000000000;0.285520000000000;0.289570000000000;0.293660000000000;0.297770000000000;0.301910000000000;0.306070000000000;0.310270000000000;0.314490000000000;0.318740000000000;0.323010000000000;0.327310000000000;0.331640000000000;0.335990000000000;0.340360000000000;0.344770000000000;0.349190000000000;0.353640000000000;0.358110000000000;0.362610000000000;0.367130000000000;0.371670000000000;0.376240000000000;0.380820000000000;0.385430000000000;0.3900600000</span></span>
+<span class="srcline"><span class="lineno"><a href="70,976" id="srcline976">976</a></span><span class="line">00000;0.394710000000000;0.399380000000000;0.404060000000000;0.408770000000000;0.413500000000000;0.418240000000000;0.423000000000000;0.427780000000000;0.432570000000000;0.437380000000000;0.442200000000000;0.447040000000000;0.451900000000000;0.456760000000000;0.461640000000000;0.466540000000000;0.471440000000000;0.476360000000000;0.481280000000000;0.486220000000000;0.491160000000000;0.496120000000000;0.501080000000000;0.506050000000000;0.511020000000000;0.516000000000000;0.520990000000000;0.525980000000000;0.530970000000000;0.535960000000000;0.540960000000000;0.545960000000000;0.550960000000000;0.555960000000000;0.560960000000000;0.565960000000000;0.570950000000000;0.575940000000000;0.580930000000000;0.585910000000000;0.590880000000000;0.595850000000000;0.600810000000000;0.605770000000000;0.610710000000000;0.615640000000000;0.620560000000000;0.625470000000000;0.630360000000000;0.635250000000000;0.640110000000000;0.644960000000000;0.649800000000000;0.654610000000000;0.659410000000000;0.664190000000000;0.668950000000000;0.673680000000000;0.678390000000000;0.683080000000000;0.687750000000000;0.692390000000000;0.697000000000000;0.701580000000000;0.706140000000000;0.710670000000000;0.715160000000000;0.719630000000000;0.724060000000000;0.728460000000000;0.732820000000000;0.737150000000000;0.741440000000000;0.745700000000000;0.749910000000000;0.754080000000000;0.758220000000000;0.762310000000000;0.766360000000000;0.770360000000000;0.774320000000000;0.778240000000000;0.782100000000000;0.785920000000000;0.789690000000000;0.793410000000000;0.797080000000000;0.800690000000000;0.804260000000000;0.807770000000000;0.811220000000000;0.814610000000000;0.817950000000000;0.821240000000000;0.824460000000000;0.827620000000000;0.830720000000000;0.833760000000000;0.836730000000000;0.839640000000000;0.842490000000000;0.845270000000000;0.847980000000000;0.850630000000000;0.853200000000000;0.855710000000000;0.858150000000000;0.860510000000000;0.862810000000000;0.865030000000000;0.867170000000000;0.869250000000000;0.871240000000000;0.873160000000000;0.875010000000000;0.876770000000000;0.878460000000000;0.880070000000000;0.881600000000000;0.883050000000000;0.884420000000000;0.885700000000000;0.886910000000000;0.888030000000000;0.889060000000000;0.890020000000000;0.890880000000000;0.891670000000000;0.892370000000000;0.892980000000000;0.893500000000000;0.893940000000000;0.894290000000000;0.894560000000000;0.894730000000000;0.894820000000000];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,977" id="srcline977">977</a></span><span class="line">        quadcosu2tbl = [0;0.00500000000000000;0.0100000000000000;0.0150000000000000;0.0200000000000000;0.0250000000000000;0.0300000000000000;0.0350000000000000;0.0400000000000000;0.0450000000000000;0.0500000000000000;0.0550000000000000;0.0600000000000000;0.0650000000000000;0.0700000000000000;0.0750000000000000;0.0800000000000000;0.0850000000000000;0.0900000000000000;0.0950000000000000;0.100000000000000;0.105000000000000;0.110000000000000;0.115000000000000;0.120000000000000;0.125000000000000;0.130000000000000;0.135000000000000;0.139990000000000;0.144990000000000;0.149990000000000;0.154990000000000;0.159990000000000;0.164990000000000;0.169990000000000;0.174980000000000;0.179980000000000;0.184980000000000;0.189980000000000;0.194970000000000;0.199970000000000;0.204960000000000;0.209960000000000;0.214950000000000;0.219950000000000;0.224940000000000;0.229940000000000;0.234930000000000;0.239920000000000;0.244910000000000;0.249900000000000;0.254890000000000;0.259880000000000;0.264870000000000;0.269860000000000;0.274840000000000;0.279830000000000;0.284810000000000;0.289790000000000;0.294780000000000;0.299760000000000;0.304740000000000;0.309710000000000;0.314690000000000;0.319660000000000;0.324640000000000;0.329610000000000;0.334580000000000;0.339550000000000;0.344510000000000;0.349480000000000;0.354440000000000;0.359400000000000;0.364350000000000;0.369310000000000;0.374260000000000;0.379210000000000;0.384150000000000;0.389100000000000;0.394040000000000;0.398980000000000;0.403910000000000;0.408840000000000;0.413770000000000;0.418690000000000;0.423620000000000;0.428530000000000;0.433450000000000;0.438350000000000;0.443260000000000;0.448160000000000;0.453050000000000;0.457940000000000;0.462830000000000;0.467710000000000;0.472590000000000;0.477460000000000;0.482320000000000;0.487180000000000;0.492040000000000;0.496880000000000;0.501730000000000;0.506560000000000;0.511390000000000;0.516210000000000;0.521030000000000;0.525830000000000;0.530630000000000;0.535430000000000;0.540210000000000;0.544990000000000;0.549760000000000;0.554520000000000;0.559270000000000;0.564010000000000;0.568750000000000;0.573470000000000;0.578190000000000;0.582890000000000;0.587590000000000;0.592270000000000;0.596940000000000;0.601610000000000;0.606260000000000;0.610900000000000;0.615530000000000;0.620150000000000;0.624750000000000;0.629350000000000;0.633930000000000;0.638490000000000;0.643050000000000;0.647590000000000;0.652110000000000;0.656620000000000;0.661120000000000;0.665600000000000;0.670070000000000;0.674520000000000;0.678960000000000;0.683380000000000;0.687780000000000;0.692170000000000;0.696540000000000;0.700890000000000;0.705220000000000;0.709540000000000;0.713840000000000;0.718120000000000;0.722380000000000;0.726610000000000;0.730830000000000;0.735030000000000;0.739210000000000;0.743370000000000;0.747500000000000;0.751620000000000;0.755710000000000;0.759780000000000;0.763830000000000;0.767850000000000;0.771850000000000;0.775820000000000;0.779770000000000;0.783690000000000;0.787590000000000;0.791470000000000;0.795310000000000;0.799130000000000;0.802920000000000;0.806690000000000;0.810430000000000;0.814130000000000;0.817810000000000;0.821460000000000;0.825080000000000;0.828670000000000;0.832230000000000;0.835760000000000;0.839250000000000;0.842720000000000;0.846150000000000;0.849550000000000;0.852910000000000;0.856240000000000;0.859540000000000;0.862800000000000;0.866030000000000;0.869220000000000;0.872370000000000;0.875490000000000;0.878570000000000;0.881610000000000;0.884610000000000;0.887580000000000;0.890500000000000;0.893390000000000;0.896230000000000;0.899040000000000;0.901800000000000;0.904520000000000;0.907200000000000;0.909840000000000;0.912440000000000;0.914990000000000;0.917500000000000;0.919960000000000;0.922380000000000;0.924750000000000;0.927080000000000;0.929360000000000;0.931590000000000;0.933780000000000;0.935910000000000;0.938000000000000;0.940040000000000;0.942040000000000;0.943980000000000;0.945870000000000;0.947710000000000;0.949500000000000;0.951240000000000;0.952930000000000;0.954570000000000;0.956150000000000;0.957680000000</span></span>
+<span class="srcline"><span class="lineno"><a href="70,978" id="srcline978">978</a></span><span class="line">000;0.959150000000000;0.960570000000000;0.961940000000000;0.963250000000000;0.964510000000000;0.965710000000000;0.966850000000000;0.967940000000000;0.968970000000000;0.969950000000000;0.970860000000000;0.971720000000000;0.972520000000000;0.973260000000000;0.973940000000000;0.974570000000000;0.975130000000000;0.975630000000000;0.976070000000000;0.976450000000000;0.976770000000000;0.977030000000000;0.977230000000000;0.977370000000000;0.977440000000000;0.977450000000000;0.977400000000000;0.977280000000000;0.977100000000000;0.976860000000000;0.976560000000000;0.976190000000000;0.975750000000000;0.975250000000000;0.974690000000000;0.974060000000000;0.973370000000000;0.972610000000000;0.971790000000000;0.970910000000000;0.969960000000000;0.968940000000000;0.967860000000000;0.966710000000000;0.965500000000000;0.964220000000000;0.962880000000000;0.961470000000000;0.959990000000000;0.958450000000000;0.956850000000000;0.955180000000000;0.953440000000000;0.951640000000000;0.949780000000000;0.947850000000000;0.945860000000000;0.943800000000000;0.941670000000000;0.939490000000000;0.937240000000000;0.934920000000000;0.932540000000000;0.930100000000000;0.927600000000000;0.925030000000000;0.922400000000000;0.919710000000000;0.916960000000000;0.914150000000000;0.911280000000000;0.908340000000000;0.905350000000000;0.902300000000000;0.899180000000000;0.896010000000000;0.892790000000000;0.889500000000000;0.886160000000000;0.882760000000000;0.879310000000000;0.875800000000000;0.872240000000000;0.868620000000000;0.864950000000000;0.861230000000000;0.857460000000000;0.853630000000000;0.849760000000000;0.845840000000000;0.841870000000000;0.837850000000000;0.833780000000000;0.829670000000000;0.825520000000000;0.821320000000000;0.817070000000000;0.812790000000000;0.808460000000000;0.804100000000000;0.799690000000000;0.795250000000000;0.790770000000000;0.786250000000000;0.781700000000000;0.777120000000000;0.772500000000000;0.767860000000000;0.763180000000000;0.758470000000000;0.753740000000000;0.748980000000000;0.744190000000000;0.739380000000000;0.734550000000000;0.729700000000000;0.724830000000000;0.719930000000000;0.715030000000000;0.710100000000000;0.705160000000000;0.700210000000000;0.695250000000000;0.690280000000000;0.685300000000000;0.680310000000000;0.675320000000000;0.670320000000000;0.665320000000000];</span></span>
+<span class="srcline"><span class="lineno"><a href="70,979" id="srcline979">979</a></span><span class="line">        InitFlg = 1;          </span></span>
+<span class="srcline"><span class="lineno"><a href="70,980" id="srcline980">980</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,981" id="srcline981">981</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="70,982" id="srcline982">982</a></span><span class="line"> </span></span>
+</pre>
+</div>

@@ -1,0 +1,30 @@
+---- HeadingAngle Matches (29 in 3 files) ----
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):  Vehicle_Beta = 1.5707963267948966 - getHeadingAngle();
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):        getHeadingAngle()) + (TrackPoint_0[VehicleIndexOnProfileLong] -
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):        Vehicle_X) * cos(1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):        getHeadingAngle()) - (TrackPoint_0[VehicleIndexOnProfileLong] -
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):        Vehicle_X) * sin(1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):        ( (int32_T)tempIndex + 4999 ) - (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) + (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) - (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) + (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) - (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) + (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) - (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) + (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle()) - (getProfileLongMapInput
+CodeGen_LanInfoSys.c (d:\new_adu\sw\fusing\src\himap\codegen_laninfosys_ert_rtw):            (1.5707963267948966 - getHeadingAngle());
+CodeGen_RTKMessage.c (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):real_T HeadingAngle;                   /* '<S1>/RTKRAW2WGS' */
+CodeGen_RTKMessage.c (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):  HeadingAngle = getRTK_GPS_YAW() * 3.1415926535897931 / 180.0;
+CodeGen_RTKMessage.c (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):  CodeGen_RTKMessage_Y.HeadingAngle_e = CodeGen_RTKMessage_P.Gain3_Gain *
+CodeGen_RTKMessage.c (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):    HeadingAngle;
+CodeGen_RTKMessage.c (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):  HeadingAngle = 0.0;
+CodeGen_RTKMessage.h (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):  real_T HeadingAngle_e;               /* '<Root>/HeadingAngle' */
+CodeGen_RTKMessage.h (d:\new_adu\sw\fusing\src\himap\codegen_rtkmessage_ert_rtw):extern real_T HeadingAngle;            /* '<S1>/RTKRAW2WGS' */

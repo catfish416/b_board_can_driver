@@ -1,0 +1,375 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="52,1" id="srcline1">  1</a></span><span class="line">function [Curoperation,OperationLongDislimit,RoadInfo,SpeedLimit,LCOPCnt,Info_MeRel,InLaneLCFlgOut,PreInfo_MeRel,OpSts,RoadInfo2,LCShutDwn2] = OpSchedule(Navi_InfoTurn,Line_ShapeInfo,Lane_NumInfo,Info_Me,TargetPosition,InLaneLCFlg,ObjTrig,LCTrigSuccess,Info_Lo,TrigStart,SpeedLimitOp,SpeedLimitIdle,LCDelayTime,TurnTrigStartDis,TurnFrontLCFobDis,OperationFinishFlgIn,AngTol,LCStartFlg,LCEnbSts,TunEnbSts,LCForceShudown,TunForceShudown,ByPassTurnFinsJudge,End,LCReleaseDis)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,2" id="srcline2">  2</a></span><span class="line">    <span class="comment">%#codegen</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,3" id="srcline3">  3</a></span><span class="line">    <span class="comment">%OperationFinishFlg 0 NA 1 Success 2 FailtoStart</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,4" id="srcline4">  4</a></span><span class="line">    <span class="comment">% First Judge whether a LC needs to be done.</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,5" id="srcline5">  5</a></span><span class="line">    persistent CurOp NexLCDelayCnt PTargetLaneNum EgoCordOrig PInLaneLCFlg PLCOPCnt PInLaneLCFlgInt PFailRestoreCn PRoadInfo PNavi_InfoTurn PreEgoCordOrig PNavi_InfoTurn2 PTargetLaneNum2 PreOp  PCentTargetOffset</span></span>
+<span class="srcline"><span class="lineno"><a href="52,6" id="srcline6">  6</a></span><span class="line">    if isempty(CurOp)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,7" id="srcline7">  7</a></span><span class="line">        CurOp = 0;NexLCDelayCnt = 0;EgoCordOrig = zeros(1,3);PreEgoCordOrig = EgoCordOrig;PInLaneLCFlg = 0;PLCOPCnt = 0;PTargetLaneNum = 1;PInLaneLCFlgInt = 0; PFailRestoreCn = 0; PRoadInfo = zeros(2,4);PNavi_InfoTurn = zeros(4,7);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,8" id="srcline8">  8</a></span><span class="line">        PNavi_InfoTurn2 = zeros(4,7);PTargetLaneNum2 = 1;PreOp = 0;PCentTargetOffset= 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,9" id="srcline9">  9</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,10" id="srcline10"> 10</a></span><span class="line">    LCOverDelay = 1;OpSts = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,11" id="srcline11"> 11</a></span><span class="line">    <span class="comment">% Use the lane info to judge whether previous operation is OK</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,12" id="srcline12"> 12</a></span><span class="line">    SpeedLimit = SpeedLimitIdle;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,13" id="srcline13"> 13</a></span><span class="line">    EgoLaneNum = Lane_NumInfo(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,14" id="srcline14"> 14</a></span><span class="line">    TargetLaneNum = Lane_NumInfo(3);       </span></span>
+<span class="srcline"><span class="lineno"><a href="52,15" id="srcline15"> 15</a></span><span class="line">    EgoHeadAng = Info_Me(6); InLaneLCFlgOut = PInLaneLCFlg;Info_MeRel = zeros(1,6); FailSilentCnt = 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,16" id="srcline16"> 16</a></span><span class="line">    Curoperation = 0;OperationLongDislimit = 255;RoadInfo = zeros(2,4);LCOPCnt = 1;Info_MeRel(1:6) = Info_Me(1:6);PreInfo_MeRel = Info_MeRel;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,17" id="srcline17"> 17</a></span><span class="line">    RoadInfo2 = zeros(2,4);RoadInfo2(2,2) = 255;LCShutDwn2 = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,18" id="srcline18"> 18</a></span><span class="line">    if TrigStart&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,19" id="srcline19"> 19</a></span><span class="line">        if NexLCDelayCnt &gt;= 1</span></span>
+<span class="srcline"><span class="lineno"><a href="52,20" id="srcline20"> 20</a></span><span class="line">            NexLCDelayCnt = NexLCDelayCnt - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,21" id="srcline21"> 21</a></span><span class="line">            LCOverDelay = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,22" id="srcline22"> 22</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,23" id="srcline23"> 23</a></span><span class="line">            LCOverDelay = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,24" id="srcline24"> 24</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,25" id="srcline25"> 25</a></span><span class="line">        EgoPosTagFlg = 0;        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,26" id="srcline26"> 26</a></span><span class="line">        if PFailRestoreCn&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,27" id="srcline27"> 27</a></span><span class="line">            PFailRestoreCn = PFailRestoreCn -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,28" id="srcline28"> 28</a></span><span class="line">        else            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,29" id="srcline29"> 29</a></span><span class="line">        end        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,30" id="srcline30"> 30</a></span><span class="line">        if CurOp&lt;0.5 </span></span>
+<span class="srcline"><span class="lineno"><a href="52,31" id="srcline31"> 31</a></span><span class="line">            <span class="comment">%Find an operation to do </span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,32" id="srcline32"> 32</a></span><span class="line">            if (Navi_InfoTurn(1,2)&gt;0.5) &amp;&amp; (Navi_InfoTurn(2,2)&gt;0.5) &amp;&amp; TunEnbSts &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,33" id="srcline33"> 33</a></span><span class="line">                AbsCord_Ego = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,34" id="srcline34"> 34</a></span><span class="line">                AbsCord_Trn = [Navi_InfoTurn(1,3),Navi_InfoTurn(1,4),Navi_InfoTurn(1,7)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,35" id="srcline35"> 35</a></span><span class="line">                PassFlgIn = PassJudgement(AbsCord_Ego,AbsCord_Trn);          </span></span>
+<span class="srcline"><span class="lineno"><a href="52,36" id="srcline36"> 36</a></span><span class="line">                Dis2TrnIn = sqrt((AbsCord_Ego(1) - AbsCord_Trn(1))^2+(AbsCord_Ego(2) - AbsCord_Trn(2))^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,37" id="srcline37"> 37</a></span><span class="line"><span class="comment">%                 AbsCord_Ego = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,38" id="srcline38"> 38</a></span><span class="line">                AbsCord_Trn = [Navi_InfoTurn(2,3),Navi_InfoTurn(2,4),Navi_InfoTurn(2,7)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,39" id="srcline39"> 39</a></span><span class="line">                PassFlgOut = PassJudgement(AbsCord_Ego,AbsCord_Trn);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,40" id="srcline40"> 40</a></span><span class="line">                if End(4)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,41" id="srcline41"> 41</a></span><span class="line">                    EndOffset = End(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,42" id="srcline42"> 42</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,43" id="srcline43"> 43</a></span><span class="line">                    EndOffset = Info_Me(7) + 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,44" id="srcline44"> 44</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,45" id="srcline45"> 45</a></span><span class="line">                if ((Info_Me(7) &gt; (Navi_InfoTurn(1,1)-TurnTrigStartDis))||(PassFlgIn&gt;0.5 &amp;&amp; Dis2TrnIn &lt; 10))&amp;&amp;(PassFlgOut&lt;0.5)&amp;&amp;(Info_Me(7) &lt; min([Navi_InfoTurn(2,1)-10,Navi_InfoTurn(1,1)+10]))&amp;&amp;(EndOffset&gt;Navi_InfoTurn(2,1)+TurnFrontLCFobDis)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,46" id="srcline46"> 46</a></span><span class="line">                    CurOp = 1;                    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,47" id="srcline47"> 47</a></span><span class="line">        <span class="comment">%             RoadInfo = [EndCentX,EndCentY,LaneAngle,LaneWidth];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,48" id="srcline48"> 48</a></span><span class="line">                    RoadInfo = RoadInfoExtractTr(Navi_InfoTurn,Info_Me);             </span></span>
+<span class="srcline"><span class="lineno"><a href="52,49" id="srcline49"> 49</a></span><span class="line">                    <span class="comment">%Trans into ego cordition</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,50" id="srcline50"> 50</a></span><span class="line">                    EgoPosTagFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,51" id="srcline51"> 51</a></span><span class="line">                    PRoadInfo = RoadInfo;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,52" id="srcline52"> 52</a></span><span class="line">                    PNavi_InfoTurn = Navi_InfoTurn;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,53" id="srcline53"> 53</a></span><span class="line">                    PNavi_InfoTurn2 = PNavi_InfoTurn;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,54" id="srcline54"> 54</a></span><span class="line">                    PreOp = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,55" id="srcline55"> 55</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,56" id="srcline56"> 56</a></span><span class="line">                LCFobOffset = (Navi_InfoTurn(1,1)-TurnFrontLCFobDis);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,57" id="srcline57"> 57</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,58" id="srcline58"> 58</a></span><span class="line">                if (Navi_InfoTurn(1,2)&gt;0.5) </span></span>
+<span class="srcline"><span class="lineno"><a href="52,59" id="srcline59"> 59</a></span><span class="line">                    LCFobOffset = (Navi_InfoTurn(1,1)-TurnFrontLCFobDis);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,60" id="srcline60"> 60</a></span><span class="line">                elseif (Navi_InfoTurn(2,2)&gt;0.5) </span></span>
+<span class="srcline"><span class="lineno"><a href="52,61" id="srcline61"> 61</a></span><span class="line">                    LCFobOffset = (Navi_InfoTurn(2,1)-TurnFrontLCFobDis-30);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,62" id="srcline62"> 62</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,63" id="srcline63"> 63</a></span><span class="line">                    LCFobOffset = Info_Me(7)+255;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,64" id="srcline64"> 64</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="52,65" id="srcline65"> 65</a></span><span class="line">                if (Navi_InfoTurn(1,2)&gt;0.5) &amp;&amp; (Navi_InfoTurn(2,2)&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,66" id="srcline66"> 66</a></span><span class="line">                   if Info_Me(7) &gt; (Navi_InfoTurn(1,1) - LCReleaseDis)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,67" id="srcline67"> 67</a></span><span class="line">                        LCShutDwn2 = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,68" id="srcline68"> 68</a></span><span class="line">                   end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,69" id="srcline69"> 69</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,70" id="srcline70"> 70</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,71" id="srcline71"> 71</a></span><span class="line">            if End(4)&gt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,72" id="srcline72"> 72</a></span><span class="line">                <span class="comment">% Consider NaviEnd Just as Turn</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,73" id="srcline73"> 73</a></span><span class="line">                NaviEndOffset = End(1) - TurnFrontLCFobDis;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,74" id="srcline74"> 74</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,75" id="srcline75"> 75</a></span><span class="line">                NaviEndOffset = Info_Me(7) + 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,76" id="srcline76"> 76</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,77" id="srcline77"> 77</a></span><span class="line">            if (Info_Me(7) &lt; LCFobOffset)&amp;&amp;(LCOverDelay&gt;0.5)&amp;&amp;(CurOp&lt;0.5)&amp;&amp;(LCEnbSts&gt; 0.5)&amp;&amp; PFailRestoreCn &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,78" id="srcline78"> 78</a></span><span class="line">                <span class="comment">% LC is OK by object judgement</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,79" id="srcline79"> 79</a></span><span class="line">                <span class="comment">% Info_Lo trigger or abs(EgoLaneNum - TargetLaneNum)&gt;0.5 trigger</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,80" id="srcline80"> 80</a></span><span class="line"><span class="comment">%                 if ObjTrig &gt; 1.5</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,81" id="srcline81"> 81</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,82" id="srcline82"> 82</a></span><span class="line">                if LCTrigSuccess &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,83" id="srcline83"> 83</a></span><span class="line">                    <span class="comment">% LC is Trigged</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,84" id="srcline84"> 84</a></span><span class="line">                    Zmax = LCFobOffset - Info_Me(7);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,85" id="srcline85"> 85</a></span><span class="line">                    EndOffset = NaviEndOffset - Info_Me(7);              </span></span>
+<span class="srcline"><span class="lineno"><a href="52,86" id="srcline86"> 86</a></span><span class="line">                    <span class="comment">% Turn Fob LC dis        End Fob LC dis</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,87" id="srcline87"> 87</a></span><span class="line">                    if (Zmax &gt; 20 || (Zmax &gt; 5 &amp;&amp; InLaneLCFlg &lt; 0.5)) &amp;&amp; ((EndOffset &gt; TurnFrontLCFobDis)||(InLaneLCFlg &lt; 0.5))</span></span>
+<span class="srcline"><span class="lineno"><a href="52,88" id="srcline88"> 88</a></span><span class="line">                        CurOp = 5;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,89" id="srcline89"> 89</a></span><span class="line">                        <span class="comment">%RoadInfo = [EndCentX,EndCentY,LaneAngle,LaneWith];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,90" id="srcline90"> 90</a></span><span class="line">                        PTargetLaneNum = TargetLaneNum;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,91" id="srcline91"> 91</a></span><span class="line">                        Line_ShapeTemp = Line_ShapeInfoExtract(EgoLaneNum,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,92" id="srcline92"> 92</a></span><span class="line">                        <span class="comment">%Relative Cord</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,93" id="srcline93"> 93</a></span><span class="line">                        LCEndOffset = Zmax + TurnFrontLCFobDis;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,94" id="srcline94"> 94</a></span><span class="line">                        RoadInfo(1,:) = RoadInfoExtractLC(Line_ShapeTemp,LCEndOffset);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,95" id="srcline95"> 95</a></span><span class="line">                        if InLaneLCFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,96" id="srcline96"> 96</a></span><span class="line">                            RoadInfo(2,:) = RoadInfo(1,:);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,97" id="srcline97"> 97</a></span><span class="line">                            RoadInfo(2,1) = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,98" id="srcline98"> 98</a></span><span class="line">                            if abs(Info_Lo(1)) &gt; min([Line_ShapeTemp(5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="52,99" id="srcline99"> 99</a></span><span class="line">                                RoadInfo(2,1) = min([Line_ShapeTemp(5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,100" id="srcline100">100</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,101" id="srcline101">101</a></span><span class="line">                            RoadInfo(2,2) = TargetPosition;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,102" id="srcline102">102</a></span><span class="line">                            PInLaneLCFlgInt = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,103" id="srcline103">103</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,104" id="srcline104">104</a></span><span class="line">                            Line_ShapeTemp = Line_ShapeInfoExtract(TargetLaneNum,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,105" id="srcline105">105</a></span><span class="line">                            RoadInfo(2,:) = RoadInfoExtractLC(Line_ShapeTemp,LCEndOffset);  </span></span>
+<span class="srcline"><span class="lineno"><a href="52,106" id="srcline106">106</a></span><span class="line">                            RoadInfo(2,1) = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,107" id="srcline107">107</a></span><span class="line">                            if abs(Info_Lo(1)) &gt; min([Line_ShapeTemp(5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="52,108" id="srcline108">108</a></span><span class="line">                                RoadInfo(2,1) = min([Line_ShapeTemp(5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,109" id="srcline109">109</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,110" id="srcline110">110</a></span><span class="line">                            RoadInfo(2,2) = TargetPosition;                       </span></span>
+<span class="srcline"><span class="lineno"><a href="52,111" id="srcline111">111</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,112" id="srcline112">112</a></span><span class="line">                        PRoadInfo = RoadInfo;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,113" id="srcline113">113</a></span><span class="line">                        if (EndOffset &gt; TurnFrontLCFobDis)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,114" id="srcline114">114</a></span><span class="line">                            OperationLongDislimit = min([LCEndOffset,EndOffset]); </span></span>
+<span class="srcline"><span class="lineno"><a href="52,115" id="srcline115">115</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,116" id="srcline116">116</a></span><span class="line">                            OperationLongDislimit = min([LCEndOffset,(EndOffset + TurnFrontLCFobDis - 5)]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,117" id="srcline117">117</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,118" id="srcline118">118</a></span><span class="line">                        EgoPosTagFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,119" id="srcline119">119</a></span><span class="line">                        PLCOPCnt = PLCOPCnt + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,120" id="srcline120">120</a></span><span class="line">                        if PLCOPCnt &gt; 1</span></span>
+<span class="srcline"><span class="lineno"><a href="52,121" id="srcline121">121</a></span><span class="line">                            PLCOPCnt = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,122" id="srcline122">122</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,123" id="srcline123">123</a></span><span class="line">                        PreOp = 5;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,124" id="srcline124">124</a></span><span class="line">                        PTargetLaneNum2 = PTargetLaneNum;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,125" id="srcline125">125</a></span><span class="line">                        Line_ShapeTemp2 = Line_ShapeInfoExtract(PTargetLaneNum,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,126" id="srcline126">126</a></span><span class="line">                        RoadInfoTemp2 = zeros(4,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,127" id="srcline127">127</a></span><span class="line">                        LenTemp = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,128" id="srcline128">128</a></span><span class="line">                        if abs(Info_Lo(1)) &gt; min([Line_ShapeTemp(5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="52,129" id="srcline129">129</a></span><span class="line">                            LenTemp = min([Line_ShapeTemp(5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,130" id="srcline130">130</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,131" id="srcline131">131</a></span><span class="line">                        RoadInfoTemp2 = RoadInfoExtractLC(Line_ShapeTemp2,LenTemp);  </span></span>
+<span class="srcline"><span class="lineno"><a href="52,132" id="srcline132">132</a></span><span class="line">                        PCentTargetOffset = (RoadInfoTemp2(2) - TargetPosition)*cos(RoadInfoTemp2(3));</span></span>
+<span class="srcline"><span class="lineno"><a href="52,133" id="srcline133">133</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,134" id="srcline134">134</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,135" id="srcline135">135</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,136" id="srcline136">136</a></span><span class="line">                end    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,137" id="srcline137">137</a></span><span class="line">            end        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,138" id="srcline138">138</a></span><span class="line">        elseif CurOp &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,139" id="srcline139">139</a></span><span class="line">            if CurOp == 1</span></span>
+<span class="srcline"><span class="lineno"><a href="52,140" id="srcline140">140</a></span><span class="line">                RoadInfo = RoadInfoExtractTr(PNavi_InfoTurn,Info_Me); </span></span>
+<span class="srcline"><span class="lineno"><a href="52,141" id="srcline141">141</a></span><span class="line"><span class="comment">%                 RoadInfo = PRoadInfo;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,142" id="srcline142">142</a></span><span class="line">            elseif CurOp == 5                </span></span>
+<span class="srcline"><span class="lineno"><a href="52,143" id="srcline143">143</a></span><span class="line">                if TunEnbSts &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,144" id="srcline144">144</a></span><span class="line">                    Zmax = (Navi_InfoTurn(1,1)-TurnFrontLCFobDis) - Info_Me(7);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,145" id="srcline145">145</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,146" id="srcline146">146</a></span><span class="line">                    Zmax = 255;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,147" id="srcline147">147</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,148" id="srcline148">148</a></span><span class="line">                <span class="comment">%RoadInfo = [EndCentX,EndCentY,LaneAngle,LaneWith];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,149" id="srcline149">149</a></span><span class="line">                TargetLaneNum = PTargetLaneNum;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,150" id="srcline150">150</a></span><span class="line">                Line_ShapeTemp = Line_ShapeInfoExtract(EgoLaneNum,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,151" id="srcline151">151</a></span><span class="line">                <span class="comment">%Relative Cord</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,152" id="srcline152">152</a></span><span class="line">                LCEndOffset = Zmax + TurnFrontLCFobDis;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,153" id="srcline153">153</a></span><span class="line">                RoadInfo(1,:) = RoadInfoExtractLC(Line_ShapeTemp,LCEndOffset);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,154" id="srcline154">154</a></span><span class="line">                if PInLaneLCFlgInt &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,155" id="srcline155">155</a></span><span class="line">                    RoadInfo(2,:) = RoadInfo(1,:);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,156" id="srcline156">156</a></span><span class="line">                    RoadInfo(2,1) = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,157" id="srcline157">157</a></span><span class="line">                    if abs(Info_Lo(1)) &gt; min([Line_ShapeTemp(5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="52,158" id="srcline158">158</a></span><span class="line">                        RoadInfo(2,1) = min([Line_ShapeTemp(5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,159" id="srcline159">159</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,160" id="srcline160">160</a></span><span class="line">                    RoadInfo(2,2) = TargetPosition;  </span></span>
+<span class="srcline"><span class="lineno"><a href="52,161" id="srcline161">161</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,162" id="srcline162">162</a></span><span class="line">                    Line_ShapeTemp = Line_ShapeInfoExtract(TargetLaneNum,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,163" id="srcline163">163</a></span><span class="line">                    RoadInfo(2,:) = RoadInfoExtractLC(Line_ShapeTemp,LCEndOffset);  </span></span>
+<span class="srcline"><span class="lineno"><a href="52,164" id="srcline164">164</a></span><span class="line">                    RoadInfo(2,1) = Info_Lo(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,165" id="srcline165">165</a></span><span class="line">                    if abs(Info_Lo(1)) &gt; min([Line_ShapeTemp(5),50])</span></span>
+<span class="srcline"><span class="lineno"><a href="52,166" id="srcline166">166</a></span><span class="line">                        RoadInfo(2,1) = min([Line_ShapeTemp(5),50]);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,167" id="srcline167">167</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,168" id="srcline168">168</a></span><span class="line">                    RoadInfo(2,2) = TargetPosition;                      </span></span>
+<span class="srcline"><span class="lineno"><a href="52,169" id="srcline169">169</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,170" id="srcline170">170</a></span><span class="line">                OperationLongDislimit = LCEndOffset; </span></span>
+<span class="srcline"><span class="lineno"><a href="52,171" id="srcline171">171</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,172" id="srcline172">172</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,173" id="srcline173">173</a></span><span class="line">            if OperationFinishFlgIn &lt; -0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,174" id="srcline174">174</a></span><span class="line">                CurOp = 0; </span></span>
+<span class="srcline"><span class="lineno"><a href="52,175" id="srcline175">175</a></span><span class="line">                PFailRestoreCn = FailSilentCnt;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,176" id="srcline176">176</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,177" id="srcline177">177</a></span><span class="line">            <span class="comment">%Update the operation status</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,178" id="srcline178">178</a></span><span class="line">            if (abs(CurOp-5)&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,179" id="srcline179">179</a></span><span class="line">                if (OperationFinishFlgIn &gt; 0.5)||(LCForceShudown &gt; 0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,180" id="srcline180">180</a></span><span class="line"><span class="comment">%                 if ((abs(PTargetLaneNum - EgoLaneNum)&lt;0.5)&amp;&amp;(OperationFinishFlgIn&gt;0.5))||(LCForceShudown &gt; 0.5)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,181" id="srcline181">181</a></span><span class="line">    <span class="comment">%                 Line_ShapeTemp = Line_ShapeInfoExtract(PTargetLaneNum,Line_ShapeInfo);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,182" id="srcline182">182</a></span><span class="line">                    <span class="comment">%AngleDifference &amp; DisDifference</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,183" id="srcline183">183</a></span><span class="line">    <span class="comment">%                 if (abs(Line_ShapeTemp(2))&lt;AngTol)||(PInLaneLCFlgInt &gt; 0.5)||(LCEnbSts &lt; 0.5)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,184" id="srcline184">184</a></span><span class="line">                    <span class="comment">%Previous is success                           </span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,185" id="srcline185">185</a></span><span class="line">                        CurOp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,186" id="srcline186">186</a></span><span class="line">                        if PInLaneLCFlgInt &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,187" id="srcline187">187</a></span><span class="line">                            if PInLaneLCFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,188" id="srcline188">188</a></span><span class="line">                                PInLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,189" id="srcline189">189</a></span><span class="line">                            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,190" id="srcline190">190</a></span><span class="line">                                PInLaneLCFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,191" id="srcline191">191</a></span><span class="line">                            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,192" id="srcline192">192</a></span><span class="line">                            PInLaneLCFlgInt = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,193" id="srcline193">193</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,194" id="srcline194">194</a></span><span class="line">                            NexLCDelayCnt = LCDelayTime; </span></span>
+<span class="srcline"><span class="lineno"><a href="52,195" id="srcline195">195</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,196" id="srcline196">196</a></span><span class="line">    <span class="comment">%                 end   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,197" id="srcline197">197</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,198" id="srcline198">198</a></span><span class="line">                    OpSts = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,199" id="srcline199">199</a></span><span class="line">                    if (abs(PTargetLaneNum - EgoLaneNum)&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,200" id="srcline200">200</a></span><span class="line">                        OpSts = OpSts + 10;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,201" id="srcline201">201</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,202" id="srcline202">202</a></span><span class="line">                    if (OperationFinishFlgIn&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,203" id="srcline203">203</a></span><span class="line">                        OpSts = OpSts + 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,204" id="srcline204">204</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,205" id="srcline205">205</a></span><span class="line">                end    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,206" id="srcline206">206</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,207" id="srcline207">207</a></span><span class="line">            if (abs(CurOp - 1)&lt;0.5)||(abs(CurOp - 2)&lt;0.5) </span></span>
+<span class="srcline"><span class="lineno"><a href="52,208" id="srcline208">208</a></span><span class="line">                AbsCord_Ego = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,209" id="srcline209">209</a></span><span class="line">                AbsCord_Trn = [PNavi_InfoTurn(2,3),PNavi_InfoTurn(2,4),PNavi_InfoTurn(2,7)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,210" id="srcline210">210</a></span><span class="line"><span class="comment">%                 AbsCord_Trn = [PRoadInfo(2,1),PRoadInfo(2,2),PRoadInfo(2,3)];</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,211" id="srcline211">211</a></span><span class="line">                PassFlg = PassJudgement(AbsCord_Ego,AbsCord_Trn);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,212" id="srcline212">212</a></span><span class="line">                if ((((abs(EgoHeadAng - PNavi_InfoTurn(2,7))&lt;AngTol/180*3.14)&amp;&amp;(PassFlg&gt;0.5))||(ByPassTurnFinsJudge&gt;0.5))&amp;&amp;(OperationFinishFlgIn&gt;0.5))||(TunForceShudown &gt; 0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,213" id="srcline213">213</a></span><span class="line">                    CurOp = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,214" id="srcline214">214</a></span><span class="line">                    PRoadInfo = zeros(2,4);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,215" id="srcline215">215</a></span><span class="line">                    PNavi_InfoTurn = zeros(4,7);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,216" id="srcline216">216</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,217" id="srcline217">217</a></span><span class="line">                    OpSts = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,218" id="srcline218">218</a></span><span class="line">                    if (abs(EgoHeadAng - PNavi_InfoTurn(2,7))&gt;=AngTol/180*3.14)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,219" id="srcline219">219</a></span><span class="line">                        OpSts = OpSts + 10;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,220" id="srcline220">220</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,221" id="srcline221">221</a></span><span class="line">                    if (PassFlg&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,222" id="srcline222">222</a></span><span class="line">                        OpSts = OpSts + 100;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,223" id="srcline223">223</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,224" id="srcline224">224</a></span><span class="line">                    if (OperationFinishFlgIn&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,225" id="srcline225">225</a></span><span class="line">                        OpSts = OpSts + 1000;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,226" id="srcline226">226</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,227" id="srcline227">227</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,228" id="srcline228">228</a></span><span class="line">            end   </span></span>
+<span class="srcline"><span class="lineno"><a href="52,229" id="srcline229">229</a></span><span class="line">        else            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,230" id="srcline230">230</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,231" id="srcline231">231</a></span><span class="line">        if EgoPosTagFlg &gt; 0.5            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,232" id="srcline232">232</a></span><span class="line"><span class="comment">%             Temp = EgoCordOrig;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,233" id="srcline233">233</a></span><span class="line">            EgoCordOrig = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,234" id="srcline234">234</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,235" id="srcline235">235</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,236" id="srcline236">236</a></span><span class="line">        if LCStartFlg &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,237" id="srcline237">237</a></span><span class="line">            PreEgoCordOrig = EgoCordOrig;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,238" id="srcline238">238</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,239" id="srcline239">239</a></span><span class="line">        AbsCord_Ego = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,240" id="srcline240">240</a></span><span class="line">        RelCord_Ego = CordTransfer(AbsCord_Ego,EgoCordOrig);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,241" id="srcline241">241</a></span><span class="line">        Info_MeRel(1:6)=Info_Me(1:6);        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,242" id="srcline242">242</a></span><span class="line">        Info_MeRel(1) = RelCord_Ego(1);Info_MeRel(2) = RelCord_Ego(2);Info_MeRel(6) = RelCord_Ego(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,243" id="srcline243">243</a></span><span class="line">        PreInfo_MeRel = Info_MeRel;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,244" id="srcline244">244</a></span><span class="line">        RelCord_Ego = CordTransfer(AbsCord_Ego,PreEgoCordOrig);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,245" id="srcline245">245</a></span><span class="line">        PreInfo_MeRel(1) = RelCord_Ego(1);PreInfo_MeRel(2) = RelCord_Ego(2);PreInfo_MeRel(6) = RelCord_Ego(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,246" id="srcline246">246</a></span><span class="line">        Curoperation = CurOp;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,247" id="srcline247">247</a></span><span class="line">        if CurOp &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,248" id="srcline248">248</a></span><span class="line">            SpeedLimit = SpeedLimitOp;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,249" id="srcline249">249</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,250" id="srcline250">250</a></span><span class="line">            if (Info_Me(7) &gt; (Navi_InfoTurn(1,1)-20))&amp;&amp; (Info_Me(7) &lt; Navi_InfoTurn(2,1))</span></span>
+<span class="srcline"><span class="lineno"><a href="52,251" id="srcline251">251</a></span><span class="line">                SpeedLimit = SpeedLimitOp;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,252" id="srcline252">252</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,253" id="srcline253">253</a></span><span class="line">                SpeedLimit = SpeedLimitIdle;     </span></span>
+<span class="srcline"><span class="lineno"><a href="52,254" id="srcline254">254</a></span><span class="line">            end                   </span></span>
+<span class="srcline"><span class="lineno"><a href="52,255" id="srcline255">255</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,256" id="srcline256">256</a></span><span class="line">        InLaneLCFlgOut = PInLaneLCFlgInt;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,257" id="srcline257">257</a></span><span class="line">        RoadInfo(1,1) = Info_MeRel(1);RoadInfo(1,2) = Info_MeRel(2);RoadInfo(1,3) = Info_MeRel(6);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,258" id="srcline258">258</a></span><span class="line">        <span class="comment">% RisEdge Update this for Obj monitor</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,259" id="srcline259">259</a></span><span class="line">        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,260" id="srcline260">260</a></span><span class="line">        if abs(PreOp - 1)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,261" id="srcline261">261</a></span><span class="line">            RoadInfoTemp = RoadInfoExtractTr(PNavi_InfoTurn2,Info_Me); </span></span>
+<span class="srcline"><span class="lineno"><a href="52,262" id="srcline262">262</a></span><span class="line">            RoadInfo2 = RoadInfoTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,263" id="srcline263">263</a></span><span class="line">        elseif abs(PreOp - 5)&lt;0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,264" id="srcline264">264</a></span><span class="line">            Line_ShapeTemp = Line_ShapeInfoExtract(PTargetLaneNum2,Line_ShapeInfo);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,265" id="srcline265">265</a></span><span class="line">            RoadInfo2(2,:) = RoadInfoExtractLC(Line_ShapeTemp,50);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,266" id="srcline266">266</a></span><span class="line">            TargetOffset = PCentTargetOffset/(abs(cos(RoadInfo2(2,3)))+1e-4);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,267" id="srcline267">267</a></span><span class="line">            RoadInfo2(2,2) = RoadInfo2(2,2) - TargetOffset;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,268" id="srcline268">268</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,269" id="srcline269">269</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,270" id="srcline270">270</a></span><span class="line">    else        </span></span>
+<span class="srcline"><span class="lineno"><a href="52,271" id="srcline271">271</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,272" id="srcline272">272</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="52,273" id="srcline273">273</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,274" id="srcline274">274</a></span><span class="line"><span class="keyword">function</span> <span class="var type1" id="S89T7U1729">RoadInfo</span> = RoadInfoExtractLC(<span class="var type1" id="S90T40U1732">Line_ShapeTemp</span>,<span class="var type1" id="S91T1U1733">Xmax</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,275" id="srcline275">275</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U4"><span class="var type1" id="S91T1U1737">Xmax</span> &gt; <span class="mxinfo " id="T1:U6">min(<span class="mxinfo " id="T33:U7">[<span class="mxinfo " id="T1:U8"><span class="var type1" id="S90T40U1743">Line_ShapeTemp</span>(<span class="mxinfo " id="T9:U10">5</span>)</span>,<span class="mxinfo " id="T1:U11">50</span>]</span>)</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,276" id="srcline276">276</a></span><span class="line">        <span class="mxinfo " id="T1:U12"><span class="var type1" id="S91T1U1748">Xmax</span> = <span class="mxinfo " id="T1:U14">min(<span class="mxinfo " id="T33:U15">[<span class="mxinfo " id="T1:U16"><span class="var type1" id="S90T40U1754">Line_ShapeTemp</span>(<span class="mxinfo " id="T9:U18">5</span>)</span>,<span class="mxinfo " id="T1:U19">50</span>]</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,277" id="srcline277">277</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,278" id="srcline278">278</a></span><span class="line">    <span class="mxinfo " id="T1:U20"><span class="var type1" id="S93T1U1759">EndCentX</span> = <span class="var type1" id="S91T1U1760">Xmax</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,279" id="srcline279">279</a></span><span class="line">    <span class="mxinfo " id="T1:U23"><span class="var type1" id="S94T1U1763">EndCentY</span> = <span class="mxinfo " id="T1:U25"><span class="mxinfo " id="T1:U26"><span class="mxinfo " id="T1:U27"><span class="mxinfo " id="T1:U28"><span class="mxinfo " id="T1:U29"><span class="var type1" id="S91T1U1769">Xmax</span>^3</span>*<span class="mxinfo " id="T1:U31"><span class="var type1" id="S90T40U1772">Line_ShapeTemp</span>(<span class="mxinfo " id="T1:U33">4</span>)</span></span>+<span class="mxinfo " id="T1:U34"><span class="mxinfo " id="T1:U35"><span class="var type1" id="S91T1U1776">Xmax</span>^2</span>*<span class="mxinfo " id="T1:U37"><span class="var type1" id="S90T40U1779">Line_ShapeTemp</span>(<span class="mxinfo " id="T1:U39">3</span>)</span></span></span>+<span class="mxinfo " id="T1:U40"><span class="var type1" id="S91T1U1782">Xmax</span>*<span class="mxinfo " id="T1:U42"><span class="var type1" id="S90T40U1784">Line_ShapeTemp</span>(<span class="mxinfo " id="T1:U44">2</span>)</span></span></span>+<span class="mxinfo " id="T1:U45"><span class="var type1" id="S90T40U1787">Line_ShapeTemp</span>(<span class="mxinfo " id="T1:U47">1</span>)</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,280" id="srcline280">280</a></span><span class="line">    <span class="mxinfo " id="T1:U48"><span class="var type1" id="S94T1U1791">EndCentY</span> = <span class="mxinfo " id="T1:U50"><span class="var type1" id="S94T1U1793">EndCentY</span>*<span class="mxinfo " id="T1:U52">-<span class="mxinfo " id="T1:U53">1</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,281" id="srcline281">281</a></span><span class="line">    <span class="mxinfo " id="T1:U54"><span class="var type1" id="S95T1U1798">LaneAngle</span> = <span class="mxinfo " id="T1:U56">-<span class="mxinfo " id="T1:U57">atan(<span class="mxinfo " id="T1:U58"><span class="var type1" id="S90T40U1803">Line_ShapeTemp</span>(<span class="mxinfo " id="T9:U60">2</span>)</span>)</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,282" id="srcline282">282</a></span><span class="line">    <span class="mxinfo " id="T1:U61"><span class="var type1" id="S97T1U1807">LaneWidth</span> = <span class="mxinfo " id="T1:U63"><span class="var type1" id="S90T40U1809">Line_ShapeTemp</span>(<span class="mxinfo " id="T9:U65">6</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,283" id="srcline283">283</a></span><span class="line">    <span class="mxinfo " id="T7:U66"><span class="var type1" id="S89T7U1813">RoadInfo</span> = <span class="mxinfo " id="T7:U68">[<span class="var type1" id="S93T1U1816">EndCentX</span>,<span class="var type1" id="S94T1U1817">EndCentY</span>,<span class="var type1" id="S95T1U1818">LaneAngle</span>,<span class="var type1" id="S97T1U1819">LaneWidth</span>]</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,284" id="srcline284">284</a></span><span class="line"><span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="52,285" id="srcline285">285</a></span><span class="line"></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="52,286" id="srcline286">286</a></span><span class="line">function RoadInfo = RoadInfoExtractTr(Navi_InfoTurn,Info_Me)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,287" id="srcline287">287</a></span><span class="line">    RoadInfo = zeros(2,4);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,288" id="srcline288">288</a></span><span class="line">    RoadInfo(1,:) = [Navi_InfoTurn(1,3),Navi_InfoTurn(1,4),Navi_InfoTurn(1,7),4];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,289" id="srcline289">289</a></span><span class="line">    RoadInfo(2,:) = [Navi_InfoTurn(2,3),Navi_InfoTurn(2,4),Navi_InfoTurn(2,7),4];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,290" id="srcline290">290</a></span><span class="line">    CordOrig = [Info_Me(1),Info_Me(2),Info_Me(6)];    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,291" id="srcline291">291</a></span><span class="line">    for i = 1:2</span></span>
+<span class="srcline"><span class="lineno"><a href="52,292" id="srcline292">292</a></span><span class="line">        Cord2Trans = RoadInfo(i,1:3);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,293" id="srcline293">293</a></span><span class="line">        RoadInfo(i,1:3) = CordTransfer(Cord2Trans,CordOrig);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,294" id="srcline294">294</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,295" id="srcline295">295</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,296" id="srcline296">296</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,297" id="srcline297">297</a></span><span class="line">function PassFlg = PassJudgement(EgoCord,TargetCord)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,298" id="srcline298">298</a></span><span class="line">    EgoCordTemp = CordTransfer(EgoCord,TargetCord);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,299" id="srcline299">299</a></span><span class="line">    if EgoCordTemp(1) &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="52,300" id="srcline300">300</a></span><span class="line">        PassFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,301" id="srcline301">301</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,302" id="srcline302">302</a></span><span class="line">        PassFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,303" id="srcline303">303</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,304" id="srcline304">304</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,305" id="srcline305">305</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,306" id="srcline306">306</a></span><span class="line">function CordAfter = CordTransfer(CordBefore,CordOrig)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,307" id="srcline307">307</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="52,308" id="srcline308">308</a></span><span class="line">    theta_rot = CordOrig(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,309" id="srcline309">309</a></span><span class="line">    xpositionTemp = (CordBefore(1) - CordOrig(1))*cos(theta_rot) + (CordBefore(2) - CordOrig(2))*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,310" id="srcline310">310</a></span><span class="line">    ypositionTemp = (CordBefore(2) - CordOrig(2))*cos(theta_rot) - (CordBefore(1) - CordOrig(1))*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,311" id="srcline311">311</a></span><span class="line">    AngleTemp = CordBefore(3)-theta_rot;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,312" id="srcline312">312</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,313" id="srcline313">313</a></span><span class="line">        if (AngleTemp &gt;= 0)&amp;&amp;(AngleTemp &lt; 2*pi)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,314" id="srcline314">314</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,315" id="srcline315">315</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,316" id="srcline316">316</a></span><span class="line">            if AngleTemp&lt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="52,317" id="srcline317">317</a></span><span class="line">                AngleTemp = AngleTemp + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,318" id="srcline318">318</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,319" id="srcline319">319</a></span><span class="line">                AngleTemp = AngleTemp - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,320" id="srcline320">320</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="52,321" id="srcline321">321</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,322" id="srcline322">322</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,323" id="srcline323">323</a></span><span class="line">    CordAfter = [xpositionTemp,ypositionTemp,AngleTemp];</span></span>
+<span class="srcline"><span class="lineno"><a href="52,324" id="srcline324">324</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,325" id="srcline325">325</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,326" id="srcline326">326</a></span><span class="line">function [Distance,theta] = AngleDisCalin2Pi(Xdis,Ydis)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,327" id="srcline327">327</a></span><span class="line">    theta = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,328" id="srcline328">328</a></span><span class="line">    Distance = sqrt(Xdis^2 + Ydis^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,329" id="srcline329">329</a></span><span class="line">    if abs(Xdis) &lt; 1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,330" id="srcline330">330</a></span><span class="line">        if Ydis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="52,331" id="srcline331">331</a></span><span class="line">            theta = 3*pi/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,332" id="srcline332">332</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,333" id="srcline333">333</a></span><span class="line">            theta = pi/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,334" id="srcline334">334</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,335" id="srcline335">335</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,336" id="srcline336">336</a></span><span class="line">        theta = atan(Ydis/Xdis);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,337" id="srcline337">337</a></span><span class="line">        if abs(theta)&lt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="52,338" id="srcline338">338</a></span><span class="line">            if Xdis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="52,339" id="srcline339">339</a></span><span class="line">                theta = pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,340" id="srcline340">340</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,341" id="srcline341">341</a></span><span class="line">                theta = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,342" id="srcline342">342</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,343" id="srcline343">343</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,344" id="srcline344">344</a></span><span class="line">            if Xdis &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="52,345" id="srcline345">345</a></span><span class="line">                theta = theta + pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,346" id="srcline346">346</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,347" id="srcline347">347</a></span><span class="line">                if theta &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="52,348" id="srcline348">348</a></span><span class="line">                    theta = theta + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="52,349" id="srcline349">349</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,350" id="srcline350">350</a></span><span class="line">            end                </span></span>
+<span class="srcline"><span class="lineno"><a href="52,351" id="srcline351">351</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,352" id="srcline352">352</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,353" id="srcline353">353</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,354" id="srcline354">354</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,355" id="srcline355">355</a></span><span class="line">function Line_ShapeRes = Line_ShapeInfoExtract(TargetLaneNum,Line_ShapeInfo)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,356" id="srcline356">356</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,357" id="srcline357">357</a></span><span class="line">    if (TargetLaneNum &gt; length(Line_ShapeInfo(:,1)))||(TargetLaneNum &lt; 0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="52,358" id="srcline358">358</a></span><span class="line">        Line_ShapeRes = zeros(1,10);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,359" id="srcline359">359</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="52,360" id="srcline360">360</a></span><span class="line">        Line_ShapeRes = Line_ShapeInfo(TargetLaneNum,:);</span></span>
+<span class="srcline"><span class="lineno"><a href="52,361" id="srcline361">361</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,362" id="srcline362">362</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="52,363" id="srcline363">363</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="52,364" id="srcline364">364</a></span><span class="line"> </span></span>
+</pre>
+</div>

@@ -1,0 +1,132 @@
+# module.mk
+#     Author: haibei  #
+       
+# Created on: 2016-12-21
+
+MODULE_PATH			:= $(call current_path)
+MODULE_NAME			:= adu.elf
+
+## 定义product定制文件
+PRODUCT_SPECS := 
+## 定义platform定制文件
+PLATFORM_SPECS :=
+## 定义target定制文件
+TARGET_SPECS :=
+
+include $(BUILD_CONFIGURE)
+
+
+## 调用executable.mk，就可以自动编译得到想要的可执行文件
+SRC_FILES:= $(MODULE_PATH)/src/main.cpp\
+            $(MODULE_PATH)/src/rt/rt_nonfinite.c\
+            $(MODULE_PATH)/src/rt/rtGetInf.c\
+            $(MODULE_PATH)/src/rt/rtGetNaN.c\
+            $(MODULE_PATH)/src/rt/rt_i32zcfcn.c\
+            $(MODULE_PATH)/src/rt/rt_nonfinite.c\
+            $(MODULE_PATH)/src/rt/rtkraw2wgs.c \
+            $(MODULE_PATH)/src/EthrevThread.cpp\
+            $(MODULE_PATH)/src/data_fusing.cpp\
+            $(MODULE_PATH)/src/CAN1/M2S_CAN1.c\
+            $(MODULE_PATH)/src/CAN1/M2S_CAN1_par.c\
+            $(MODULE_PATH)/src/CAN2/M2S_CAN2.c\
+            $(MODULE_PATH)/src/CAN2/M2S_CAN2_par.c\
+            $(MODULE_PATH)/src/CAN3/M2S_CAN3.c\
+            $(MODULE_PATH)/src/CAN3/M2S_CAN3_par.c\
+            $(MODULE_PATH)/src/CAN4/M2S_CAN4.c\
+            $(MODULE_PATH)/src/CAN4/M2S_CAN4_par.c\
+			$(MODULE_PATH)/src/MapDbc/M2S_Map.c\
+			$(MODULE_PATH)/src/MapDbc/M2S_Map_par.c\
+            $(MODULE_PATH)/src/rtk_gps/RTK_M2S.c\
+            $(MODULE_PATH)/src/spiThread.cpp\
+            $(MODULE_PATH)/src/pathplan.cpp\
+            $(MODULE_PATH)/src/map.cpp\
+            $(MODULE_PATH)/src/interface.c\
+            $(MODULE_PATH)/src/matlab_fusing/EPM_Driver_Fcn/EPM_Driver_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/EPM_Driver_Fcn/EPM_Driver_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/ESR_Driver_Fcn/ESR_Driver_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/ESR_Driver_Fcn/ESR_Driver_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/ESR_CoorAlig_Fcn/ESR_CoorAlig_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/ESR_CoorAlig_Fcn/ESR_CoorAlig_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/Camera_DataGen_Fcn/Camera_DataGen_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/Camera_DataGen_Fcn/Camera_DataGen_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/EPM2MotionControl/EPM_Ln_ObjGenFcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/EPM2MotionControl/EPM_Ln_ObjGenFcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/SRR_Driver_Fcn_20ms/SRR_Driver_Fcn_20ms.c\
+            $(MODULE_PATH)/src/matlab_fusing/SRR_Driver_Fcn_20ms/SRR_Driver_Fcn_20ms_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/SRR_Driver_Fcn_100ms/SRR_Driver_Fcn_100ms.c\
+            $(MODULE_PATH)/src/matlab_fusing/SRR_Driver_Fcn_100ms/SRR_Driver_Fcn_100ms_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/LFSRR_DataGen_Fcn/LFSRR_DataGen_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/LFSRR_DataGen_Fcn/LFSRR_DataGen_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/LRSRR_DataGen_Fcn/LRSRR_DataGen_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/LRSRR_DataGen_Fcn/LRSRR_DataGen_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/RFSRR_DataGen_Fcn/RFSRR_DataGen_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/RFSRR_DataGen_Fcn/RFSRR_DataGen_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/RRSRR_DataGen_Fcn/RRSRR_DataGen_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/RRSRR_DataGen_Fcn/RRSRR_DataGen_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/SideFusion_Fcn/SideFusion_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/SideFusion_Fcn/SideFusion_Fcn_data.c\
+            $(MODULE_PATH)/src/matlab_fusing/GlobalFusion_Fcn/GlobalFusion_Fcn.c\
+            $(MODULE_PATH)/src/matlab_fusing/GlobalFusion_Fcn/GlobalFusion_Fcn_data.c\
+	    $(MODULE_PATH)/src/matlab_fusing/SideOccupy_Fcn/SideOccupy_Fcn.c\
+	    $(MODULE_PATH)/src/matlab_fusing/SideOccupy_Fcn/SideOccupy_Fcn_data.c\
+            $(MODULE_PATH)/src/himap/CodeGen_LaneMarkMessage_ert_rtw/CodeGen_LaneMarkMessage.c\
+            $(MODULE_PATH)/src/himap/CodeGen_LaneMessage_ert_rtw/CodeGen_LaneMessage.c\
+	    $(MODULE_PATH)/src/himap/CodeGen_PositionMessage_ert_rtw/CodeGen_PositionMessage.c\
+	    $(MODULE_PATH)/src/himap/CodeGen_ProfileLongMessage_ert_rtw/CodeGen_ProfileLongMessage.c\
+	    $(MODULE_PATH)/src/himap/CodeGen_ProfileShortMessage_ert_rtw/CodeGen_ProfileShortMessage.c\
+            $(MODULE_PATH)/src/himap/CodeGen_RTKMessage_ert_rtw/CodeGen_RTKMessage.c\
+            $(MODULE_PATH)/src/himap/CodeGen_RTKMessage_ert_rtw/CodeGen_RTKMessage_data.c\
+	    $(MODULE_PATH)/src/himap/CodeGen_SegmentMessage_ert_rtw/CodeGen_SegmentMessage.c\
+	    $(MODULE_PATH)/src/himap/CodeGen_StubMessage_ert_rtw/CodeGen_StubMessage.c\
+            $(MODULE_PATH)/src/himap/CodeGen_TrafficSignMessage_ert_rtw/CodeGen_TrafficSignMessage.c \
+            $(MODULE_PATH)/src/himap/CodeGen_LanInfoSys_ert_rtw/CodeGen_LanInfoSys.c \
+	    $(MODULE_PATH)/src/himap/CODE_GEN_TrackProc/CodeGen_TrackProc.c \
+	    $(MODULE_PATH)/src/himap/CODE_GEN_TrackProc/CodeGen_TrackProc_data.c \
+             $(MODULE_PATH)/src/pathplan/abs.c\
+			  $(MODULE_PATH)/src/pathplan/CordConvertLC.c\
+ $(MODULE_PATH)/src/pathplan/CordTransfer.c\
+ $(MODULE_PATH)/src/pathplan/CordTransferInterSection.c\
+ $(MODULE_PATH)/src/pathplan/DebugMain.c\
+ $(MODULE_PATH)/src/pathplan/DebugMain_data.c\
+ $(MODULE_PATH)/src/pathplan/DebugMain_initialize.c\
+ $(MODULE_PATH)/src/pathplan/DebugMain_rtwutil.c\
+ $(MODULE_PATH)/src/pathplan/DebugMain_terminate.c\
+ $(MODULE_PATH)/src/pathplan/diag.c\
+  $(MODULE_PATH)/src/pathplan/DisEngStateMang.c\
+   $(MODULE_PATH)/src/pathplan/ElementaryPosCalInterSection.c\
+ $(MODULE_PATH)/src/pathplan/eye.c\
+  $(MODULE_PATH)/src/pathplan/InPutMonitorAndFuncEnb.c\
+  $(MODULE_PATH)/src/pathplan/InputPreTreatMent.c\
+  $(MODULE_PATH)/src/pathplan/InterSectionPathPlanningModule.c\
+  $(MODULE_PATH)/src/pathplan/LaneChangePathPlanningModule.c\
+  $(MODULE_PATH)/src/pathplan/LaneChgExitJudge.c\
+   $(MODULE_PATH)/src/pathplan/mldivide.c\
+   $(MODULE_PATH)/src/pathplan/MonitorObjDebugVersion.c\
+    $(MODULE_PATH)/src/pathplan/norm.c\
+   $(MODULE_PATH)/src/pathplan/ObjSelectDebugVersion.c\
+   $(MODULE_PATH)/src/pathplan/OperAndObjSelector.c\
+   $(MODULE_PATH)/src/pathplan/OpSchedule.c\
+ $(MODULE_PATH)/src/pathplan/OpTrigJudgeLC.c\
+ $(MODULE_PATH)/src/pathplan/OpTrigJudgeTurn.c\
+$(MODULE_PATH)/src/pathplan/PathCreatorInterSection.c\
+$(MODULE_PATH)/src/pathplan/PathCreatorLC.c\
+$(MODULE_PATH)/src/pathplan/PathGenerator.c\
+$(MODULE_PATH)/src/pathplan/pinv.c\
+$(MODULE_PATH)/src/pathplan/PosUpdateLC.c\
+$(MODULE_PATH)/src/pathplan/sign.c\
+$(MODULE_PATH)/src/pathplan/svd1.c\
+$(MODULE_PATH)/src/pathplan/TransPathPlan.c\
+$(MODULE_PATH)/src/pathplan/TurnLightTrigLane_NumInfo.c\
+$(MODULE_PATH)/src/pathplan/UpdateSideObjRes.c\
+$(MODULE_PATH)/src/pathplan/xgetrf.c\
+$(MODULE_PATH)/src/pathplan/XinExtractFunc.c\
+          \
+
+ LDLIBS := \
+           sw/osal_hal/liboal_hal.a\
+		  
+           
+           
+      
+## 定义了如何生成可执行文件的通用规则
+$(call build_target,$(BUILD_EXECUTABLE))

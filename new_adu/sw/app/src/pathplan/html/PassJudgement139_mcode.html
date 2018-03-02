@@ -1,0 +1,155 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="64,1" id="srcline1">  1</a></span><span class="line">function [PathFinishFlg,TrunTrigFlg,x_inStartTPoint,y_inStartTPoint,x_outEndTPoint,y_outEndTPoint,CurActiveModel,RoadInfoPGCd,TarPosInfo,PathPlanningSuccessFlg] = XinExtractFunc(CurOPPP,TrigFlg,x_in,y_in,angle_in,x_out,y_out,angle_out,W_in,W_out,Info_Me,TurnLenIn,aTransIn,EnterZoneFlg,ExitOutOfTurn,PathPlanRetryFlg,StopFlg)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,2" id="srcline2">  2</a></span><span class="line"><span class="comment">%#codegen</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,3" id="srcline3">  3</a></span><span class="line"><span class="comment">%         RoadInfo(1,1) = Info_Me(1);RoadInfo(1,2) = Info_Me(2);RoadInfo(1,3) = Info_Me(6);RoadInfo(1,4) = EgoLaneInfo(2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,4" id="srcline4">  4</a></span><span class="line"><span class="comment">%         RoadInfo(2,:) = [EgoLaneInfo(3),EgoLaneInfo(4),EgoLaneInfo(1),EgoLaneInfo(2)]; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,5" id="srcline5">  5</a></span><span class="line">    persistent PTurnTrigFlg PTrigFlg CurState PInfo_Me</span></span>
+<span class="srcline"><span class="lineno"><a href="64,6" id="srcline6">  6</a></span><span class="line">    if isempty(PTurnTrigFlg)||(abs(CurOPPP-1)&gt;1e-1)&amp;&amp;(abs(CurOPPP-2)&gt;1e-1)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,7" id="srcline7">  7</a></span><span class="line">        PTurnTrigFlg = 0;PTrigFlg = 0;CurState = 1;PInfo_Me = [0 0 0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,8" id="srcline8">  8</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,9" id="srcline9">  9</a></span><span class="line">    if TrigFlg &gt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="64,10" id="srcline10"> 10</a></span><span class="line">        PTrigFlg = 1;CurState = 1;PTurnTrigFlg= 0;PInfo_Me = [0 0 0 0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,11" id="srcline11"> 11</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,12" id="srcline12"> 12</a></span><span class="line">    TurnLen = TurnLenIn; TrunTrigFlg = 0; aTrans = aTransIn; CurActiveModel = 0;PathFinishFlg = 0;RoadInfoPGCd = [0 0 0 0;0 0 0 0];TarPosInfo = [0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,13" id="srcline13"> 13</a></span><span class="line">    if abs(sin(angle_out - angle_in))&lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="64,14" id="srcline14"> 14</a></span><span class="line">        <span class="comment">% Treat outpoint as a 90 degree Turn</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,15" id="srcline15"> 15</a></span><span class="line">        <span class="comment">% No Turn is needed </span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,16" id="srcline16"> 16</a></span><span class="line">        Xcent = 0;Ycent = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,17" id="srcline17"> 17</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,18" id="srcline18"> 18</a></span><span class="line">        Xcent = x_out - y_out * cot(angle_out - angle_in);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,19" id="srcline19"> 19</a></span><span class="line">        Ycent = 0;    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,20" id="srcline20"> 20</a></span><span class="line">    end    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,21" id="srcline21"> 21</a></span><span class="line">    DisIn2CentP = sqrt((x_in - Xcent)^2 + (y_in - Ycent)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,22" id="srcline22"> 22</a></span><span class="line">    DisOut2CentP = sqrt((x_out - Xcent)^2 + (y_out - Ycent)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,23" id="srcline23"> 23</a></span><span class="line">    Dis2CentP = min([DisIn2CentP,DisOut2CentP]);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,24" id="srcline24"> 24</a></span><span class="line">    if Dis2CentP &gt; TurnLen</span></span>
+<span class="srcline"><span class="lineno"><a href="64,25" id="srcline25"> 25</a></span><span class="line">        x_inStartTPoint = Xcent - TurnLen;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,26" id="srcline26"> 26</a></span><span class="line">        y_inStartTPoint = 0;    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,27" id="srcline27"> 27</a></span><span class="line">        x_outEndTPoint = Xcent + TurnLen * cos(angle_out - angle_in);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,28" id="srcline28"> 28</a></span><span class="line">        y_outEndTPoint = Ycent + TurnLen * sin(angle_out - angle_in);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,29" id="srcline29"> 29</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,30" id="srcline30"> 30</a></span><span class="line">        x_inStartTPoint = Xcent - Dis2CentP;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,31" id="srcline31"> 31</a></span><span class="line">        y_inStartTPoint = 0;    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,32" id="srcline32"> 32</a></span><span class="line">        x_outEndTPoint = Xcent + Dis2CentP * cos(angle_out - angle_in);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,33" id="srcline33"> 33</a></span><span class="line">        y_outEndTPoint = Ycent + Dis2CentP * sin(angle_out - angle_in);              </span></span>
+<span class="srcline"><span class="lineno"><a href="64,34" id="srcline34"> 34</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,35" id="srcline35"> 35</a></span><span class="line">    if PTrigFlg &gt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="64,36" id="srcline36"> 36</a></span><span class="line">        PathPlanningSuccessFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,37" id="srcline37"> 37</a></span><span class="line">        switch CurState</span></span>
+<span class="srcline"><span class="lineno"><a href="64,38" id="srcline38"> 38</a></span><span class="line">            case 1</span></span>
+<span class="srcline"><span class="lineno"><a href="64,39" id="srcline39"> 39</a></span><span class="line">                Dis2XinStPoint = sqrt((Info_Me(1) - x_inStartTPoint)^2 + (Info_Me(2) - y_inStartTPoint)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,40" id="srcline40"> 40</a></span><span class="line">                TarPosInfo = [x_inStartTPoint,y_inStartTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,41" id="srcline41"> 41</a></span><span class="line">                EgoCord = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,42" id="srcline42"> 42</a></span><span class="line">                TargetCord = [x_inStartTPoint,y_inStartTPoint,angle_in];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,43" id="srcline43"> 43</a></span><span class="line">                PassFlg = PassJudgement(EgoCord,TargetCord)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,44" id="srcline44"> 44</a></span><span class="line">                if (PTurnTrigFlg &lt;1)&amp;&amp;(Dis2XinStPoint &lt; 1||PassFlg&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,45" id="srcline45"> 45</a></span><span class="line">                    if (EnterZoneFlg&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,46" id="srcline46"> 46</a></span><span class="line">                        TrunTrigFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,47" id="srcline47"> 47</a></span><span class="line">                        PTurnTrigFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,48" id="srcline48"> 48</a></span><span class="line">                        CurState = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,49" id="srcline49"> 49</a></span><span class="line">                        PInfo_Me = Info_Me;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,50" id="srcline50"> 50</a></span><span class="line">                        CurActiveModel = 2; </span></span>
+<span class="srcline"><span class="lineno"><a href="64,51" id="srcline51"> 51</a></span><span class="line">                        TarPosInfo = [x_outEndTPoint,y_outEndTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,52" id="srcline52"> 52</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,53" id="srcline53"> 53</a></span><span class="line">                        CurState = 4;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,54" id="srcline54"> 54</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,55" id="srcline55"> 55</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,56" id="srcline56"> 56</a></span><span class="line">                    CurActiveModel = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,57" id="srcline57"> 57</a></span><span class="line">                end        </span></span>
+<span class="srcline"><span class="lineno"><a href="64,58" id="srcline58"> 58</a></span><span class="line">            case 2</span></span>
+<span class="srcline"><span class="lineno"><a href="64,59" id="srcline59"> 59</a></span><span class="line">                if PathPlanRetryFlg &lt; 0.5                    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,60" id="srcline60"> 60</a></span><span class="line">                    if ExitOutOfTurn &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="64,61" id="srcline61"> 61</a></span><span class="line">                        Dis2XoutEndPoint = sqrt((Info_Me(1) - x_outEndTPoint)^2 + (Info_Me(2) - y_outEndTPoint)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,62" id="srcline62"> 62</a></span><span class="line">                        TarPosInfo = [x_outEndTPoint y_outEndTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,63" id="srcline63"> 63</a></span><span class="line">                        EgoCord = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,64" id="srcline64"> 64</a></span><span class="line">                        TargetCord = [x_outEndTPoint y_outEndTPoint,angle_out];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,65" id="srcline65"> 65</a></span><span class="line">                        PassFlg = PassJudgement(EgoCord,TargetCord);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,66" id="srcline66"> 66</a></span><span class="line">                        if (Dis2XoutEndPoint &lt; 1 || PassFlg &gt; 0.5)&amp;&amp;abs(sin(angle_out - Info_Me(6)))&lt;sin(5/180*3.14)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,67" id="srcline67"> 67</a></span><span class="line">                            PTurnTrigFlg = 0;    CurState =3;  CurActiveModel = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,68" id="srcline68"> 68</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,69" id="srcline69"> 69</a></span><span class="line">                            CurActiveModel = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,70" id="srcline70"> 70</a></span><span class="line">                        end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,71" id="srcline71"> 71</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,72" id="srcline72"> 72</a></span><span class="line">                        Dis2XoutPoint = sqrt((Info_Me(1) - x_out)^2 + (Info_Me(2) - y_out)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,73" id="srcline73"> 73</a></span><span class="line">                        TarPosInfo = [x_outEndTPoint y_outEndTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,74" id="srcline74"> 74</a></span><span class="line">                        EgoCord = [Info_Me(1),Info_Me(2),Info_Me(6)];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,75" id="srcline75"> 75</a></span><span class="line">                        TargetCord = [x_outEndTPoint y_outEndTPoint,angle_out];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,76" id="srcline76"> 76</a></span><span class="line">                        PassFlg = PassJudgement(EgoCord,TargetCord);                        </span></span>
+<span class="srcline"><span class="lineno"><a href="64,77" id="srcline77"> 77</a></span><span class="line">                        if (Dis2XoutPoint &lt; 1 || PassFlg &gt; 0.5)&amp;&amp;abs(sin(angle_out - Info_Me(6)))&lt;sin(5/180*3.14)&amp;&amp;(StopFlg&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,78" id="srcline78"> 78</a></span><span class="line">                            PTurnTrigFlg = 0;    CurState =0;     PathFinishFlg = 1;  CurActiveModel = 2;PathPlanningSuccessFlg = 0;PTrigFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,79" id="srcline79"> 79</a></span><span class="line">                        else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,80" id="srcline80"> 80</a></span><span class="line">                             CurActiveModel = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,81" id="srcline81"> 81</a></span><span class="line">                        end </span></span>
+<span class="srcline"><span class="lineno"><a href="64,82" id="srcline82"> 82</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,83" id="srcline83"> 83</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,84" id="srcline84"> 84</a></span><span class="line">                    PTurnTrigFlg = 0;CurState =4;CurActiveModel = 1;TarPosInfo = [x_inStartTPoint,y_inStartTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,85" id="srcline85"> 85</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,86" id="srcline86"> 86</a></span><span class="line">            case 3</span></span>
+<span class="srcline"><span class="lineno"><a href="64,87" id="srcline87"> 87</a></span><span class="line">                Dis2XoutPoint = sqrt((Info_Me(1) - x_out)^2 + (Info_Me(2) - y_out)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,88" id="srcline88"> 88</a></span><span class="line">                TarPosInfo = [x_out y_out];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,89" id="srcline89"> 89</a></span><span class="line">                if Dis2XoutPoint &lt; 1                   </span></span>
+<span class="srcline"><span class="lineno"><a href="64,90" id="srcline90"> 90</a></span><span class="line">                    PTurnTrigFlg = 0;    CurState =0;     PathFinishFlg = 1;  CurActiveModel = 3;PathPlanningSuccessFlg = 0;PTrigFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,91" id="srcline91"> 91</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,92" id="srcline92"> 92</a></span><span class="line">                     CurActiveModel = 3;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,93" id="srcline93"> 93</a></span><span class="line">                end </span></span>
+<span class="srcline"><span class="lineno"><a href="64,94" id="srcline94"> 94</a></span><span class="line">            case 4</span></span>
+<span class="srcline"><span class="lineno"><a href="64,95" id="srcline95"> 95</a></span><span class="line">                <span class="comment">%Pending</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,96" id="srcline96"> 96</a></span><span class="line">                TarPosInfo = [x_inStartTPoint,y_inStartTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,97" id="srcline97"> 97</a></span><span class="line">                if (PTurnTrigFlg &lt;1)&amp;&amp;(EnterZoneFlg&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,98" id="srcline98"> 98</a></span><span class="line">                    TrunTrigFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,99" id="srcline99"> 99</a></span><span class="line">                    PTurnTrigFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,100" id="srcline100">100</a></span><span class="line">                    CurState = 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,101" id="srcline101">101</a></span><span class="line">                    PInfo_Me = Info_Me;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,102" id="srcline102">102</a></span><span class="line">                    CurActiveModel = 2; </span></span>
+<span class="srcline"><span class="lineno"><a href="64,103" id="srcline103">103</a></span><span class="line">                    TarPosInfo = [x_outEndTPoint,y_outEndTPoint];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,104" id="srcline104">104</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,105" id="srcline105">105</a></span><span class="line">                    CurActiveModel = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,106" id="srcline106">106</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="64,107" id="srcline107">107</a></span><span class="line">            otherwise</span></span>
+<span class="srcline"><span class="lineno"><a href="64,108" id="srcline108">108</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,109" id="srcline109">109</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,110" id="srcline110">110</a></span><span class="line">        PathFinishFlg = 1;PTrigFlg = 0;PathPlanningSuccessFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,111" id="srcline111">111</a></span><span class="line">    end </span></span>
+<span class="srcline"><span class="lineno"><a href="64,112" id="srcline112">112</a></span><span class="line">    RoadInfoPGCd(1,:) = [PInfo_Me(1),PInfo_Me(2),PInfo_Me(6),W_in];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,113" id="srcline113">113</a></span><span class="line">    RoadInfoPGCd(2,:) = [x_outEndTPoint,y_outEndTPoint,angle_out,W_out];            </span></span>
+<span class="srcline"><span class="lineno"><a href="64,114" id="srcline114">114</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="64,115" id="srcline115">115</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="64,116" id="srcline116">116</a></span><span class="line"><span class="keyword">function</span> <span class="var type1" id="S55T1U855">PassFlg</span> = PassJudgement(<span class="var type1" id="S56T3U858">EgoCord</span>,<span class="var type1" id="S57T3U859">TargetCord</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,117" id="srcline117">117</a></span><span class="line">    <span class="mxinfo " id="T3:U4"><span class="var type1" id="S58T3U862">EgoCordTemp</span> = <span class="mxinfo " id="T3:U6"><span class="fcn" id="F138N111:B864">CordTransfer</span>(<span class="var type1" id="S56T3U865">EgoCord</span>,<span class="var type1" id="S57T3U866">TargetCord</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,118" id="srcline118">118</a></span><span class="line">    <span class="keyword">if</span> <span class="mxinfo " id="T8:U9"><span class="mxinfo " id="T1:U10"><span class="var type1" id="S58T3U871">EgoCordTemp</span>(<span class="mxinfo " id="T9:U12">1</span>)</span> &gt; <span class="mxinfo " id="T1:U13">0</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,119" id="srcline119">119</a></span><span class="line">        <span class="mxinfo " id="T1:U14"><span class="var type1" id="S55T1U876">PassFlg</span> = <span class="mxinfo " id="T1:U16">1</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,120" id="srcline120">120</a></span><span class="line">    <span class="keyword">else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,121" id="srcline121">121</a></span><span class="line">        <span class="mxinfo " id="T1:U17"><span class="var type1" id="S55T1U881">PassFlg</span> = <span class="mxinfo " id="T1:U19">0</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,122" id="srcline122">122</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,123" id="srcline123">123</a></span><span class="line"><span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="64,124" id="srcline124">124</a></span><span class="line"></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="64,125" id="srcline125">125</a></span><span class="line">function CordAfter = CordTransfer(CordBefore,CordOrig)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,126" id="srcline126">126</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="64,127" id="srcline127">127</a></span><span class="line">    theta_rot = CordOrig(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,128" id="srcline128">128</a></span><span class="line">    xpositionTemp = (CordBefore(1) - CordOrig(1))*cos(theta_rot) + (CordBefore(2) - CordOrig(2))*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,129" id="srcline129">129</a></span><span class="line">    ypositionTemp = (CordBefore(2) - CordOrig(2))*cos(theta_rot) - (CordBefore(1) - CordOrig(1))*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="64,130" id="srcline130">130</a></span><span class="line">    AngleTemp = CordBefore(3)-theta_rot;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,131" id="srcline131">131</a></span><span class="line">    while(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,132" id="srcline132">132</a></span><span class="line">        if (AngleTemp &gt;= 0)&amp;&amp;(AngleTemp &lt; 2*pi)</span></span>
+<span class="srcline"><span class="lineno"><a href="64,133" id="srcline133">133</a></span><span class="line">            break;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,134" id="srcline134">134</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,135" id="srcline135">135</a></span><span class="line">            if AngleTemp&lt;0</span></span>
+<span class="srcline"><span class="lineno"><a href="64,136" id="srcline136">136</a></span><span class="line">                AngleTemp = AngleTemp + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,137" id="srcline137">137</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="64,138" id="srcline138">138</a></span><span class="line">                AngleTemp = AngleTemp - 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="64,139" id="srcline139">139</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="64,140" id="srcline140">140</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,141" id="srcline141">141</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,142" id="srcline142">142</a></span><span class="line">    CordAfter = [xpositionTemp,ypositionTemp,AngleTemp];</span></span>
+<span class="srcline"><span class="lineno"><a href="64,143" id="srcline143">143</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="64,144" id="srcline144">144</a></span><span class="line"> </span></span>
+</pre>
+</div>

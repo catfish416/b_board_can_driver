@@ -1,0 +1,71 @@
+
+ARCH = arm
+
+CROSS_DIR = 
+##CROSS_DIR = aarch64-linux-gnu-
+CROSS_COMPILE	= $(CROSS_DIR)
+#_coder_slam_ekf_patac_map_pose_output_api.c \
+ #      _coder_slam_ekf_patac_map_pose_output_info.c \
+  #     _coder_slam_ekf_patac_map_pose_output_mex.c \
+CC =  $(CROSS_COMPILE)g++
+CCP= $(CROSS_COMPILE)g++
+LD = $(CROSS_COMPILE)ld
+STRIP=$(CROSS_COMPILE)strip
+AR = $(CROSS_COMPILE)ar
+AS = $(CROSS_COMPILE)as
+CFLAGS = -g -rdynamic
+
+SRCS+= \
+       main.c \
+        slam_ekf_patac_map_pose_output_data.c \
+      slam_ekf_patac_map_pose_output_initialize.c \
+      slam_ekf_patac_map_pose_output_terminate.c  \
+      slam_ekf_patac_map_pose_output.c \
+      rtkraw2wgs.c \
+      wgs2utm.c \
+      sum.c \
+      power.c   \
+     tpcomp.c \
+     quest_map4landmark_new_lane.c \
+     calDistance.c \
+     point2line.c \
+     flipud.c \
+     eml_setop.c \
+     sortLE.c \
+     object_localization.c \
+     point_inside_lane.c \
+     det.c \
+     norm.c \
+     xnrm2.c \
+     objects_of_interest_fast.c \
+     point_dist2lane.c \
+     point_projection2LNM.c \
+     sortrows.c \
+     lanefit.c \
+     polyfit.c \
+     xgeqp3.c \
+     xzlarf.c \
+     rt_nonfinite.c \
+     rtGetNaN.c\
+     rtGetInf.c\
+       \
+
+OBJS = $(SRCS:.cpp=.o)
+
+
+
+TARGET=map.elf
+
+$(TARGET):$(OBJS)
+	@echo "Makeing $(TARGET)..."
+	$(CC) $(OBJS) -o $(TARGET) $(LIB) -lpthread -lrt -lm
+
+
+%.o:%.cpp
+	@echo "=======>>Makeing $(CC) -w -c -o $<"
+	@$(CC) $(CFLAGS) -c $< -w -o $@
+
+
+clean:
+	rm -f *.o *elf
+	

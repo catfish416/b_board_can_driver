@@ -1,0 +1,449 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="143,1" id="srcline1">  1</a></span><span class="line">function [PreTimeAcu,xpositionPre,ypositionPre,Ax,Ay,Vx,Vy,Theta, xpositionNex,ypositionNex,PathPlanSucFlg,PathTrjFinishFlg,LCInTransState] = PosUpdateLC( StopFlg,StopArc,ArcNex,ArcPre,VPre,VNex,xoptres,x_in,y_in,angle_in,y_out,angle_out,Info_Me,PreTime,PathPlanRes,ToLeftOrRight,CurOp,SimpleStop,PosPreDisEn,ResumeVelAduEnFlg,aResume,TransCnt,PreTimeMin,PreInfo_Me,LCTransEn,LCEnSts)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,2" id="srcline2">  2</a></span><span class="line">    persistent PrePointCalEn PointCalEn PDeltaTemp PArclengthTol Ptheta_qitemp Pangle_in Px_in Py_in Px_qitemp Py_qitemp Pangle_out Px_out Py_out PTime PT_lat PT_long PV_me PV_tar PTransCntInit Pxposition Pyposition ArcHistory StopFlgRiseEdge ArcAdd PPreTmTransCnt PInLaneLCTrans PPathPlanRes PToLeftOrRight PxpositionNex PypositionNex</span></span>
+<span class="srcline"><span class="lineno"><a href="143,3" id="srcline3">  3</a></span><span class="line">    xpositionPre = 0;ypositionPre = 0;Ax = 0;Ay = 0;Vx = 0;Vy = 0;Theta = 0;PathTrjFinishFlg = 0;FirstTrigFlg = 0;T_lat=0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,4" id="srcline4">  4</a></span><span class="line">    PathPlanSucFlg = PathPlanRes;LCInTransState = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,5" id="srcline5">  5</a></span><span class="line"><span class="comment">%     if (isempty(PrePointCalEn))||(PathPlanRes &lt; 1e-1)||(CurOp &lt; 4)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,6" id="srcline6">  6</a></span><span class="line">    if isempty(PrePointCalEn)||(LCEnSts&lt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,7" id="srcline7">  7</a></span><span class="line">        PrePointCalEn = 0;PointCalEn = 0;ArcHistory = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,8" id="srcline8">  8</a></span><span class="line">        PDeltaTemp=[0 0];PArclengthTol=[0 0];Ptheta_qitemp=0;Pangle_in=0;Px_in =0;Py_in=0;Px_qitemp=0;Py_qitemp=0;Pangle_out=0;Px_out=0;Py_out=0;PTime=0;StopFlgRiseEdge = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,9" id="srcline9">  9</a></span><span class="line">        PT_lat=0;PT_long=0;PV_me=0;PV_tar=0;Pxposition=0;Pyposition=0;ArcAdd = 0;PPreTmTransCnt = TransCnt;PTransCntInit = TransCnt;PPathPlanRes = 0;PToLeftOrRight = 0;PxpositionNex = 0;PypositionNex= 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,10" id="srcline10"> 10</a></span><span class="line">        PInLaneLCTrans = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,11" id="srcline11"> 11</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,12" id="srcline12"> 12</a></span><span class="line">    if isempty(PointCalEn)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,13" id="srcline13"> 13</a></span><span class="line">        PointCalEn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,14" id="srcline14"> 14</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,15" id="srcline15"> 15</a></span><span class="line">    if isempty(PInLaneLCTrans)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,16" id="srcline16"> 16</a></span><span class="line">        PInLaneLCTrans = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,17" id="srcline17"> 17</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,18" id="srcline18"> 18</a></span><span class="line">    if PointCalEn &lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,19" id="srcline19"> 19</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,20" id="srcline20"> 20</a></span><span class="line">        <span class="comment">% If In LC transition state</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,21" id="srcline21"> 21</a></span><span class="line">        if PInLaneLCTrans &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,22" id="srcline22"> 22</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,23" id="srcline23"> 23</a></span><span class="line">            if PToLeftOrRight &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,24" id="srcline24"> 24</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,25" id="srcline25"> 25</a></span><span class="line">                Info_Me(2) = -Info_Me(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,26" id="srcline26"> 26</a></span><span class="line">                Info_Me(6) = -Info_Me(6);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,27" id="srcline27"> 27</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,28" id="srcline28"> 28</a></span><span class="line">            <span class="comment">% New PPres Rising Edge or Exit Trans and PPres = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,29" id="srcline29"> 29</a></span><span class="line">            if (PathPlanRes &gt; 0.5)&amp;&amp;(PPathPlanRes &lt; 0.5) || ((LCTransEn &lt; 0.5)&amp;&amp;(PathPlanRes &lt; 0.5))</span></span>
+<span class="srcline"><span class="lineno"><a href="143,30" id="srcline30"> 30</a></span><span class="line">                <span class="comment">%End Transition to accept new PlanRes</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,31" id="srcline31"> 31</a></span><span class="line">                PrePointCalEn = 0;PointCalEn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,32" id="srcline32"> 32</a></span><span class="line">                PInLaneLCTrans = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,33" id="srcline33"> 33</a></span><span class="line">            end        </span></span>
+<span class="srcline"><span class="lineno"><a href="143,34" id="srcline34"> 34</a></span><span class="line">        end       </span></span>
+<span class="srcline"><span class="lineno"><a href="143,35" id="srcline35"> 35</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,36" id="srcline36"> 36</a></span><span class="line">    if PInLaneLCTrans &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,37" id="srcline37"> 37</a></span><span class="line">        Info_Me = PreInfo_Me;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,38" id="srcline38"> 38</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,39" id="srcline39"> 39</a></span><span class="line">    if PointCalEn &lt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,40" id="srcline40"> 40</a></span><span class="line">        if PathPlanRes &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,41" id="srcline41"> 41</a></span><span class="line">            PointCalEn = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,42" id="srcline42"> 42</a></span><span class="line">            if (PointCalEn &gt; 1e-1) &amp;&amp; (PrePointCalEn &lt; 1e-1)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,43" id="srcline43"> 43</a></span><span class="line">                PrePointCalEn = PointCalEn;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,44" id="srcline44"> 44</a></span><span class="line">                FirstTrigFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,45" id="srcline45"> 45</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,46" id="srcline46"> 46</a></span><span class="line">                FirstTrigFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,47" id="srcline47"> 47</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,48" id="srcline48"> 48</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,49" id="srcline49"> 49</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,50" id="srcline50"> 50</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,51" id="srcline51"> 51</a></span><span class="line">    if abs(PathPlanRes - PPathPlanRes)&gt;1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,52" id="srcline52"> 52</a></span><span class="line">        PPathPlanRes = PathPlanRes;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,53" id="srcline53"> 53</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,54" id="srcline54"> 54</a></span><span class="line">    DeltaTemp = [0 0];xpositionNex = 0;ypositionNex= 0;ThetaNex = 0;k_localmaxTemp = [0 0];ArclengthTol = [0 0];Arc = 255;V_tarPos = 255;x_out=xoptres(1);V_me = Info_Me(3);    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,55" id="srcline55"> 55</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,56" id="srcline56"> 56</a></span><span class="line">    <span class="comment">% Not supposed to work</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,57" id="srcline57"> 57</a></span><span class="line">    PreTimeAcu = PreTime;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,58" id="srcline58"> 58</a></span><span class="line">    if PointCalEn &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,59" id="srcline59"> 59</a></span><span class="line">        if FirstTrigFlg &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,60" id="srcline60"> 60</a></span><span class="line">            [ x_qitemp,y_qitemp,theta_qitemp ] = qiConfigCal( x_in,y_in,angle_in,x_out,y_out,angle_out );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,61" id="srcline61"> 61</a></span><span class="line">            x_qi = x_qitemp;y_qi = y_qitemp;theta_qi = theta_qitemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,62" id="srcline62"> 62</a></span><span class="line">            [DeltaTemp(1),k_localmaxTemp(1),ArclengthTol(1)] = ElementaryPathPlot( x_in,y_in,angle_in,x_qi,y_qi,theta_qi );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,63" id="srcline63"> 63</a></span><span class="line">            [DeltaTemp(2),k_localmaxTemp(2),ArclengthTol(2)] = ElementaryPathPlot( x_qi,y_qi,theta_qi,x_out,y_out,angle_out );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,64" id="srcline64"> 64</a></span><span class="line">            V_tar=xoptres(3);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,65" id="srcline65"> 65</a></span><span class="line">            PToLeftOrRight = ToLeftOrRight;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,66" id="srcline66"> 66</a></span><span class="line"><span class="comment">%             Pxoptres = xoptres;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,67" id="srcline67"> 67</a></span><span class="line">            S_arc = ArclengthTol(1) + ArclengthTol(2);    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,68" id="srcline68"> 68</a></span><span class="line">            T_long = xoptres(2)*2*S_arc/(V_tar + V_me);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,69" id="srcline69"> 69</a></span><span class="line">            S_acc = (V_tar + V_me)/2 * T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,70" id="srcline70"> 70</a></span><span class="line">            S_arc = ArclengthTol(1) + ArclengthTol(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,71" id="srcline71"> 71</a></span><span class="line">            if S_acc &lt; S_arc</span></span>
+<span class="srcline"><span class="lineno"><a href="143,72" id="srcline72"> 72</a></span><span class="line">                T_lat = T_long + (S_arc - S_acc) / V_tar;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,73" id="srcline73"> 73</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,74" id="srcline74"> 74</a></span><span class="line">                a = (V_tar - V_me)/T_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,75" id="srcline75"> 75</a></span><span class="line">                V_end = sqrt(V_me^2 + 2*a*S_arc);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,76" id="srcline76"> 76</a></span><span class="line">                if a == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="143,77" id="srcline77"> 77</a></span><span class="line">                    T_lat = S_arc / V_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,78" id="srcline78"> 78</a></span><span class="line">                else        </span></span>
+<span class="srcline"><span class="lineno"><a href="143,79" id="srcline79"> 79</a></span><span class="line">                    T_lat = (V_end - V_me)/a;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,80" id="srcline80"> 80</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,81" id="srcline81"> 81</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,82" id="srcline82"> 82</a></span><span class="line">            PDeltaTemp = DeltaTemp; PArclengthTol = ArclengthTol;Ptheta_qitemp = theta_qitemp;Pangle_in = angle_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,83" id="srcline83"> 83</a></span><span class="line">            Px_in = x_in; Py_in = y_in;Px_qitemp = x_qitemp;Py_qitemp = y_qitemp;Pangle_out = angle_out; Px_out =x_out;Py_out=y_out;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,84" id="srcline84"> 84</a></span><span class="line">            PTime = 0; PT_lat = T_lat;PT_long = T_long;PV_tar = V_tar;PV_me = V_me;ArcHistory = 0;StopFlgRiseEdge = 0;ArcAdd = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,85" id="srcline85"> 85</a></span><span class="line">            PTransCntInit = TransCnt;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,86" id="srcline86"> 86</a></span><span class="line">            PPreTmTransCnt = TransCnt;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,87" id="srcline87"> 87</a></span><span class="line">            PInLaneLCTrans = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,88" id="srcline88"> 88</a></span><span class="line">            PxpositionNex = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,89" id="srcline89"> 89</a></span><span class="line">            PypositionNex = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,90" id="srcline90"> 90</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,91" id="srcline91"> 91</a></span><span class="line">            if StopFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,92" id="srcline92"> 92</a></span><span class="line">                PTime = PTime + 0.01;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,93" id="srcline93"> 93</a></span><span class="line">                if StopFlgRiseEdge &gt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,94" id="srcline94"> 94</a></span><span class="line">                    StopFlgRiseEdge = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,95" id="srcline95"> 95</a></span><span class="line">                    if ResumeVelAduEnFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,96" id="srcline96"> 96</a></span><span class="line">                        PTime = PTime + 2*StopArc/PV_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,97" id="srcline97"> 97</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,98" id="srcline98"> 98</a></span><span class="line">                    <span class="comment">% In order to resume the previous operation, a modify</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,99" id="srcline99"> 99</a></span><span class="line">                    <span class="comment">% of Lat and Long time is needed</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,100" id="srcline100">100</a></span><span class="line">                        PTime = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,101" id="srcline101">101</a></span><span class="line">                        PV_me = V_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,102" id="srcline102">102</a></span><span class="line">                        PT_long = abs(PV_tar - PV_me)/aResume;  </span></span>
+<span class="srcline"><span class="lineno"><a href="143,103" id="srcline103">103</a></span><span class="line">                        ArcAdd = ArcHistory;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,104" id="srcline104">104</a></span><span class="line">                    end                    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,105" id="srcline105">105</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,106" id="srcline106">106</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,107" id="srcline107">107</a></span><span class="line">                StopFlgRiseEdge = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,108" id="srcline108">108</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,109" id="srcline109">109</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,110" id="srcline110">110</a></span><span class="line">        <span class="comment">% Transition of Preview Time</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,111" id="srcline111">111</a></span><span class="line">        if PPreTmTransCnt &gt; 0.5 &amp;&amp; PTransCntInit &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="143,112" id="srcline112">112</a></span><span class="line">            PPreTmTransCnt = PPreTmTransCnt - 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,113" id="srcline113">113</a></span><span class="line">            PreTime = max([PreTime,PreTimeMin]);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,114" id="srcline114">114</a></span><span class="line">            PreTime = (PreTime - PreTimeMin) * ( PTransCntInit - PPreTmTransCnt ) / PTransCntInit + PreTimeMin;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,115" id="srcline115">115</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,116" id="srcline116">116</a></span><span class="line">        end               </span></span>
+<span class="srcline"><span class="lineno"><a href="143,117" id="srcline117">117</a></span><span class="line">        i = 0;Theta = 0;Kur = 0;V_tarPos = 0;PreDis = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,118" id="srcline118">118</a></span><span class="line">        while(i&lt;0.5)||((PreDis &lt; 1)&amp;&amp;(StopFlg&lt;0.5)&amp;&amp;(PosPreDisEn&gt;0.5)&amp;&amp;(i&lt;10))</span></span>
+<span class="srcline"><span class="lineno"><a href="143,119" id="srcline119">119</a></span><span class="line">            i=i+1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,120" id="srcline120">120</a></span><span class="line">            Time = PTime + (PreTime)*i; </span></span>
+<span class="srcline"><span class="lineno"><a href="143,121" id="srcline121">121</a></span><span class="line">            PreTimeAcu = (PreTime)*i;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,122" id="srcline122">122</a></span><span class="line">            if StopFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,123" id="srcline123">123</a></span><span class="line">                if Time &lt;= PT_long</span></span>
+<span class="srcline"><span class="lineno"><a href="143,124" id="srcline124">124</a></span><span class="line">                    if abs(PV_tar - PV_me) &gt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,125" id="srcline125">125</a></span><span class="line">                        a_me = (PV_tar - PV_me)/PT_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,126" id="srcline126">126</a></span><span class="line">                    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,127" id="srcline127">127</a></span><span class="line">                        a_me = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,128" id="srcline128">128</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,129" id="srcline129">129</a></span><span class="line">                    Arc = PV_me * Time + 0.5 * a_me * Time ^2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,130" id="srcline130">130</a></span><span class="line">                    V_tarPos = PV_me + Time * a_me;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,131" id="srcline131">131</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,132" id="srcline132">132</a></span><span class="line">                    Arc = (PV_me + PV_tar) /2 * PT_long + (Time - PT_long) * PV_tar;            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,133" id="srcline133">133</a></span><span class="line">                    V_tarPos = PV_tar;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,134" id="srcline134">134</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,135" id="srcline135">135</a></span><span class="line">                Arc = Arc + ArcAdd;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,136" id="srcline136">136</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,137" id="srcline137">137</a></span><span class="line">                Arc = ArcHistory + ArcPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,138" id="srcline138">138</a></span><span class="line">                V_tarPos = VPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,139" id="srcline139">139</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,140" id="srcline140">140</a></span><span class="line">            if Arc &lt;= PArclengthTol(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,141" id="srcline141">141</a></span><span class="line">                [xpositionPre,ypositionPre,Theta] = ElementaryPosCal( Arc,PDeltaTemp(1),PArclengthTol(1),Ptheta_qitemp,Pangle_in,Px_in,Py_in,Px_qitemp,Py_qitemp );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,142" id="srcline142">142</a></span><span class="line">                if xpositionPre &gt; 50</span></span>
+<span class="srcline"><span class="lineno"><a href="143,143" id="srcline143">143</a></span><span class="line">                xpositionPre = xpositionPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,144" id="srcline144">144</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,145" id="srcline145">145</a></span><span class="line">                if Arc &lt;= PArclengthTol(1)/2</span></span>
+<span class="srcline"><span class="lineno"><a href="143,146" id="srcline146">146</a></span><span class="line">                    Kur = Arc * PDeltaTemp(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,147" id="srcline147">147</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,148" id="srcline148">148</a></span><span class="line">                    Kur = PDeltaTemp(1) * Arc - PArclengthTol(1)/2 * PDeltaTemp(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,149" id="srcline149">149</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,150" id="srcline150">150</a></span><span class="line">                Pxposition = xpositionPre;Pyposition = ypositionPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,151" id="srcline151">151</a></span><span class="line">            elseif Arc &lt;= (PArclengthTol(1)+PArclengthTol(2))</span></span>
+<span class="srcline"><span class="lineno"><a href="143,152" id="srcline152">152</a></span><span class="line">                Arc = Arc - PArclengthTol(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,153" id="srcline153">153</a></span><span class="line">                [xpositionPre,ypositionPre,Theta] = ElementaryPosCal( Arc,PDeltaTemp(2),PArclengthTol(2),Pangle_out,Ptheta_qitemp,Px_qitemp,Py_qitemp,Px_out,Py_out );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,154" id="srcline154">154</a></span><span class="line">                if Arc &lt;= PArclengthTol(2)/2</span></span>
+<span class="srcline"><span class="lineno"><a href="143,155" id="srcline155">155</a></span><span class="line">                    Kur = Arc * PDeltaTemp(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,156" id="srcline156">156</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,157" id="srcline157">157</a></span><span class="line">                    Kur = PDeltaTemp(2) * Arc - PArclengthTol(2)/2 * PDeltaTemp(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,158" id="srcline158">158</a></span><span class="line">                end            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,159" id="srcline159">159</a></span><span class="line">                Pxposition = xpositionPre;Pyposition = ypositionPre;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,160" id="srcline160">160</a></span><span class="line">            else            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,161" id="srcline161">161</a></span><span class="line">                Arc = Arc - PArclengthTol(1) - PArclengthTol(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,162" id="srcline162">162</a></span><span class="line">    <span class="comment">%             if Time &gt; PT_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,163" id="srcline163">163</a></span><span class="line">                    xpositionPre = Px_out + Arc * cos(Pangle_out);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,164" id="srcline164">164</a></span><span class="line">                    ypositionPre = Py_out + Arc * sin(Pangle_out);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,165" id="srcline165">165</a></span><span class="line">    <span class="comment">%             else                </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,166" id="srcline166">166</a></span><span class="line">    <span class="comment">%             end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,167" id="srcline167">167</a></span><span class="line">                <span class="comment">% Straight line preview point calculate;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,168" id="srcline168">168</a></span><span class="line">                Theta = 0;Kur = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,169" id="srcline169">169</a></span><span class="line">            end            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,170" id="srcline170">170</a></span><span class="line">            PreDistheta_rot = Info_Me(6);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,171" id="srcline171">171</a></span><span class="line">            PreDis = (xpositionPre - Info_Me(1))*cos(PreDistheta_rot) + (ypositionPre - Info_Me(2))*sin(PreDistheta_rot);     </span></span>
+<span class="srcline"><span class="lineno"><a href="143,172" id="srcline172">172</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,173" id="srcline173">173</a></span><span class="line">        Vx = V_tarPos * cos(Theta);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,174" id="srcline174">174</a></span><span class="line">        Vy = V_tarPos * sin(Theta);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,175" id="srcline175">175</a></span><span class="line">        Arel = V_tarPos^2 * Kur;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,176" id="srcline176">176</a></span><span class="line">        Ax = Arel * cos(Theta);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,177" id="srcline177">177</a></span><span class="line">        Ay = Arel * sin(Theta);          </span></span>
+<span class="srcline"><span class="lineno"><a href="143,178" id="srcline178">178</a></span><span class="line">        if (PreDis&lt;0.5)&amp;&amp;(SimpleStop&gt;0.5)&amp;&amp;(StopFlg&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,179" id="srcline179">179</a></span><span class="line">            xpositionPre = Info_Me(1) + ArcPre*cos(Info_Me(6));</span></span>
+<span class="srcline"><span class="lineno"><a href="143,180" id="srcline180">180</a></span><span class="line">            ypositionPre = Info_Me(2) + ArcPre*sin(Info_Me(6));</span></span>
+<span class="srcline"><span class="lineno"><a href="143,181" id="srcline181">181</a></span><span class="line">            Vx = 0;Vy = 0;Theta = Info_Me(6);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,182" id="srcline182">182</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,183" id="srcline183">183</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,184" id="srcline184">184</a></span><span class="line">        <span class="comment">%To cal next point</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,185" id="srcline185">185</a></span><span class="line">        Time = PTime + 0.01; </span></span>
+<span class="srcline"><span class="lineno"><a href="143,186" id="srcline186">186</a></span><span class="line">        if StopFlg &lt; 0.5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,187" id="srcline187">187</a></span><span class="line">            if Time &lt;= PT_long</span></span>
+<span class="srcline"><span class="lineno"><a href="143,188" id="srcline188">188</a></span><span class="line">                if abs(PV_tar - PV_me) &gt;1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,189" id="srcline189">189</a></span><span class="line">                    a_me = (PV_tar - PV_me)/PT_long;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,190" id="srcline190">190</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,191" id="srcline191">191</a></span><span class="line">                    a_me = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,192" id="srcline192">192</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,193" id="srcline193">193</a></span><span class="line">                Arc = PV_me * Time + 0.5 * a_me * Time ^2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,194" id="srcline194">194</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,195" id="srcline195">195</a></span><span class="line">                Arc = (PV_me + PV_tar) /2 * PT_long + (Time - PT_long) * PV_tar;            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,196" id="srcline196">196</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,197" id="srcline197">197</a></span><span class="line">            Arc = Arc + ArcAdd;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,198" id="srcline198">198</a></span><span class="line">            ArcHistory = Arc;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,199" id="srcline199">199</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,200" id="srcline200">200</a></span><span class="line">            Arc = ArcHistory + ArcNex;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,201" id="srcline201">201</a></span><span class="line">            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,202" id="srcline202">202</a></span><span class="line">            ArcHistory = Arc; </span></span>
+<span class="srcline"><span class="lineno"><a href="143,203" id="srcline203">203</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,204" id="srcline204">204</a></span><span class="line">        </span></span>
+<span class="srcline"><span class="lineno"><a href="143,205" id="srcline205">205</a></span><span class="line">        if (SimpleStop&gt;0.5)&amp;&amp;(StopFlg&gt;0.5)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,206" id="srcline206">206</a></span><span class="line">            xpositionNexLo = Info_Me(1) + ArcNex*cos(Info_Me(6));</span></span>
+<span class="srcline"><span class="lineno"><a href="143,207" id="srcline207">207</a></span><span class="line">            ypositionNexLo = Info_Me(2) + ArcNex*sin(Info_Me(6));            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,208" id="srcline208">208</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,209" id="srcline209">209</a></span><span class="line">            if Arc &lt;= PArclengthTol(1)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,210" id="srcline210">210</a></span><span class="line">                [xpositionNexLo,ypositionNexLo,ThetaNex] = ElementaryPosCal( Arc,PDeltaTemp(1),PArclengthTol(1),Ptheta_qitemp,Pangle_in,Px_in,Py_in,Px_qitemp,Py_qitemp );</span></span>
+<span class="srcline"><span class="lineno"><a href="143,211" id="srcline211">211</a></span><span class="line">    <span class="comment">%             Pxposition = xpositionPre;Pyposition = ypositionPre;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,212" id="srcline212">212</a></span><span class="line">            elseif Arc &lt;= (PArclengthTol(1)+PArclengthTol(2))</span></span>
+<span class="srcline"><span class="lineno"><a href="143,213" id="srcline213">213</a></span><span class="line">                Arc = Arc - PArclengthTol(1);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,214" id="srcline214">214</a></span><span class="line">                [xpositionNexLo,ypositionNexLo,ThetaNex] = ElementaryPosCal( Arc,PDeltaTemp(2),PArclengthTol(2),Pangle_out,Ptheta_qitemp,Px_qitemp,Py_qitemp,Px_out,Py_out );      </span></span>
+<span class="srcline"><span class="lineno"><a href="143,215" id="srcline215">215</a></span><span class="line">    <span class="comment">%             Pxposition = xpositionPre;Pyposition = ypositionPre;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,216" id="srcline216">216</a></span><span class="line">            else            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,217" id="srcline217">217</a></span><span class="line">                Arc = Arc - PArclengthTol(1) - PArclengthTol(2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,218" id="srcline218">218</a></span><span class="line">    <span class="comment">%             if Time &gt; PT_long</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,219" id="srcline219">219</a></span><span class="line">                    xpositionNexLo = Px_out + Arc * cos(Pangle_out);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,220" id="srcline220">220</a></span><span class="line">                    ypositionNexLo = Py_out + Arc * sin(Pangle_out);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,221" id="srcline221">221</a></span><span class="line">    <span class="comment">%             else                </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,222" id="srcline222">222</a></span><span class="line">    <span class="comment">%             end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,223" id="srcline223">223</a></span><span class="line">                <span class="comment">% Straight line preview point calculate;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,224" id="srcline224">224</a></span><span class="line"><span class="comment">%                 if PathPlanRes &lt; 1e-1 </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,225" id="srcline225">225</a></span><span class="line"><span class="comment">%                     if LCTransEn &lt; 0.5</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,226" id="srcline226">226</a></span><span class="line"><span class="comment">%                         PointCalEn = 0;PrePointCalEn = 0;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,227" id="srcline227">227</a></span><span class="line"><span class="comment">%                     else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,228" id="srcline228">228</a></span><span class="line"><span class="comment">%                         PInLaneLCTrans = 1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,229" id="srcline229">229</a></span><span class="line"><span class="comment">%                         PathPlanSucFlg = 1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,230" id="srcline230">230</a></span><span class="line"><span class="comment">%                     end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,231" id="srcline231">231</a></span><span class="line"><span class="comment">%                 end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,232" id="srcline232">232</a></span><span class="line">                </span></span>
+<span class="srcline"><span class="lineno"><a href="143,233" id="srcline233">233</a></span><span class="line">                if LCTransEn &lt; 0.5 </span></span>
+<span class="srcline"><span class="lineno"><a href="143,234" id="srcline234">234</a></span><span class="line">                    if PathPlanRes &lt; 1e-1 </span></span>
+<span class="srcline"><span class="lineno"><a href="143,235" id="srcline235">235</a></span><span class="line">                        PointCalEn = 0;PrePointCalEn = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,236" id="srcline236">236</a></span><span class="line">                    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,237" id="srcline237">237</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,238" id="srcline238">238</a></span><span class="line">                    PInLaneLCTrans = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,239" id="srcline239">239</a></span><span class="line">                    PathPlanSucFlg = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,240" id="srcline240">240</a></span><span class="line">                end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,241" id="srcline241">241</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="143,242" id="srcline242">242</a></span><span class="line">                PathTrjFinishFlg = 1;	    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,243" id="srcline243">243</a></span><span class="line">            end </span></span>
+<span class="srcline"><span class="lineno"><a href="143,244" id="srcline244">244</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,245" id="srcline245">245</a></span><span class="line">        xpositionNex = PxpositionNex;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,246" id="srcline246">246</a></span><span class="line">        ypositionNex = PypositionNex;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,247" id="srcline247">247</a></span><span class="line">        PxpositionNex = xpositionNexLo;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,248" id="srcline248">248</a></span><span class="line">        PypositionNex = ypositionNexLo;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,249" id="srcline249">249</a></span><span class="line">        if PToLeftOrRight &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="143,250" id="srcline250">250</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,251" id="srcline251">251</a></span><span class="line">            ypositionPre = -ypositionPre;Ay = -Ay;Vy = -Vy;Theta = - Theta;ypositionNex = -ypositionNex;            </span></span>
+<span class="srcline"><span class="lineno"><a href="143,252" id="srcline252">252</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,253" id="srcline253">253</a></span><span class="line">        LCInTransState = PInLaneLCTrans;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,254" id="srcline254">254</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,255" id="srcline255">255</a></span><span class="line">end </span></span>
+<span class="srcline"><span class="lineno"><a href="143,256" id="srcline256">256</a></span><span class="line">    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,257" id="srcline257">257</a></span><span class="line">function [xposition,yposition,Theta] = ElementaryPosCal( Arc,Delta,Arclength,angle_out,angle_in,x_in,y_in,x_out,y_out )</span></span>
+<span class="srcline"><span class="lineno"><a href="143,258" id="srcline258">258</a></span><span class="line"><span class="comment">%UNTITLED Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,259" id="srcline259">259</a></span><span class="line"><span class="comment">%   Detailed explanation goes here   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,260" id="srcline260">260</a></span><span class="line">    Beta = (angle_out - angle_in)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,261" id="srcline261">261</a></span><span class="line">    theta_rot = angle_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,262" id="srcline262">262</a></span><span class="line">    x_outRot = (x_out - x_in)*cos(theta_rot) + (y_out - y_in)*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,263" id="srcline263">263</a></span><span class="line">    y_outRot = (y_out - y_in)*cos(theta_rot) - (x_out - x_in)*sin(theta_rot);    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,264" id="srcline264">264</a></span><span class="line">    if Beta == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="143,265" id="srcline265">265</a></span><span class="line">        SignBeta = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,266" id="srcline266">266</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,267" id="srcline267">267</a></span><span class="line">        SignBeta = sign(Beta);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,268" id="srcline268">268</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,269" id="srcline269">269</a></span><span class="line">    if Arc &lt; Arclength/2    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,270" id="srcline270">270</a></span><span class="line">        ulimit = Arc * sqrt(abs(Delta)/2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,271" id="srcline271">271</a></span><span class="line">        Theta = Delta * (Arc)^2/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,272" id="srcline272">272</a></span><span class="line">        xpositionTemp = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,273" id="srcline273">273</a></span><span class="line">        ypositionTemp = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,274" id="srcline274">274</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,275" id="srcline275">275</a></span><span class="line">        ulimit = (Arclength - Arc) * sqrt(abs(Delta)/2); </span></span>
+<span class="srcline"><span class="lineno"><a href="143,276" id="srcline276">276</a></span><span class="line">        <span class="comment">%Theta = 2*Beta*SignBeta - Delta * (Arclength - Arc)^2/2; </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,277" id="srcline277">277</a></span><span class="line">        xpositionMirrTemp = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,278" id="srcline278">278</a></span><span class="line">        ypositionMirrTemp = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,279" id="srcline279">279</a></span><span class="line">        <span class="comment">%mirror line Ax+By+C=0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,280" id="srcline280">280</a></span><span class="line">        x_mirr = (x_outRot)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,281" id="srcline281">281</a></span><span class="line">        y_mirr = (y_outRot)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,282" id="srcline282">282</a></span><span class="line">        angle_mirr = pi/2 + atan((y_outRot)/(x_outRot));</span></span>
+<span class="srcline"><span class="lineno"><a href="143,283" id="srcline283">283</a></span><span class="line">        A = tan(angle_mirr);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,284" id="srcline284">284</a></span><span class="line">        B = -1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,285" id="srcline285">285</a></span><span class="line">        C = y_mirr - A * x_mirr;      </span></span>
+<span class="srcline"><span class="lineno"><a href="143,286" id="srcline286">286</a></span><span class="line">        <span class="comment">%two points are symmetrical to the Ax+By+C we just defined</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,287" id="srcline287">287</a></span><span class="line">        xpositionTemp = xpositionMirrTemp - 2*A*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,288" id="srcline288">288</a></span><span class="line">        ypositionTemp = ypositionMirrTemp - 2*B*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,289" id="srcline289">289</a></span><span class="line">        Theta = 2*abs(Beta)*SignBeta - Delta * (Arclength - Arc)^2/2;          </span></span>
+<span class="srcline"><span class="lineno"><a href="143,290" id="srcline290">290</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,291" id="srcline291">291</a></span><span class="line">    theta_rot = - angle_in;   </span></span>
+<span class="srcline"><span class="lineno"><a href="143,292" id="srcline292">292</a></span><span class="line">    xposition = xpositionTemp*cos(theta_rot) + ypositionTemp*sin(theta_rot);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,293" id="srcline293">293</a></span><span class="line">    yposition = ypositionTemp*cos(theta_rot) - xpositionTemp*sin(theta_rot) ;  </span></span>
+<span class="srcline"><span class="lineno"><a href="143,294" id="srcline294">294</a></span><span class="line">    xposition = xposition + x_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,295" id="srcline295">295</a></span><span class="line">    yposition = yposition + y_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,296" id="srcline296">296</a></span><span class="line">    Theta = Theta + angle_in;    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,297" id="srcline297">297</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,298" id="srcline298">298</a></span><span class="line"><span class="comment">%#codegen</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,299" id="srcline299">299</a></span><span class="line">function [ x_qi,y_qi,theta_qi ] = qiConfigCal( x_in,y_in,angle_in,x_out,y_out,angle_out )</span></span>
+<span class="srcline"><span class="lineno"><a href="143,300" id="srcline300">300</a></span><span class="line"><span class="comment">%UNTITLED2 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,301" id="srcline301">301</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,302" id="srcline302">302</a></span><span class="line">    kesi_en = angle_out - angle_in;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,303" id="srcline303">303</a></span><span class="line">    r_en = sqrt((x_in-x_out)^2+(y_in-y_out)^2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,304" id="srcline304">304</a></span><span class="line">    k_qi_en = 2 * sin(kesi_en/2)/r_en;    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,305" id="srcline305">305</a></span><span class="line">    if k_qi_en == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="143,306" id="srcline306">306</a></span><span class="line">        x_qi = (x_in + x_out)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,307" id="srcline307">307</a></span><span class="line">        y_qi = (y_in + y_out)/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,308" id="srcline308">308</a></span><span class="line">        theta_qi = asin((y_out - y_in)/r_en) * 2 + (angle_in + angle_out)/2;        </span></span>
+<span class="srcline"><span class="lineno"><a href="143,309" id="srcline309">309</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,310" id="srcline310">310</a></span><span class="line">        r_qi_en = abs(1/k_qi_en);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,311" id="srcline311">311</a></span><span class="line">        angle_qi_CC = 2* asin(r_en*k_qi_en/2);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,312" id="srcline312">312</a></span><span class="line">        alpha_en = atan((y_out-y_in)/(x_out-x_in));</span></span>
+<span class="srcline"><span class="lineno"><a href="143,313" id="srcline313">313</a></span><span class="line">        if (x_out &lt; x_in)</span></span>
+<span class="srcline"><span class="lineno"><a href="143,314" id="srcline314">314</a></span><span class="line">            alpha_en = alpha_en + pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,315" id="srcline315">315</a></span><span class="line">        elseif angle_in &gt; pi</span></span>
+<span class="srcline"><span class="lineno"><a href="143,316" id="srcline316">316</a></span><span class="line">            alpha_en = alpha_en + pi*2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,317" id="srcline317">317</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,318" id="srcline318">318</a></span><span class="line">        if alpha_en &gt; 1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,319" id="srcline319">319</a></span><span class="line">            while alpha_en &gt; 2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="143,320" id="srcline320">320</a></span><span class="line">                alpha_en = alpha_en - 2 * pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,321" id="srcline321">321</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,322" id="srcline322">322</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,323" id="srcline323">323</a></span><span class="line">            while alpha_en &lt; -2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="143,324" id="srcline324">324</a></span><span class="line">                alpha_en = alpha_en + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,325" id="srcline325">325</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,326" id="srcline326">326</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,327" id="srcline327">327</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="143,328" id="srcline328">328</a></span><span class="line">        angle_qi = angle_qi_CC/2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,329" id="srcline329">329</a></span><span class="line">        if k_qi_en == 0</span></span>
+<span class="srcline"><span class="lineno"><a href="143,330" id="srcline330">330</a></span><span class="line">            signK = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,331" id="srcline331">331</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,332" id="srcline332">332</a></span><span class="line">            signK = sign(k_qi_en);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,333" id="srcline333">333</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,334" id="srcline334">334</a></span><span class="line">        a = r_qi_en * cos(-angle_qi_CC/2+angle_qi)-sqrt(r_qi_en^2-r_en^2/4);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,335" id="srcline335">335</a></span><span class="line">        b = r_qi_en * sin(-angle_qi_CC/2+angle_qi);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,336" id="srcline336">336</a></span><span class="line">        x_qi = a * sin(alpha_en) * signK - b * cos(alpha_en) * signK + (x_in + x_out) / 2;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,337" id="srcline337">337</a></span><span class="line">        y_qi = - a * cos(alpha_en) * signK - b * sin(alpha_en) * signK + (y_in + y_out) / 2 ; </span></span>
+<span class="srcline"><span class="lineno"><a href="143,338" id="srcline338">338</a></span><span class="line">        theta_qi = - ( angle_in +angle_out )/2 + 2 * alpha_en;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,339" id="srcline339">339</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,340" id="srcline340">340</a></span><span class="line">    if theta_qi &gt; 1e-5</span></span>
+<span class="srcline"><span class="lineno"><a href="143,341" id="srcline341">341</a></span><span class="line">        while theta_qi &gt; 2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="143,342" id="srcline342">342</a></span><span class="line">            theta_qi = theta_qi - 2 * pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,343" id="srcline343">343</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,344" id="srcline344">344</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="143,345" id="srcline345">345</a></span><span class="line">        while theta_qi &lt; -2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="143,346" id="srcline346">346</a></span><span class="line">            theta_qi = theta_qi + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,347" id="srcline347">347</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,348" id="srcline348">348</a></span><span class="line">    end       </span></span>
+<span class="srcline"><span class="lineno"><a href="143,349" id="srcline349">349</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="143,350" id="srcline350">350</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="143,351" id="srcline351">351</a></span><span class="line"><span class="keyword">function</span> [<span class="var type1" id="S179T1U2398">Delta</span>,<span class="var type1" id="S180T1U2399">k_localmax</span>,<span class="var type1" id="S181T1U2400">Arclength</span>] = ElementaryPathPlot( <span class="var type1" id="S182T1U2403">x_in</span>,<span class="var type1" id="S183T1U2404">y_in</span>,<span class="var type1" id="S184T1U2405">angle_in</span>,<span class="var type1" id="S185T1U2406">x_out</span>,<span class="var type1" id="S186T1U2407">y_out</span>,<span class="var type1" id="S187T1U2408">angle_out</span> )</span></span>
+<span class="srcline"><span class="lineno"><a href="143,352" id="srcline352">352</a></span><span class="line">    <span class="comment">%UNTITLED2 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,353" id="srcline353">353</a></span><span class="line">    <span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,354" id="srcline354">354</a></span><span class="line">    <span class="mxinfo " id="T1:U10"><span class="var type1" id="S188T1U2411">Nlen</span> = <span class="mxinfo " id="T1:U12">20</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,355" id="srcline355">355</a></span><span class="line">    <span class="mxinfo " id="T59:U13"><span class="var type1" id="S189T59U2415">xposition</span> = <span class="mxinfo " id="T59:U15">zeros(<span class="var type1" id="S188T1U2418">Nlen</span>,1)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,356" id="srcline356">356</a></span><span class="line">    <span class="mxinfo " id="T59:U17"><span class="var type1" id="S191T59U2422">yposition</span> = <span class="mxinfo " id="T59:U19">zeros(<span class="var type1" id="S188T1U2425">Nlen</span>,1)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,357" id="srcline357">357</a></span><span class="line">    <span class="mxinfo " id="T59:U21"><span class="var type1" id="S192T59U2429">Theta</span> = <span class="mxinfo " id="T59:U23">zeros(<span class="var type1" id="S188T1U2432">Nlen</span>,1)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,358" id="srcline358">358</a></span><span class="line">    <span class="mxinfo " id="T59:U25"><span class="var type1" id="S193T59U2436">kur</span> = <span class="mxinfo " id="T59:U27">zeros(<span class="var type1" id="S188T1U2439">Nlen</span>,1)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,359" id="srcline359">359</a></span><span class="line">    <span class="comment">%ArcPos = zeros(Nlen,1);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,360" id="srcline360">360</a></span><span class="line">    <span class="mxinfo " id="T1:U29"><span class="var type1" id="S194T1U2443">Beta</span> = <span class="mxinfo " id="T1:U31">(<span class="mxinfo " id="T1:U32"><span class="var type1" id="S187T1U2447">angle_out</span> - <span class="var type1" id="S184T1U2448">angle_in</span></span>)/<span class="mxinfo " id="T1:U35">2</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,361" id="srcline361">361</a></span><span class="line">    <span class="mxinfo " id="T1:U36"><span class="var type1" id="S195T1U2452">r</span> = <span class="mxinfo " id="T1:U38">sqrt(<span class="mxinfo " id="T1:U39"><span class="mxinfo " id="T1:U40">(<span class="mxinfo " id="T1:U41"><span class="var type1" id="S182T1U2459">x_in</span>-<span class="var type1" id="S185T1U2460">x_out</span></span>)^2</span>+<span class="mxinfo " id="T1:U44">(<span class="mxinfo " id="T1:U45"><span class="var type1" id="S183T1U2465">y_in</span>-<span class="var type1" id="S186T1U2466">y_out</span></span>)^2</span></span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,362" id="srcline362">362</a></span><span class="line">    <span class="comment">%Move</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,363" id="srcline363">363</a></span><span class="line">    <span class="mxinfo " id="T1:U48"><span class="var type1" id="S197T1U2470">x_inMove</span> = <span class="mxinfo " id="T1:U50"><span class="var type1" id="S182T1U2472">x_in</span> - <span class="var type1" id="S182T1U2473">x_in</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,364" id="srcline364">364</a></span><span class="line">    <span class="mxinfo " id="T1:U53"><span class="var type1" id="S198T1U2476">y_inMove</span> = <span class="mxinfo " id="T1:U55"><span class="var type1" id="S183T1U2478">y_in</span> - <span class="var type1" id="S183T1U2479">y_in</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,365" id="srcline365">365</a></span><span class="line">    <span class="mxinfo " id="T1:U58"><span class="var type1" id="S199T1U2482">x_outMove</span> = <span class="mxinfo " id="T1:U60"><span class="var type1" id="S185T1U2484">x_out</span> - <span class="var type1" id="S182T1U2485">x_in</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,366" id="srcline366">366</a></span><span class="line">    <span class="mxinfo " id="T1:U63"><span class="var type1" id="S200T1U2488">y_outMove</span> = <span class="mxinfo " id="T1:U65"><span class="var type1" id="S186T1U2490">y_out</span> - <span class="var type1" id="S183T1U2491">y_in</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,367" id="srcline367">367</a></span><span class="line">    <span class="comment">%Rotate</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,368" id="srcline368">368</a></span><span class="line">    <span class="mxinfo " id="T1:U68"><span class="var type1" id="S201T1U2494">theta_rot</span> = <span class="var type1" id="S184T1U2495">angle_in</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,369" id="srcline369">369</a></span><span class="line">    <span class="mxinfo " id="T1:U71"><span class="var type1" id="S202T1U2498">x_inRot</span> = <span class="mxinfo " id="T1:U73"><span class="mxinfo " id="T1:U74"><span class="var type1" id="S197T1U2501">x_inMove</span>*<span class="mxinfo " id="T1:U76">cos(<span class="var type1" id="S201T1U2504">theta_rot</span>)</span></span> + <span class="mxinfo " id="T1:U78"><span class="var type1" id="S198T1U2506">y_inMove</span>*<span class="mxinfo " id="T1:U80">sin(<span class="var type1" id="S201T1U2509">theta_rot</span>)</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,370" id="srcline370">370</a></span><span class="line">    <span class="mxinfo " id="T1:U82"><span class="var type1" id="S205T1U2512">x_outRot</span> = <span class="mxinfo " id="T1:U84"><span class="mxinfo " id="T1:U85"><span class="var type1" id="S199T1U2515">x_outMove</span>*<span class="mxinfo " id="T1:U87">cos(<span class="var type1" id="S201T1U2518">theta_rot</span>)</span></span> + <span class="mxinfo " id="T1:U89"><span class="var type1" id="S200T1U2520">y_outMove</span>*<span class="mxinfo " id="T1:U91">sin(<span class="var type1" id="S201T1U2523">theta_rot</span>)</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,371" id="srcline371">371</a></span><span class="line">    <span class="mxinfo " id="T1:U93"><span class="var type1" id="S206T1U2526">y_inRot</span> = <span class="mxinfo " id="T1:U95"><span class="mxinfo " id="T1:U96"><span class="var type1" id="S198T1U2529">y_inMove</span>*<span class="mxinfo " id="T1:U98">cos(<span class="var type1" id="S201T1U2532">theta_rot</span>)</span></span> - <span class="mxinfo " id="T1:U100"><span class="var type1" id="S197T1U2534">x_inMove</span>*<span class="mxinfo " id="T1:U102">sin(<span class="var type1" id="S201T1U2537">theta_rot</span>)</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,372" id="srcline372">372</a></span><span class="line">    <span class="mxinfo " id="T1:U104"><span class="var type1" id="S207T1U2540">y_outRot</span> = <span class="mxinfo " id="T1:U106"><span class="mxinfo " id="T1:U107"><span class="var type1" id="S200T1U2543">y_outMove</span>*<span class="mxinfo " id="T1:U109">cos(<span class="var type1" id="S201T1U2546">theta_rot</span>)</span></span> - <span class="mxinfo " id="T1:U111"><span class="var type1" id="S199T1U2548">x_outMove</span>*<span class="mxinfo " id="T1:U113">sin(<span class="var type1" id="S201T1U2551">theta_rot</span>)</span></span></span></span>;    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,373" id="srcline373">373</a></span><span class="line">    <span class="mxinfo " id="T1:U115"><span class="var type1" id="S208T1U2554">SignBeta</span> = <span class="mxinfo " id="T1:U117">sign(<span class="var type1" id="S194T1U2557">Beta</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,374" id="srcline374">374</a></span><span class="line">    <span class="mxinfo " id="T1:U119"><span class="var type1" id="S194T1U2560">Beta</span> = <span class="mxinfo " id="T1:U121">abs(<span class="var type1" id="S194T1U2563">Beta</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,375" id="srcline375">375</a></span><span class="line">    <span class="mxinfo " id="T1:U123"><span class="var type1" id="S211T1U2566">ulimit</span> = <span class="mxinfo " id="T1:U125">sqrt(<span class="var type1" id="S194T1U2569">Beta</span>)</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,376" id="srcline376">376</a></span><span class="line">    <span class="mxinfo " id="T1:U127"><span class="var type1" id="S212T1U2572">D_BetaVal</span> = <span class="mxinfo " id="T1:U129"><span class="mxinfo " id="T1:U130"><span class="mxinfo " id="T1:U131">sin(<span class="var type1" id="S194T1U2577">Beta</span>)</span>*<span class="mxinfo " id="T1:U133"><span class="fcn" id="F769N97:B2579">quadsinu2</span>(<span class="var type1" id="S211T1U2580">ulimit</span>)</span></span>+<span class="mxinfo " id="T1:U135"><span class="mxinfo " id="T1:U136">cos(<span class="var type1" id="S194T1U2584">Beta</span>)</span>*<span class="mxinfo " id="T1:U138"><span class="fcn" id="F770N96:B2586">quadcosu2</span>(<span class="var type1" id="S211T1U2587">ulimit</span>)</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,377" id="srcline377">377</a></span><span class="line">    <span class="comment">%Droot = fzero(@(x) sin(x)*quadsinu2(x)+cos(x)*quadcosu2(x), pi);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,378" id="srcline378">378</a></span><span class="line">    <span class="mxinfo " id="T1:U140"><span class="var type1" id="S179T1U2590">Delta</span> = <span class="mxinfo " id="T1:U142"><span class="mxinfo " id="T1:U143"><span class="mxinfo " id="T1:U144"><span class="mxinfo " id="T1:U145">8</span>*<span class="var type1" id="S208T1U2595">SignBeta</span></span>*<span class="mxinfo " id="T1:U147"><span class="var type1" id="S212T1U2597">D_BetaVal</span>^2</span></span>/<span class="mxinfo " id="T1:U149"><span class="var type1" id="S195T1U2600">r</span>^2</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,379" id="srcline379">379</a></span><span class="line">    <span class="comment">%longth of the trajectary     </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,380" id="srcline380">380</a></span><span class="line">    <span class="mxinfo " id="T1:U151"><span class="var type1" id="S181T1U2604">Arclength</span> = <span class="mxinfo " id="T1:U153"><span class="mxinfo " id="T1:U154">2</span>*<span class="mxinfo " id="T1:U155">sqrt(<span class="mxinfo " id="T1:U156"><span class="mxinfo " id="T1:U157">2</span>*<span class="mxinfo " id="T1:U158">abs(<span class="mxinfo " id="T1:U159"><span class="mxinfo " id="T1:U160"><span class="var type1" id="S194T1U2615">Beta</span>/<span class="var type1" id="S179T1U2616">Delta</span></span>*<span class="var type1" id="S208T1U2617">SignBeta</span></span>)</span></span>)</span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,381" id="srcline381">381</a></span><span class="line">    <span class="mxinfo " id="T1:U164"><span class="var type1" id="S180T1U2620">k_localmax</span> = <span class="mxinfo " id="T1:U166"><span class="mxinfo " id="T1:U167"><span class="var type1" id="S179T1U2623">Delta</span> * <span class="var type1" id="S181T1U2624">Arclength</span></span>/<span class="mxinfo " id="T1:U170">2</span></span></span>;    </span></span>
+<span class="srcline"><span class="lineno"><a href="143,382" id="srcline382">382</a></span><span class="line"><span class="comment">%     ArcPos = 0:(Arclength/Nlen):Arclength;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,383" id="srcline383">383</a></span><span class="line">    <span class="comment">%mirror line Ax+By+C=0</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,384" id="srcline384">384</a></span><span class="line"><span class="comment">%     x_mirr = (x_inRot + x_outRot)/2;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,385" id="srcline385">385</a></span><span class="line"><span class="comment">%     y_mirr = (y_inRot + y_outRot)/2;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,386" id="srcline386">386</a></span><span class="line"><span class="comment">%     angle_mirr = pi/2 + atan((y_outRot - y_inRot)/(x_outRot - x_inRot));    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,387" id="srcline387">387</a></span><span class="line"><span class="comment">%     A = tan(angle_mirr);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,388" id="srcline388">388</a></span><span class="line"><span class="comment">%     B = -1;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,389" id="srcline389">389</a></span><span class="line"><span class="comment">%     C = y_mirr - A * x_mirr;    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,390" id="srcline390">390</a></span><span class="line"><span class="comment">%     for i=1:length(ArcPos)</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,391" id="srcline391">391</a></span><span class="line"><span class="comment">%         if ArcPos(i)&lt;=Arclength/2</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,392" id="srcline392">392</a></span><span class="line"><span class="comment">%             ulimit = ArcPos(i) * sqrt(abs(Delta)/2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,393" id="srcline393">393</a></span><span class="line"><span class="comment">%             xposition(i) = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,394" id="srcline394">394</a></span><span class="line"><span class="comment">%             yposition(i) = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,395" id="srcline395">395</a></span><span class="line"><span class="comment">%             Theta(i) = Delta * (ArcPos(i))^2/2;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,396" id="srcline396">396</a></span><span class="line"><span class="comment">%             kur(i) = ArcPos(i)*Delta;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,397" id="srcline397">397</a></span><span class="line"><span class="comment">%             </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,398" id="srcline398">398</a></span><span class="line"><span class="comment">%         else</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,399" id="srcline399">399</a></span><span class="line"><span class="comment">%             ulimit = (Arclength - ArcPos(i)) * sqrt(abs(Delta)/2);   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,400" id="srcline400">400</a></span><span class="line"><span class="comment">%             xpositionMirrTemp = sqrt(2/abs(Delta))*quadcosu2(ulimit);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,401" id="srcline401">401</a></span><span class="line"><span class="comment">%             ypositionMirrTemp = sqrt(2/abs(Delta))*quadsinu2(ulimit) * SignBeta;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,402" id="srcline402">402</a></span><span class="line"><span class="comment">%             %two points are symmetrical to the Ax+By+C we just defined</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,403" id="srcline403">403</a></span><span class="line"><span class="comment">%             xposition(i) = xpositionMirrTemp - 2*A*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,404" id="srcline404">404</a></span><span class="line"><span class="comment">%             yposition(i) = ypositionMirrTemp - 2*B*(A*xpositionMirrTemp+B*ypositionMirrTemp+C)/(A^2+B^2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,405" id="srcline405">405</a></span><span class="line"><span class="comment">%             Theta(i) = 2*Beta*SignBeta - Delta * (Arclength - ArcPos(i))^2/2;  </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,406" id="srcline406">406</a></span><span class="line"><span class="comment">%             kur(i) = (Arclength - ArcPos(i))*Delta;  </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,407" id="srcline407">407</a></span><span class="line"><span class="comment">%             </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,408" id="srcline408">408</a></span><span class="line"><span class="comment">%         end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,409" id="srcline409">409</a></span><span class="line"><span class="comment">%         %Rotate and move back</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,410" id="srcline410">410</a></span><span class="line"><span class="comment">%         x_positionMove = xposition(i)*cos(-theta_rot) + yposition(i)*sin(-theta_rot);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,411" id="srcline411">411</a></span><span class="line"><span class="comment">%         y_positionMove = yposition(i)*cos(-theta_rot) - xposition(i)*sin(-theta_rot);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,412" id="srcline412">412</a></span><span class="line"><span class="comment">% </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,413" id="srcline413">413</a></span><span class="line"><span class="comment">%         xposition(i) = x_positionMove + x_in;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,414" id="srcline414">414</a></span><span class="line"><span class="comment">%         yposition(i) = y_positionMove + y_in;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,415" id="srcline415">415</a></span><span class="line"><span class="comment">%         Theta(i) = Theta(i) + theta_rot;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,416" id="srcline416">416</a></span><span class="line"><span class="comment">%     end   </span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,417" id="srcline417">417</a></span><span class="line"><span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,418" id="srcline418">418</a></span><span class="line"></span></span>
+</pre>
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="143,419" id="srcline419">419</a></span><span class="line">function quadcosu2val = quadcosu2( ulimit )</span></span>
+<span class="srcline"><span class="lineno"><a href="143,420" id="srcline420">420</a></span><span class="line">    <span class="comment">%UNTITLED4 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,421" id="srcline421">421</a></span><span class="line">    <span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,422" id="srcline422">422</a></span><span class="line">    <span class="comment">% this function is used to calculate the integral of cos(x^2),which is used</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,423" id="srcline423">423</a></span><span class="line">    <span class="comment">% to calculate x position</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,424" id="srcline424">424</a></span><span class="line">    global quadcosu2tbl</span></span>
+<span class="srcline"><span class="lineno"><a href="143,425" id="srcline425">425</a></span><span class="line">    index = fix(ulimit/0.005) + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,426" id="srcline426">426</a></span><span class="line">    quadcosu2val = quadcosu2tbl(index);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,427" id="srcline427">427</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,428" id="srcline428">428</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="143,429" id="srcline429">429</a></span><span class="line">function quadsinu2val = quadsinu2( ulimit )</span></span>
+<span class="srcline"><span class="lineno"><a href="143,430" id="srcline430">430</a></span><span class="line"><span class="comment">%UNTITLED4 Summary of this function goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,431" id="srcline431">431</a></span><span class="line"><span class="comment">%   Detailed explanation goes here</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,432" id="srcline432">432</a></span><span class="line"><span class="comment">% this function is used to calculate the integral of sin(x^2),which is used</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,433" id="srcline433">433</a></span><span class="line"><span class="comment">% to calculate y position</span></span></span>
+<span class="srcline"><span class="lineno"><a href="143,434" id="srcline434">434</a></span><span class="line">    global quadsinu2tbl </span></span>
+<span class="srcline"><span class="lineno"><a href="143,435" id="srcline435">435</a></span><span class="line">    index = fix(ulimit/0.005) + 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="143,436" id="srcline436">436</a></span><span class="line">    quadsinu2val = quadsinu2tbl(index);</span></span>
+<span class="srcline"><span class="lineno"><a href="143,437" id="srcline437">437</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="143,438" id="srcline438">438</a></span><span class="line"> </span></span>
+</pre>
+</div>

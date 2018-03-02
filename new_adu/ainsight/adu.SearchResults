@@ -1,0 +1,25 @@
+---- AdvDrAstMpStbOffset Matches (25 in 4 files) ----
+M2S_Map.h (d:\adu\sw\fusing\src\mapdbc):#define getAdvDrAstMpStbOffset                                  CAN_TO_MAP_MSG(ADAS_Stub,AdvDrAstMpStbOffset)
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):void Put_ADAS_Stub_AdvDrAstMpStbOffset(uint16 sigData)
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffset_0=(uint8)(sigData>>8);
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffset_1=(uint8)(sigData);
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):void Put_ADAS_Stub_AdvDrAstMpStbOffsetToLaneEnd(uint8 sigData)
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffsetToLaneEnd=sigData;
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):uint16 Get_ADAS_Stub_AdvDrAstMpStbOffset( )
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    rc=((uint16)ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffset_0)<<8
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    |((uint16)ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffset_1);
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):uint8 Get_ADAS_Stub_AdvDrAstMpStbOffsetToLaneEnd( )
+M2S_Map_par.c (d:\adu\sw\fusing\src\mapdbc):    rc=ADAS_Stub_u.ADAS_Stub_Layout.AdvDrAstMpStbOffsetToLaneEnd;
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):  vbittype AdvDrAstMpStbOffset_0 : 8;
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):  vbittype AdvDrAstMpStbOffset_1 : 8;
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):  vbittype AdvDrAstMpStbOffsetToLaneEnd : 8;
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):void Put_ADAS_Stub_AdvDrAstMpStbOffset(uint16 sigData);
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):void Put_ADAS_Stub_AdvDrAstMpStbOffsetToLaneEnd(uint8 sigData);
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):uint16 Get_ADAS_Stub_AdvDrAstMpStbOffset( );
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):uint8 Get_ADAS_Stub_AdvDrAstMpStbOffsetToLaneEnd( );
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):uint16 Get_ADAS_Stub_AdvDrAstMpStbOffset( );
+M2S_Map_par.h (d:\adu\sw\fusing\src\mapdbc):uint8 Get_ADAS_Stub_AdvDrAstMpStbOffsetToLaneEnd( );
+MessageRecStub.c (d:\adu\sw\fusing\src\himap\messagerecstub_ert_rtw):      (getAdvDrAstMpStbOffset() != MessageRecStub_DW.gPreStubOffset)) {
+MessageRecStub.c (d:\adu\sw\fusing\src\himap\messagerecstub_ert_rtw):    if (getAdvDrAstMpStbOffset() < MessageRecStub_DW.gPreStubOffset -
+MessageRecStub.c (d:\adu\sw\fusing\src\himap\messagerecstub_ert_rtw):      getAdvDrAstMpStbOffset();
+MessageRecStub.c (d:\adu\sw\fusing\src\himap\messagerecstub_ert_rtw):  MessageRecStub_DW.gPreStubOffset = getAdvDrAstMpStbOffset();

@@ -1,0 +1,138 @@
+<!-- saved from url=(0014)about:internet -->
+<div class="dead">
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="62,1" id="srcline1">  1</a></span><span class="line">function [Info_MePGCd,RoadInfoPGCd,Info_FdPGCd,Info_FoPGCd,Info_LdPGCd,Info_LoPGCd,LongDisLimitPGCd,ToLeftLC,LCOPCntOut,CurOpPGCd,PGCdInfo,InLaneLCFlg] = CordTransfer(Info_MeGCd,Info_FdGCd,Info_FoGCd,Info_LdGCd,Info_LoGCd,CurOpGCd,LongDisLimitGCd,RoadInfoGCd,LCOPCntIn,Chg2NextLane,SafetyTol,ImprovYoutPres,LCInlineTol,ByPassFlg)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,2" id="srcline2">  2</a></span><span class="line"><span class="comment">%#codegen</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,3" id="srcline3">  3</a></span><span class="line"><span class="comment">%RoadInfo(1,1) = Info_Me(1);RoadInfo(1,2) = Info_Me(2);RoadInfo(1,3) = Info_Me(6);RoadInfo(1,4) = EgoLaneInfo(2);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,4" id="srcline4">  4</a></span><span class="line"><span class="comment">% 1 to next lane 0 to avoid front vehicle Chg2NextLane</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,5" id="srcline5">  5</a></span><span class="line">    persistent CurOpTemp PGCXorig PGCYorig PGCThetaorig PRoadInfoPGCd LCCnt PInLaneLCFlg</span></span>
+<span class="srcline"><span class="lineno"><a href="62,6" id="srcline6">  6</a></span><span class="line">    if isempty(CurOpTemp)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,7" id="srcline7">  7</a></span><span class="line">        CurOpTemp = 0;LCCnt = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,8" id="srcline8">  8</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,9" id="srcline9">  9</a></span><span class="line">    if isempty(PGCXorig)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,10" id="srcline10"> 10</a></span><span class="line">        PGCXorig = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,11" id="srcline11"> 11</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,12" id="srcline12"> 12</a></span><span class="line">    if isempty(PGCYorig)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,13" id="srcline13"> 13</a></span><span class="line">        PGCYorig = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,14" id="srcline14"> 14</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,15" id="srcline15"> 15</a></span><span class="line">    if isempty(PGCThetaorig)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,16" id="srcline16"> 16</a></span><span class="line">        PGCThetaorig = 0;PRoadInfoPGCd = [0 0 0 0;0 0 0 0];PInLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,17" id="srcline17"> 17</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,18" id="srcline18"> 18</a></span><span class="line">    Info_MePGCd = [0 0 0 0 0 0];Info_FdPGCd = [0 0 0 0 0 0];Info_FoPGCd = [0 0 0 0 0 0];Info_LdPGCd = [0 0 0 0 0 0];Info_LoPGCd = [0 0 0 0 0 0];LongDisLimitPGCd = 0;RoadInfoPGCd = [0 0 0 0;0 0 0 0];PGCdInfo = [0 0 0];</span></span>
+<span class="srcline"><span class="lineno"><a href="62,19" id="srcline19"> 19</a></span><span class="line">    LongDisLimitPGCd = LongDisLimitGCd;CurOpPGCd = CurOpGCd;ToLeftLC = 0;LCOPCntOut = LCOPCntIn;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,20" id="srcline20"> 20</a></span><span class="line">    Info_MePGCd = Info_MeGCd;RoadInfoPGCd = RoadInfoGCd;Info_FdPGCd = Info_FdGCd;Info_FoPGCd = Info_FoGCd;Info_LdPGCd = Info_LdGCd;Info_LoPGCd = Info_LoGCd;InLaneLCFlg = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,21" id="srcline21"> 21</a></span><span class="line">    if (abs(CurOpTemp - CurOpGCd) &gt;1e-1)||((abs(LCCnt - LCOPCntIn)&gt;1e-1) &amp;&amp; (abs(CurOpGCd - 5)&lt;1e-1))</span></span>
+<span class="srcline"><span class="lineno"><a href="62,22" id="srcline22"> 22</a></span><span class="line">        CurOpTemp = CurOpGCd;LCCnt = LCOPCntIn;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,23" id="srcline23"> 23</a></span><span class="line">        if (CurOpGCd&gt;1e-1)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,24" id="srcline24"> 24</a></span><span class="line">            PGCXorig = RoadInfoGCd(1,1);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,25" id="srcline25"> 25</a></span><span class="line">            PGCYorig = RoadInfoGCd(1,2);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,26" id="srcline26"> 26</a></span><span class="line">            PGCThetaorig = RoadInfoGCd(1,3);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,27" id="srcline27"> 27</a></span><span class="line">            RoadInfoPGCd(1,1) = (RoadInfoGCd(1,1) - PGCXorig)*cos(PGCThetaorig) + (RoadInfoGCd(1,2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,28" id="srcline28"> 28</a></span><span class="line">            RoadInfoPGCd(1,2) = (RoadInfoGCd(1,2) - PGCYorig)*cos(PGCThetaorig) - (RoadInfoGCd(1,1) - PGCXorig)*sin(PGCThetaorig);    </span></span>
+<span class="srcline"><span class="lineno"><a href="62,29" id="srcline29"> 29</a></span><span class="line">            RoadInfoPGCd(2,1) = (RoadInfoGCd(2,1) - PGCXorig)*cos(PGCThetaorig) + (RoadInfoGCd(2,2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,30" id="srcline30"> 30</a></span><span class="line">            RoadInfoPGCd(2,2) = (RoadInfoGCd(2,2) - PGCYorig)*cos(PGCThetaorig) - (RoadInfoGCd(2,1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,31" id="srcline31"> 31</a></span><span class="line">            RoadInfoPGCd(1,3) = RoadInfoGCd(1,3) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,32" id="srcline32"> 32</a></span><span class="line">            RoadInfoPGCd(2,3) = RoadInfoGCd(2,3) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,33" id="srcline33"> 33</a></span><span class="line">            if abs(CurOpTemp - 5) &lt; 1e-1                </span></span>
+<span class="srcline"><span class="lineno"><a href="62,34" id="srcline34"> 34</a></span><span class="line">                AngleTemp = RoundAngle0To2Pi(RoadInfoPGCd(1,3));</span></span>
+<span class="srcline"><span class="lineno"><a href="62,35" id="srcline35"> 35</a></span><span class="line">                RoadInfoPGCd(1,3) = AngleTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,36" id="srcline36"> 36</a></span><span class="line">                AngleTemp = RoundAngle0To2Pi(RoadInfoPGCd(2,3));</span></span>
+<span class="srcline"><span class="lineno"><a href="62,37" id="srcline37"> 37</a></span><span class="line">                RoadInfoPGCd(2,3) = AngleTemp;                </span></span>
+<span class="srcline"><span class="lineno"><a href="62,38" id="srcline38"> 38</a></span><span class="line">                if  (RoadInfoPGCd(2,2) - ByPassFlg*RoadInfoPGCd(2,1)*tan(RoadInfoPGCd(2,3))) &gt;  RoadInfoPGCd(1,2)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,39" id="srcline39"> 39</a></span><span class="line">                    ToLeftLC = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,40" id="srcline40"> 40</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,41" id="srcline41"> 41</a></span><span class="line">                    ToLeftLC = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,42" id="srcline42"> 42</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="62,43" id="srcline43"> 43</a></span><span class="line">            elseif abs(CurOpTemp - 1) &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="62,44" id="srcline44"> 44</a></span><span class="line">                AngleTemp = RoundAngleNPiToPPi(RoadInfoPGCd(1,3));</span></span>
+<span class="srcline"><span class="lineno"><a href="62,45" id="srcline45"> 45</a></span><span class="line">                RoadInfoPGCd(1,3) = AngleTemp;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,46" id="srcline46"> 46</a></span><span class="line">                AngleTemp = RoundAngleNPiToPPi(RoadInfoPGCd(2,3));</span></span>
+<span class="srcline"><span class="lineno"><a href="62,47" id="srcline47"> 47</a></span><span class="line">                RoadInfoPGCd(2,3) = AngleTemp;  </span></span>
+<span class="srcline"><span class="lineno"><a href="62,48" id="srcline48"> 48</a></span><span class="line">                AngleRotTemp = RoadInfoPGCd(2,3) - RoadInfoPGCd(1,3);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,49" id="srcline49"> 49</a></span><span class="line">                AngleRot = RoundAngleNPiToPPi(AngleRotTemp);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,50" id="srcline50"> 50</a></span><span class="line">                if  AngleRot &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="62,51" id="srcline51"> 51</a></span><span class="line">                    ToLeftLC = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,52" id="srcline52"> 52</a></span><span class="line">                else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,53" id="srcline53"> 53</a></span><span class="line">                    ToLeftLC = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,54" id="srcline54"> 54</a></span><span class="line">                end                </span></span>
+<span class="srcline"><span class="lineno"><a href="62,55" id="srcline55"> 55</a></span><span class="line">            else                </span></span>
+<span class="srcline"><span class="lineno"><a href="62,56" id="srcline56"> 56</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,57" id="srcline57"> 57</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,58" id="srcline58"> 58</a></span><span class="line">        PRoadInfoPGCd = RoadInfoPGCd;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,59" id="srcline59"> 59</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,60" id="srcline60"> 60</a></span><span class="line">    InLaneLCFlg = PInLaneLCFlg;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,61" id="srcline61"> 61</a></span><span class="line">    <span class="comment">% Transform only when there is an operation</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,62" id="srcline62"> 62</a></span><span class="line">    if CurOpGCd &gt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="62,63" id="srcline63"> 63</a></span><span class="line">    <span class="comment">%     theta_rot = angle_in;</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,64" id="srcline64"> 64</a></span><span class="line">        <span class="comment">%     x_outRot = (x_out - x_in)*cos(theta_rot) + (y_out - y_in)*sin(theta_rot);</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,65" id="srcline65"> 65</a></span><span class="line">        <span class="comment">%     y_outRot = (y_out - y_in)*cos(theta_rot) - (x_out - x_in)*sin(theta_rot);    </span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,66" id="srcline66"> 66</a></span><span class="line">        <span class="comment">% X Y Rot and Move</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,67" id="srcline67"> 67</a></span><span class="line">        Info_MePGCd(1) = (Info_MeGCd(1) - PGCXorig)*cos(PGCThetaorig) + (Info_MeGCd(2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,68" id="srcline68"> 68</a></span><span class="line">        Info_MePGCd(2) = (Info_MeGCd(2) - PGCYorig)*cos(PGCThetaorig) - (Info_MeGCd(1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,69" id="srcline69"> 69</a></span><span class="line">        Info_FdPGCd(1) = (Info_FdGCd(1) - PGCXorig)*cos(PGCThetaorig) + (Info_FdGCd(2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,70" id="srcline70"> 70</a></span><span class="line">        Info_FdPGCd(2) = (Info_FdGCd(2) - PGCYorig)*cos(PGCThetaorig) - (Info_FdGCd(1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,71" id="srcline71"> 71</a></span><span class="line">        Info_FoPGCd(1) = (Info_FoGCd(1) - PGCXorig)*cos(PGCThetaorig) + (Info_FoGCd(2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,72" id="srcline72"> 72</a></span><span class="line">        Info_FoPGCd(2) = (Info_FoGCd(2) - PGCYorig)*cos(PGCThetaorig) - (Info_FoGCd(1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,73" id="srcline73"> 73</a></span><span class="line">        Info_LdPGCd(1) = (Info_LdGCd(1) - PGCXorig)*cos(PGCThetaorig) + (Info_LdGCd(2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,74" id="srcline74"> 74</a></span><span class="line">        Info_LdPGCd(2) = (Info_LdGCd(2) - PGCYorig)*cos(PGCThetaorig) - (Info_LdGCd(1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,75" id="srcline75"> 75</a></span><span class="line">        Info_LoPGCd(1) = (Info_LoGCd(1) - PGCXorig)*cos(PGCThetaorig) + (Info_LoGCd(2) - PGCYorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,76" id="srcline76"> 76</a></span><span class="line">        Info_LoPGCd(2) = (Info_LoGCd(2) - PGCYorig)*cos(PGCThetaorig) - (Info_LoGCd(1) - PGCXorig)*sin(PGCThetaorig); </span></span>
+<span class="srcline"><span class="lineno"><a href="62,77" id="srcline77"> 77</a></span><span class="line">        <span class="comment">%Angle Rot</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,78" id="srcline78"> 78</a></span><span class="line">        Info_MePGCd(6) = Info_MeGCd(6) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,79" id="srcline79"> 79</a></span><span class="line">        Info_FdPGCd(6) = Info_FdGCd(6) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,80" id="srcline80"> 80</a></span><span class="line">        Info_FoPGCd(6) = Info_FoGCd(6) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,81" id="srcline81"> 81</a></span><span class="line">        Info_LdPGCd(6) = Info_LdGCd(6) - PGCThetaorig;      </span></span>
+<span class="srcline"><span class="lineno"><a href="62,82" id="srcline82"> 82</a></span><span class="line">        Info_LoPGCd(6) = Info_LoGCd(6) - PGCThetaorig;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,83" id="srcline83"> 83</a></span><span class="line">        PGCdInfo = [PGCXorig,PGCYorig,PGCThetaorig];         </span></span>
+<span class="srcline"><span class="lineno"><a href="62,84" id="srcline84"> 84</a></span><span class="line">        RoadInfoPGCd = PRoadInfoPGCd;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,85" id="srcline85"> 85</a></span><span class="line">        if abs(CurOpTemp - 5) &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="62,86" id="srcline86"> 86</a></span><span class="line">            if  (RoadInfoPGCd(2,2) -  ByPassFlg*RoadInfoPGCd(2,1)*tan(RoadInfoPGCd(2,3))) &gt;  RoadInfoPGCd(1,2)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,87" id="srcline87"> 87</a></span><span class="line">                ToLeftLC = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,88" id="srcline88"> 88</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,89" id="srcline89"> 89</a></span><span class="line">                ToLeftLC = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,90" id="srcline90"> 90</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,91" id="srcline91"> 91</a></span><span class="line">        elseif abs(CurOpTemp - 1) &lt; 1e-1</span></span>
+<span class="srcline"><span class="lineno"><a href="62,92" id="srcline92"> 92</a></span><span class="line">            AngleRotTemp = RoadInfoPGCd(2,3) - RoadInfoPGCd(1,3);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,93" id="srcline93"> 93</a></span><span class="line">            AngleRot = RoundAngleNPiToPPi(AngleRotTemp);</span></span>
+<span class="srcline"><span class="lineno"><a href="62,94" id="srcline94"> 94</a></span><span class="line">            if  AngleRot &gt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="62,95" id="srcline95"> 95</a></span><span class="line">                ToLeftLC = 1;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,96" id="srcline96"> 96</a></span><span class="line">            else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,97" id="srcline97"> 97</a></span><span class="line">                ToLeftLC = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,98" id="srcline98"> 98</a></span><span class="line">            end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,99" id="srcline99"> 99</a></span><span class="line">        else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,100" id="srcline100">100</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,101" id="srcline101">101</a></span><span class="line">    else</span></span>
+<span class="srcline"><span class="lineno"><a href="62,102" id="srcline102">102</a></span><span class="line">        PGCXorig = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,103" id="srcline103">103</a></span><span class="line">        PGCYorig = 0;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,104" id="srcline104">104</a></span><span class="line">        PGCThetaorig = 0;        </span></span>
+<span class="srcline"><span class="lineno"><a href="62,105" id="srcline105">105</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,106" id="srcline106">106</a></span><span class="line"> </span></span>
+<span class="srcline"><span class="lineno"><a href="62,107" id="srcline107">107</a></span><span class="line">end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,108" id="srcline108">108</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="62,109" id="srcline109">109</a></span><span class="line">function AngleOut = RoundAngle0To2Pi(AngleIn)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,110" id="srcline110">110</a></span><span class="line">    AngleOut = AngleIn;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,111" id="srcline111">111</a></span><span class="line">    while (AngleOut &lt; 0) ||(AngleOut&gt;=2*pi)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,112" id="srcline112">112</a></span><span class="line">        if AngleOut &lt; 0</span></span>
+<span class="srcline"><span class="lineno"><a href="62,113" id="srcline113">113</a></span><span class="line">            AngleOut = AngleOut + 2*pi;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,114" id="srcline114">114</a></span><span class="line">        end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,115" id="srcline115">115</a></span><span class="line">        if AngleOut &gt;= 2*pi</span></span>
+<span class="srcline"><span class="lineno"><a href="62,116" id="srcline116">116</a></span><span class="line">            AngleOut = AngleOut - 2*pi;    </span></span>
+<span class="srcline"><span class="lineno"><a href="62,117" id="srcline117">117</a></span><span class="line">        end    </span></span>
+<span class="srcline"><span class="lineno"><a href="62,118" id="srcline118">118</a></span><span class="line">    end</span></span>
+<span class="srcline"><span class="lineno"><a href="62,119" id="srcline119">119</a></span><span class="line">end</span></span>
+</pre>
+</div>
+<pre class="code">
+<span class="srcline"><span class="lineno"><a href="62,120" id="srcline120">120</a></span><span class="line"></span></span>
+<span class="srcline"><span class="lineno"><a href="62,121" id="srcline121">121</a></span><span class="line"><span class="keyword">function</span> <span class="var type1" id="S50T1U1064">AngleOut</span> = RoundAngleNPiToPPi(<span class="var type1" id="S51T1U1067">AngleIn</span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,122" id="srcline122">122</a></span><span class="line">    <span class="mxinfo " id="T1:U3"><span class="var type1" id="S50T1U1070">AngleOut</span> = <span class="var type1" id="S51T1U1071">AngleIn</span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,123" id="srcline123">123</a></span><span class="line">    <span class="keyword">while</span> (<span class="mxinfo " id="T8:U6"><span class="var type1" id="S50T1U1076">AngleOut</span> &lt;= <span class="mxinfo " id="T1:U8">-<span class="mxinfo " id="T1:U9">pi</span></span></span>) ||(<span class="mxinfo " id="T8:U10"><span class="var type1" id="S50T1U1082">AngleOut</span>&gt;<span class="mxinfo " id="T1:U12">pi</span></span>)</span></span>
+<span class="srcline"><span class="lineno"><a href="62,124" id="srcline124">124</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U13"><span class="var type1" id="S50T1U1088">AngleOut</span> &lt;= <span class="mxinfo " id="T1:U15">-<span class="mxinfo " id="T1:U16">pi</span></span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,125" id="srcline125">125</a></span><span class="line">            <span class="mxinfo " id="T1:U17"><span class="var type1" id="S50T1U1094">AngleOut</span> = <span class="mxinfo " id="T1:U19"><span class="var type1" id="S50T1U1096">AngleOut</span> + <span class="mxinfo " id="T1:U21"><span class="mxinfo " id="T1:U22">2</span>*<span class="mxinfo " id="T1:U23">pi</span></span></span></span>;</span></span>
+<span class="srcline"><span class="lineno"><a href="62,126" id="srcline126">126</a></span><span class="line">        <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,127" id="srcline127">127</a></span><span class="line">        <span class="keyword">if</span> <span class="mxinfo " id="T8:U24"><span class="var type1" id="S50T1U1104">AngleOut</span> &gt;<span class="mxinfo " id="T1:U26">pi</span></span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,128" id="srcline128">128</a></span><span class="line">            <span class="mxinfo " id="T1:U27"><span class="var type1" id="S50T1U1109">AngleOut</span> = <span class="mxinfo " id="T1:U29"><span class="var type1" id="S50T1U1111">AngleOut</span> - <span class="mxinfo " id="T1:U31"><span class="mxinfo " id="T1:U32">2</span>*<span class="mxinfo " id="T1:U33">pi</span></span></span></span>;    </span></span>
+<span class="srcline"><span class="lineno"><a href="62,129" id="srcline129">129</a></span><span class="line">        <span class="keyword">end</span>    </span></span>
+<span class="srcline"><span class="lineno"><a href="62,130" id="srcline130">130</a></span><span class="line">    <span class="keyword">end</span></span></span>
+<span class="srcline"><span class="lineno"><a href="62,131" id="srcline131">131</a></span><span class="line"><span class="keyword">end</span></span></span>
+</pre>
