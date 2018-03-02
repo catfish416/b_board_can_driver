@@ -38,4 +38,5 @@ SRC_FILES:=  $(MODULE_PATH)/src/CLinuxCountingSem.cpp\
              \
 
 ## 定义了如何生成可执行文件的通用规则
-$(call build_target,$(BUILD_STATIC_LIBRARY),$(MODULE_PATH)/liboal_hal.a)
+##$(call build_target,$(BUILD_STATIC_LIBRARY),$(MODULE_PATH)/liboal_hal.a)
+$(call build_target,$(BUILD_STATIC_LIBRARY), $(PROJECT_OUT_PATH)/Adu/lib/liboal_hal.a)
