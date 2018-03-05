@@ -41,14 +41,18 @@
 #include <sys/uio.h>
 #include <net/if.h>
 #include <fcntl.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
 
 #define CAN_MAX_DLEN  8
 #define CAN_RAW		  1 /* RAW sockets */
+#define CAN_MAX_RD_RETRY    5
 
 typedef __u32 				canid_t;
 typedef unsigned short 		__kernel_sa_family_t;
 typedef unsigned char    	byte;
 
+#if 0
 struct can_frame {
 	canid_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
 	__u8    can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
@@ -65,7 +69,7 @@ struct sockaddr_can {
 		/* reserved for future CAN protocols address information */
 	} can_addr;
 };
-
+#endif
 
 
 void Initsocketcan(const char *pcan);

@@ -14,17 +14,17 @@ int s_can[2];
 void  Initsocketcan(const char *pcan)
 {
     int flags;
-    	if(0 ==strcmp(pcan,"can0"))
-    	{
-    	     s_can[0] = socket(PF_CAN, SOCK_RAW, CAN_RAW); 	
-	    strcpy(ifr[0].ifr_name, pcan );	
-	    ioctl(s_can[0], SIOCGIFINDEX, &ifr[0]);			
-	    addr[0].can_family = AF_CAN;	
-	    addr[0].can_ifindex = ifr[0].ifr_ifindex;	
-	    bind(s_can[0], (struct sockaddr *)&addr[0], sizeof(addr[0]));  
-	    flags = fcntl(s_can[0], F_GETFL, 0);
-	    fcntl(s_can[0], F_SETFL, flags | O_NONBLOCK);
-	}
+    if(0 ==strcmp(pcan,"can0"))
+    {
+        s_can[0] = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+        strcpy(ifr[0].ifr_name, pcan );
+        ioctl(s_can[0], SIOCGIFINDEX, &ifr[0]);
+        addr[0].can_family = AF_CAN;
+        addr[0].can_ifindex = ifr[0].ifr_ifindex;
+        bind(s_can[0], (struct sockaddr *)&addr[0], sizeof(addr[0]));
+        flags = fcntl(s_can[0], F_GETFL, 0);
+        fcntl(s_can[0], F_SETFL, flags | O_NONBLOCK);
+    }
 	else if(0 ==strcmp(pcan,"can1"))
 	{
 	     s_can[1] = socket(PF_CAN, SOCK_RAW, CAN_RAW); 	
@@ -33,9 +33,8 @@ void  Initsocketcan(const char *pcan)
 	    addr[1].can_family = AF_CAN;	
 	    addr[1].can_ifindex = ifr[1].ifr_ifindex;	
 	    bind(s_can[1], (struct sockaddr *)&addr[1], sizeof(addr[1])); 
-	   flags = fcntl(s_can[1], F_GETFL, 0);
-	   fcntl(s_can[1], F_SETFL, flags | O_NONBLOCK);
-		
+	    flags = fcntl(s_can[1], F_GETFL, 0);
+	    fcntl(s_can[1], F_SETFL, flags | O_NONBLOCK);
 	}
 	else
 	{}
@@ -50,15 +49,30 @@ void  Initsocketcan(const char *pcan)
 */
 int read_canFrame (int read_s, void *read_frame, int read_t)
 {
-        int bytes = read(read_s, read_frame, read_t);						
-	 if(bytes != read_t)			
+    int bytes = 0;
+    int err_cnt = 0;
 
-	 {				
-	    /*printf("bytes=%d,recv Error frame\n!",bytes);	*/
-	  return  -1;
-			
-	 }
-	 return bytes;
+    while(1)
+    {
+        bytes = read(read_s, read_frame, read_t);
+        if (bytes > 0)
+        {
+            printf("read %d\n", bytes);
+            break;
+        }
+        else if (CAN_MAX_RD_RETRY == err_cnt)
+        {
+            printf("read can %d failed\n", read_s);
+            break;
+        }
+        else
+        {
+            sleep(1);
+            err_cnt++;
+        }
+    }
+
+	return bytes;
 }
 
 /**
