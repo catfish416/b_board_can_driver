@@ -12,14 +12,14 @@ extern "C" {
 
 extern int s_can[2];
 
-#define BUILD_CAN_WRITE_TEST    1
-#define BUILD_CAN_READ_TEST     0
+#define BUILD_CAN_WRITE_TEST    0
+#define BUILD_CAN_READ_TEST     1
 
 int main(void)
 {
+#if BUILD_CAN_WRITE_TEST
     Initsocketcan("can0");
 
-#if BUILD_CAN_WRITE_TEST
     uint8 data[6];
     for(int i = 0; i < 6; i++)
     {
@@ -27,7 +27,7 @@ int main(void)
     }
 
     struct can_frame write_frame;
-    write_frame.can_id = 0x333;
+    write_frame.can_id = 0x444;
     write_frame.can_dlc = 8;
     memcpy(&write_frame.data[0], &data[0], 6);
 
@@ -38,19 +38,23 @@ int main(void)
             printf("write can0 error, write_byte=%d\n", write_byte);
         else
             printf("write can0 ok\n");
+        //usleep(1000*100);
         sleep(1);
     }
+    close(s_can[0]);
 #endif
 
 #if BUILD_CAN_READ_TEST
+    Initsocketcan("can0");
+
     struct can_frame read_frame;
     (void)memset(&read_frame, 0, sizeof(read_frame));
 
     // filter can_id
     struct can_filter rfilter;
-    rfilter.can_id = 0x45;
+    rfilter.can_id = 0x07e1;
     rfilter.can_mask = CAN_SFF_MASK;
-    setsockopt(s_can[0], SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
+    //setsockopt(s_can[0], SOL_CAN_RAW, CAN_RAW_FILTER, &rfilter, sizeof(rfilter));
 
     int read_nbytes = 0;
 
@@ -66,10 +70,9 @@ int main(void)
             read_frame.data[4], read_frame.data[5], read_frame.data[6],read_frame.data[7]);
     }
     printf("read can0 over\n");
-
+    close(s_can[0]);
 #endif
 
-    close(s_can[0]);
     return 0;
 }
 

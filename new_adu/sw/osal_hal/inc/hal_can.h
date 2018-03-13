@@ -46,7 +46,7 @@
 
 #define CAN_MAX_DLEN  8
 #define CAN_RAW		  1 /* RAW sockets */
-#define CAN_MAX_RD_RETRY    5
+#define CAN_MAX_RD_RETRY    200*10*5
 
 typedef __u32 				canid_t;
 typedef unsigned short 		__kernel_sa_family_t;

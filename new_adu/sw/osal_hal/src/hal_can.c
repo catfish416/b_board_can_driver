@@ -67,7 +67,8 @@ int read_canFrame (int read_s, void *read_frame, int read_t)
         }
         else
         {
-            sleep(1);
+            //sleep(1);
+            usleep(1000);
             err_cnt++;
         }
     }
@@ -84,13 +85,14 @@ int read_canFrame (int read_s, void *read_frame, int read_t)
 */
 int write_canFrame(int write_s, void *write_frame, int write_t)
 {
-     int bytes = write(write_s, write_frame, write_t);						
-	 if(bytes != write_t)			
+    int bytes = write(write_s, write_frame, write_t);
+    if(bytes != write_t)
+    {
+        printf("bytes=%d, Send Error frame. errno= %d\n!", bytes, errno);
+        return  -1;
+    }
 
-	 {				
-	   /*printf("bytes=%d,Send Error frame\n!",bytes);	*/			
-	   return  -1;	
-	 }
-	 return bytes;
+    //fflush(stdout);
+    return bytes;
 }
 
